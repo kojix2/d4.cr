@@ -1,4 +1,4 @@
-name: Test
+name: test
 
 on:
   push:
@@ -24,15 +24,18 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache cargo (d4-format)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: d4-format
+          cache-targets: true
+
       - name: Clone d4-format / d4binding repository
         run: |
-          git clone https://github.com/38/d4-format.git
+          git clone --depth 1 https://github.com/38/d4-format.git
           cd d4-format
           cargo build --release --package=d4binding
           ls -la target/release/
-          echo "LD_LIBRARY_PATH=$PWD/d4-format/target/release:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          echo "LIBRARY_PATH=$PWD/d4-format/target/release:$LIBRARY_PATH" >> $GITHUB_ENV
-          echo "PKG_CONFIG_PATH=$PWD/d4-format/target/release:$PKG_CONFIG_PATH" >> $GITHUB_ENV
 
       - name: Verify library installation
         run: |
@@ -42,7 +45,5 @@ jobs:
 
       - name: Run Crystal tests
         run: |
-          echo "Running Crystal tests..."
-          crystal spec
-          echo "Tests completed"
-        continue-on-error: true
+          sudo apt install libgc-dev # Workaround
+          crystal spec --link-flags="-L$PWD/d4-format/target/release -Wl,-rpath,$PWD/d4-format/target/release"
