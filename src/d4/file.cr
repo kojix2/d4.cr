@@ -9,13 +9,13 @@ module D4
     @closed : Bool = false
 
     def initialize(@handle : LibD4::D4File)
-      D4.check_pointer(@handle, "Failed to initialize D4 file")
+      D4.check_pointer(@handle.as(Void*), "Failed to initialize D4 file")
     end
 
     # Open a D4 file
     def self.open(path : String, mode : String = "r")
       handle = LibD4.d4_open(path, mode)
-      D4.check_pointer(handle, "Failed to open D4 file: #{path}")
+      D4.check_pointer(handle.as(Void*), "Failed to open D4 file: #{path}")
       new(handle)
     end
 
@@ -40,6 +40,56 @@ module D4
     # Check if the file is closed
     def closed?
       @closed
+    end
+
+    # Public API: set chromosomes (write mode only)
+    def set_chromosomes(chromosomes : Hash(String, UInt32), dict_type : DictType = DictType::SimpleRange, denominator : Float64 = 1.0)
+      check_not_closed
+      chrom_names = chromosomes.keys.to_a
+      chrom_sizes = chromosomes.values.to_a
+      count = chrom_names.size
+      name_array = LibC.malloc(count * sizeof(Pointer(LibC::Char))).as(LibC::Char**)
+      size_array = LibC.malloc(count * sizeof(UInt32)).as(UInt32*)
+      allocated = Array(LibC::Char*).new(count)
+      begin
+        count.times do |i|
+          s = chrom_names[i]
+          bytes = s.to_slice
+          cstr = LibC.malloc(bytes.size + 1).as(LibC::Char*)
+          bytes.copy_to(Slice.new(cstr, bytes.size))
+          cstr[bytes.size] = 0_u8
+          name_array[i] = cstr
+          allocated << cstr
+          size_array[i] = chrom_sizes[i]
+        end
+        meta = LibD4::FileMetadata.new
+        meta.chrom_count = count
+        meta.chrom_name = name_array
+        meta.chrom_size = size_array
+        meta.dict_type = dict_type.to_lib_dict_type
+        meta.denominator = denominator
+        case dict_type
+        in .simple_range?
+          meta.dict_data.simple_range.low = 0
+          meta.dict_data.simple_range.high = 128
+        in .value_map?
+          meta.dict_data.value_map.size = 0_u64
+          meta.dict_data.value_map.values = Pointer(Int32).null
+        end
+        res = LibD4.d4_file_update_metadata(@handle, pointerof(meta))
+        D4.check_result(res, "Failed to update metadata")
+        @metadata = Metadata.new(chromosomes, dict_type, denominator)
+      ensure
+        allocated.each { |p| LibC.free(p.as(Void*)) unless p.null? }
+        LibC.free(name_array.as(Void*)) unless name_array.null?
+        LibC.free(size_array.as(Void*)) unless size_array.null?
+      end
+    end
+
+    def set_chromosomes(chromosomes : Array(Tuple(String, UInt32)), dict_type : DictType = DictType::SimpleRange, denominator : Float64 = 1.0)
+      h = Hash(String, UInt32).new
+      chromosomes.each { |k, v| h[k] = v }
+      set_chromosomes(h, dict_type, denominator)
     end
 
     # Load metadata from the file
@@ -89,11 +139,8 @@ module D4
       position = 0_u32
       result = LibD4.d4_file_tell(@handle, name_buffer.to_unsafe.as(LibC::Char*), name_buffer.size, pointerof(position))
       D4.check_result(result, "Failed to get current position")
-
-      # Find the null terminator to get the actual chromosome name
       null_pos = name_buffer.index(0_u8) || name_buffer.size
       chromosome = String.new(name_buffer[0, null_pos])
-
       {chromosome, position}
     end
 
@@ -112,11 +159,8 @@ module D4
       lib_intervals = Array(LibD4::Interval).new(count) { LibD4::Interval.new }
       result = LibD4.d4_file_read_intervals(@handle, lib_intervals.to_unsafe, count.to_u64)
       actual_count = D4.check_ssize_result(result, "Failed to read intervals")
-
       intervals = Array(Interval).new(actual_count.to_i)
-      actual_count.to_i.times do |i|
-        intervals << Interval.new(lib_intervals[i])
-      end
+      actual_count.to_i.times { |i| intervals << Interval.new(lib_intervals[i]) }
       intervals
     end
 
@@ -151,9 +195,7 @@ module D4
       actual_stop = stop || chrom_size
       actual_stop = Math.min(actual_stop, chrom_size)
 
-      if start >= actual_stop
-        return Array(Int32).new
-      end
+      return Array(Int32).new if start >= actual_stop
 
       seek(chromosome, start)
       count = (actual_stop - start).to_i
@@ -167,9 +209,7 @@ module D4
     end
 
     private def check_not_closed
-      if @closed
-        raise D4Error.new("D4 file is closed")
-      end
+      raise D4Error.new("D4 file is closed") if @closed
     end
 
     private def cleanup_lib_metadata(lib_metadata : LibD4::FileMetadata*)
@@ -179,11 +219,7 @@ module D4
       return if metadata.chrom_count == 0
 
       # Free chromosome names
-      metadata.chrom_count.times do |i|
-        LibC.free(metadata.chrom_name[i].as(Void*))
-      end
-
-      # Free arrays
+      metadata.chrom_count.times { |i| LibC.free(metadata.chrom_name[i].as(Void*)) }
       LibC.free(metadata.chrom_name.as(Void*))
       LibC.free(metadata.chrom_size.as(Void*))
 

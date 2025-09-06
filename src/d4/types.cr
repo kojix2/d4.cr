@@ -20,8 +20,7 @@ module D4
     getter right : UInt32
     getter value : Int32
 
-    def initialize(@left : UInt32, @right : UInt32, @value : Int32)
-    end
+    def initialize(@left : UInt32, @right : UInt32, @value : Int32); end
 
     def initialize(lib_interval : LibD4::Interval)
       @left = lib_interval.left
@@ -49,19 +48,15 @@ module D4
 
     def to_lib_dict_type
       case self
-      in .simple_range?
-        LibD4::DictType::SimpleRange
-      in .value_map?
-        LibD4::DictType::ValueMap
+      in .simple_range? then LibD4::DictType::SimpleRange
+      in .value_map?    then LibD4::DictType::ValueMap
       end
     end
 
     def self.from_lib_dict_type(lib_type : LibD4::DictType)
       case lib_type
-      in .simple_range?
-        SimpleRange
-      in .value_map?
-        ValueMap
+      in .simple_range? then SimpleRange
+      in .value_map?    then ValueMap
       end
     end
   end
@@ -72,19 +67,15 @@ module D4
     getter dict_type : DictType
     getter denominator : Float64
 
-    def initialize(@chromosomes : Hash(String, UInt32), @dict_type : DictType, @denominator : Float64 = 1.0)
-    end
+    def initialize(@chromosomes : Hash(String, UInt32), @dict_type : DictType, @denominator : Float64 = 1.0); end
 
     def initialize(lib_metadata : LibD4::FileMetadata)
       @chromosomes = Hash(String, UInt32).new
       @dict_type = DictType.from_lib_dict_type(lib_metadata.dict_type)
       @denominator = lib_metadata.denominator
-
-      # Extract chromosome information
       chrom_count = lib_metadata.chrom_count.to_i
       chrom_names = lib_metadata.chrom_name
       chrom_sizes = lib_metadata.chrom_size
-
       chrom_count.times do |i|
         name = String.new(chrom_names[i])
         size = chrom_sizes[i]
@@ -106,24 +97,18 @@ module D4
   end
 
   # Helper methods for error checking
-  private def self.check_result(result : Int32, message : String)
-    if result < 0
-      raise D4Error.new(message)
-    end
+  def self.check_result(result : Int32, message : String)
+    raise D4Error.new(message) if result < 0
     result
   end
 
-  private def self.check_ssize_result(result : LibC::SSizeT, message : String)
-    if result < 0
-      raise D4Error.new(message)
-    end
+  def self.check_ssize_result(result : LibC::SSizeT, message : String)
+    raise D4Error.new(message) if result < 0
     result
   end
 
-  private def self.check_pointer(pointer : Void*, message : String)
-    if pointer.null?
-      raise D4Error.new(message)
-    end
+  def self.check_pointer(pointer : Void*, message : String)
+    raise D4Error.new(message) if pointer.null?
     pointer
   end
 end

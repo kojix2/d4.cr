@@ -5,39 +5,65 @@ module D4
     # Set chromosomes for a new D4 file (write mode)
     def set_chromosomes(chromosomes : Hash(String, UInt32), dict_type : DictType = DictType::SimpleRange, denominator : Float64 = 1.0)
       check_not_closed
-
-      # Prepare chromosome data
+      # Prepare chromosome data (copy to deterministic arrays)
       chrom_names = chromosomes.keys.to_a
       chrom_sizes = chromosomes.values.to_a
 
-      # Create C string array for chromosome names
-      c_names = chrom_names.map(&.to_unsafe.as(LibC::Char*))
+      name_count = chrom_names.size
 
-      # Create metadata structure
-      lib_metadata = LibD4::FileMetadata.new
-      lib_metadata.chrom_count = chromosomes.size.to_u64
-      lib_metadata.chrom_name = c_names.to_unsafe
-      lib_metadata.chrom_size = chrom_sizes.to_unsafe
-      lib_metadata.dict_type = dict_type.to_lib_dict_type
-      lib_metadata.denominator = denominator
+      # Allocate C arrays (char** for names, UInt32* for sizes)
+      name_array = LibC.malloc(name_count * sizeof(Pointer(LibC::Char))).as(LibC::Char**)
+      size_array = LibC.malloc(name_count * sizeof(UInt32)).as(UInt32*)
 
-      # Set dictionary data based on type
-      case dict_type
-      in .simple_range?
-        lib_metadata.dict_data.simple_range.low = 0_i32
-        lib_metadata.dict_data.simple_range.high = 128_i32
-      in .value_map?
-        # For now, use empty value map - could be extended later
-        lib_metadata.dict_data.value_map.size = 0_u64
-        lib_metadata.dict_data.value_map.values = Pointer(Int32).null
+      allocated_strings = Array(LibC::Char*).new(name_count)
+
+      begin
+        name_count.times do |i|
+          s = chrom_names[i]
+          bytesize = s.bytesize
+          cstr = LibC.malloc(bytesize + 1).as(LibC::Char*)
+          # copy bytes
+          s.to_slice.copy_to(Slice.new(cstr, bytesize))
+          cstr[bytesize] = 0_u8
+          name_array[i] = cstr
+          allocated_strings << cstr
+          size_array[i] = chrom_sizes[i]
+        end
+
+        lib_metadata = LibD4::FileMetadata.new
+        lib_metadata.chrom_count = name_count.to_u64
+        lib_metadata.chrom_name = name_array
+        lib_metadata.chrom_size = size_array
+        lib_metadata.dict_type = dict_type.to_lib_dict_type
+        lib_metadata.denominator = denominator
+
+        # Set dictionary data based on type
+        case dict_type
+        in .simple_range?
+          # TODO: expose low/high? Using static default matches prior behaviour.
+          lib_metadata.dict_data.simple_range.low = 0_i32
+          lib_metadata.dict_data.simple_range.high = 128_i32
+        in .value_map?
+          # Empty value map placeholder for now
+          lib_metadata.dict_data.value_map.size = 0_u64
+          lib_metadata.dict_data.value_map.values = Pointer(Int32).null
+        end
+
+        result = LibD4.d4_file_update_metadata(@handle, pointerof(lib_metadata))
+        D4.check_result(result, "Failed to update metadata")
+
+        @metadata = Metadata.new(chromosomes, dict_type, denominator)
+      rescue e
+        # Re-raise after ensure cleanup
+        raise e
+      ensure
+        # Free all allocated C strings and arrays
+        allocated_strings.each do |ptr|
+          LibC.free(ptr.as(Void*)) unless ptr.null?
+        end
+        LibC.free(name_array.as(Void*)) unless name_array.null?
+        LibC.free(size_array.as(Void*)) unless size_array.null?
       end
-
-      # Update metadata in the file
-      result = LibD4.d4_file_update_metadata(@handle, pointerof(lib_metadata))
-      D4.check_result(result, "Failed to update metadata")
-
-      # Update cached metadata
-      @metadata = Metadata.new(chromosomes, dict_type, denominator)
     end
 
     # Set chromosomes from an array of tuples
@@ -112,10 +138,8 @@ module D4
       @file = File.open(path, "w")
     end
 
-    def initialize(@file : File)
-    end
+    def initialize(@file : File); end
 
-    # Set up chromosomes for the file
     def set_chromosomes(chromosomes : Hash(String, UInt32), dict_type : DictType = DictType::SimpleRange, denominator : Float64 = 1.0)
       @file.set_chromosomes(chromosomes, dict_type, denominator)
     end
@@ -124,27 +148,25 @@ module D4
       @file.set_chromosomes(chromosomes, dict_type, denominator)
     end
 
-    # Write values to a chromosome
     def write_values(chromosome : String, position : UInt32, values : Array(Int32))
       @file.write_values(chromosome, position, values)
     end
 
-    # Write intervals to a chromosome
     def write_intervals(chromosome : String, intervals : Array(Interval))
-      @file.write_intervals(chromosome, intervals)
+      return if intervals.empty?
+      # 先頭 interval の left にシーク (後退はライブラリが拒否するので intervals[0].left 以前へは行わない)
+      @file.seek(chromosome, intervals.first.left)
+      @file.write_intervals(intervals)
     end
 
-    # Write dense values as intervals
     def write_dense_values(chromosome : String, start_position : UInt32, values : Array(Int32))
       @file.write_dense_values(chromosome, start_position, values)
     end
 
-    # Close the writer
     def close
       @file.close
     end
 
-    # Check if closed
     def closed?
       @file.closed?
     end
