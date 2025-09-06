@@ -8,6 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      D4_DIR: ${{ github.workspace }}/d4-format
+      LIB_DIR: ${{ github.workspace }}/d4-format/target/release
 
     steps:
       - name: Checkout repository
@@ -24,26 +27,35 @@ jobs:
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Checkout d4-format
+        uses: actions/checkout@v5
+        with:
+          repository: 38/d4-format
+          path: d4-format
+          fetch-depth: 1
+
       - name: Cache cargo (d4-format)
         uses: Swatinem/rust-cache@v2
         with:
           workspaces: d4-format
           cache-targets: true
 
-      - name: Clone d4-format / d4binding repository
+      - name: Build d4binding
+        working-directory: d4-format
         run: |
-          git clone --depth 1 https://github.com/38/d4-format.git
-          cd d4-format
-          cargo build --release --package=d4binding
+          cargo build --release -p d4binding
           ls -la target/release/
 
       - name: Verify library installation
         run: |
           echo "Checking library files..."
-          find d4-format/target/release -name "*d4binding*" -type f
+          find "$LIB_DIR" -name "*d4binding*" -type f
           echo "Library path: $LD_LIBRARY_PATH"
 
       - name: Run Crystal tests
         run: |
-          sudo apt install libgc-dev # Workaround
-          crystal spec --link-flags="-L$PWD/d4-format/target/release -Wl,-rpath,$PWD/d4-format/target/release"
+          sudo apt-get update
+          sudo apt-get install -y libgc-dev
+          export CRYSTAL_LIBRARY_PATH="$LIB_DIR"
+          export LD_LIBRARY_PATH="$LIB_DIR:$LD_LIBRARY_PATH"
+          crystal spec --link-flags="-L$LIB_DIR -Wl,-rpath,$LIB_DIR"
