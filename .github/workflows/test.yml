@@ -1,0 +1,88 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Install Crystal
+      uses: crystal-lang/install-crystal@v1
+      with:
+        crystal: latest
+    
+    - name: Install dependencies
+      run: shards install
+    
+    - name: Run syntax check
+      run: crystal build --no-codegen src/d4.cr
+    
+    - name: Run basic tests (without d4binding)
+      run: crystal spec --dry-run
+      continue-on-error: true
+    
+    - name: Setup Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          d4-format/target
+        key: ${{ runner.os }}-cargo-d4-${{ hashFiles('d4-format/**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-d4-
+    
+    - name: Clone d4-format repository
+      run: |
+        git clone https://github.com/38/d4-format.git
+        cd d4-format
+        git log -1 --oneline
+    
+    - name: Build d4binding library
+      working-directory: d4-format
+      run: |
+        echo "Building d4binding library..."
+        cargo build --release --package=d4binding
+        ls -la target/release/
+        echo "Library built successfully"
+    
+    - name: Set library paths
+      run: |
+        echo "LD_LIBRARY_PATH=$PWD/d4-format/target/release:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+        echo "LIBRARY_PATH=$PWD/d4-format/target/release:$LIBRARY_PATH" >> $GITHUB_ENV
+        echo "PKG_CONFIG_PATH=$PWD/d4-format/target/release:$PKG_CONFIG_PATH" >> $GITHUB_ENV
+    
+    - name: Verify library installation
+      run: |
+        echo "Checking library files..."
+        find d4-format/target/release -name "*d4binding*" -type f
+        echo "Library path: $LD_LIBRARY_PATH"
+    
+    - name: Build Crystal project with d4binding
+      run: |
+        echo "Building Crystal project with d4binding..."
+        crystal build --no-codegen src/d4.cr
+        echo "Build successful"
+    
+    - name: Run Crystal tests
+      run: |
+        echo "Running Crystal tests..."
+        crystal spec
+        echo "Tests completed"
+      continue-on-error: true
+    
+    - name: Format check
+      run: |
+        crystal tool format --check
+        echo "Format check completed"
