@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs 1.16.3">
+<meta name="crystal_docs.project_version" content="main">
+<meta name="crystal_docs.project_name" content="d4">
+
+
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/doc.js"></script>
+
+  <meta name="repository-name" content="d4">
+  <title>D4 - d4 main</title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "";
+  </script>
+</head>
+<body>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill="currentColor" fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+<input type="checkbox" id="sidebar-btn">
+<label for="sidebar-btn" id="sidebar-btn-label">
+  <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+  <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+</label>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="index.html">
+          d4
+        </a>
+      </h1>
+
+      <span class="project-version">
+        main
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class="parent open current" data-id="d4/D4" data-name="d4">
+      <a href="D4.html">D4</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/D4Error" data-name="d4::d4error">
+      <a href="D4/D4Error.html">D4Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/DictType" data-name="d4::dicttype">
+      <a href="D4/DictType.html">DictType</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/File" data-name="d4::file">
+      <a href="D4/File.html">File</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Interval" data-name="d4::interval">
+      <a href="D4/Interval.html">Interval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Metadata" data-name="d4::metadata">
+      <a href="D4/Metadata.html">Metadata</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/QueryIterator" data-name="d4::queryiterator">
+      <a href="D4/QueryIterator.html">QueryIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Writer" data-name="d4::writer">
+      <a href="D4/Writer.html">Writer</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1 class="type-name">
+
+  <span class="kind">
+    module
+  </span> D4
+
+</h1>
+
+
+
+
+
+  <h2>
+    <a id="overview" class="anchor" href="#overview">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Overview
+  </h2>
+
+  <p>D4 format library for Crystal</p>
+<p>D4 is a format designed to store quantitative data associated with genomic intervals.
+It provides efficient compression and fast random access for depth data and similar
+genomic quantitative information.</p>
+<h2><a id="usage" class="anchor" href="#usage">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Usage</h2>
+<h3><a id="reading-d4-files" class="anchor" href="#reading-d4-files">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Reading D4 files</h3>
+<pre><code class="language-crystal"><span class="c"># Open and read a D4 file</span>
+<span class="t">D4</span><span class="t">::</span><span class="t">File</span>.open(<span class="s">&quot;data.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>d4<span class="o">|</span>
+  puts d4.chromosomes
+
+  <span class="c"># Get values for a region</span>
+  values <span class="o">=</span> d4.values(<span class="s">&quot;chr1&quot;</span>, <span class="n">1000_u32</span>, <span class="n">2000_u32</span>)
+  puts <span class="s">&quot;Mean depth: </span><span class="i">#{</span>values.sum <span class="o">/</span> values.size<span class="i">}</span><span class="s">&quot;</span>
+
+  <span class="c"># Query intervals with a block</span>
+  d4.query(<span class="s">&quot;chr1&quot;</span>, <span class="n">1000_u32</span>, <span class="n">2000_u32</span>) <span class="k">do</span> <span class="o">|</span>interval<span class="o">|</span>
+    puts <span class="s">&quot;</span><span class="i">#{</span>interval.left<span class="i">}</span><span class="s">-</span><span class="i">#{</span>interval.right<span class="i">}</span><span class="s">: </span><span class="i">#{</span>interval.value<span class="i">}</span><span class="s">&quot;</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre>
+<h3><a id="writing-d4-files" class="anchor" href="#writing-d4-files">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Writing D4 files</h3>
+<pre><code class="language-crystal"><span class="c"># Create a new D4 file</span>
+<span class="t">D4</span><span class="t">::</span><span class="t">Writer</span>.new(<span class="s">&quot;output.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>writer<span class="o">|</span>
+  <span class="c"># Set up chromosomes</span>
+  chromosomes <span class="o">=</span> {<span class="s">&quot;chr1&quot;</span> <span class="o">=&gt;</span> <span class="n">1000_u32</span>, <span class="s">&quot;chr2&quot;</span> <span class="o">=&gt;</span> <span class="n">2000_u32</span>}
+  writer.set_chromosomes(chromosomes)
+
+  <span class="c"># Write values</span>
+  values <span class="o">=</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">5</span>]
+  writer.write_values(<span class="s">&quot;chr1&quot;</span>, <span class="n">0_u32</span>, values)
+<span class="k">end</span></code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>
+    <a id="defined-in" class="anchor" href="#defined-in">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Defined in:
+  </h2>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4.cr#L48" target="_blank">
+        d4.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L4" target="_blank">
+        d4/file.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/query.cr#L3" target="_blank">
+        d4/query.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/types.cr#L3" target="_blank">
+        d4/types.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/version.cr#L1" target="_blank">
+        d4/version.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L3" target="_blank">
+        d4/writer.cr
+      </a>
+    
+    <br/>
+  
+
+
+
+  
+    <h2>
+      <a id="constant-summary" class="anchor" href="#constant-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+      Constant Summary
+    </h2>
+  
+  <dl>
+    
+      <dt class="entry-const" id="VERSION">
+        <strong>VERSION</strong> = <code><span class="o">{{</span> (<span class="s">`shards version /home/runner/work/d4.cr/d4.cr/src/d4`</span>).chomp.stringify }}</code>
+      </dt>
+      
+    
+  </dl>
+
+
+
+  
+
+  
+  <h2>
+    <a id="class-method-summary" class="anchor" href="#class-method-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Class Method Summary
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#build_index%28path%3AString%29-class-method" class="signature"><strong>.build_index</strong>(path : String)</a>
+        
+          <div class="summary"><p>Build SFI index for a D4 file</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#check_pointer%28pointer%3APointer%28Void%29%2Cmessage%3AString%29-class-method" class="signature"><strong>.check_pointer</strong>(pointer : Pointer(Void), message : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#check_result%28result%3AInt32%2Cmessage%3AString%29-class-method" class="signature"><strong>.check_result</strong>(result : Int32, message : String)</a>
+        
+          <div class="summary"><p>Helper methods for error checking</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#check_ssize_result%28result%3ALibC%3A%3ASSizeT%2Cmessage%3AString%29-class-method" class="signature"><strong>.check_ssize_result</strong>(result : LibC::SSizeT, message : String)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#clear_errors-class-method" class="signature"><strong>.clear_errors</strong></a>
+        
+          <div class="summary"><p>Clear any D4 library errors</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#error_number-class-method" class="signature"><strong>.error_number</strong></a>
+        
+          <div class="summary"><p>Get the current D4 library error number</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#open%28path%3AString%2Cmode%3AString%3D%22r%22%29-class-method" class="signature"><strong>.open</strong>(path : String, mode : String = <span class="s">&quot;r&quot;</span>)</a>
+        
+          <div class="summary"><p>Convenience method to open a D4 file for reading</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#open%28path%3AString%2Cmode%3AString%3D%22r%22%2C%26block%3AFile-%3ET%29forallT-class-method" class="signature"><strong>.open</strong>(path : String, mode : String = <span class="s">&quot;r&quot;</span>, &block : File -> T) forall T</a>
+        
+          <div class="summary"><p>Convenience method to open a D4 file with a block</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#writer%28path%3AString%29-class-method" class="signature"><strong>.writer</strong>(path : String)</a>
+        
+          <div class="summary"><p>Create a new D4 writer</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#writer%28path%3AString%2C%26block%3AWriter-%3ET%29forallT-class-method" class="signature"><strong>.writer</strong>(path : String, &block : Writer -> T) forall T</a>
+        
+          <div class="summary"><p>Create a new D4 writer with a block</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+  
+
+  
+
+
+  <div class="methods-inherited">
+    
+  </div>
+
+  
+
+  
+  <h2>
+    <a id="class-method-detail" class="anchor" href="#class-method-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Class Method Detail
+  </h2>
+  
+    <div class="entry-detail" id="build_index(path:String)-class-method">
+      <div class="signature">
+        
+        def self.<strong>build_index</strong>(path : String)
+
+        <a class="method-permalink" href="#build_index%28path%3AString%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Build SFI index for a D4 file</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4.cr#L75" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="check_pointer(pointer:Pointer(Void),message:String)-class-method">
+      <div class="signature">
+        
+        def self.<strong>check_pointer</strong>(pointer : Pointer(Void), message : String)
+
+        <a class="method-permalink" href="#check_pointer%28pointer%3APointer%28Void%29%2Cmessage%3AString%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/types.cr#L110" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="check_result(result:Int32,message:String)-class-method">
+      <div class="signature">
+        
+        def self.<strong>check_result</strong>(result : Int32, message : String)
+
+        <a class="method-permalink" href="#check_result%28result%3AInt32%2Cmessage%3AString%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Helper methods for error checking</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/types.cr#L100" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="check_ssize_result(result:LibC::SSizeT,message:String)-class-method">
+      <div class="signature">
+        
+        def self.<strong>check_ssize_result</strong>(result : LibC::SSizeT, message : String)
+
+        <a class="method-permalink" href="#check_ssize_result%28result%3ALibC%3A%3ASSizeT%2Cmessage%3AString%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/types.cr#L105" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="clear_errors-class-method">
+      <div class="signature">
+        
+        def self.<strong>clear_errors</strong>
+
+        <a class="method-permalink" href="#clear_errors-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Clear any D4 library errors</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4.cr#L80" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="error_number-class-method">
+      <div class="signature">
+        
+        def self.<strong>error_number</strong>
+
+        <a class="method-permalink" href="#error_number-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Get the current D4 library error number</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4.cr#L85" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="open(path:String,mode:String=&quot;r&quot;)-class-method">
+      <div class="signature">
+        
+        def self.<strong>open</strong>(path : String, mode : String = <span class="s">&quot;r&quot;</span>)
+
+        <a class="method-permalink" href="#open%28path%3AString%2Cmode%3AString%3D%22r%22%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Convenience method to open a D4 file for reading</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4.cr#L50" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="open(path:String,mode:String=&quot;r&quot;,&amp;block:File-&gt;T)forallT-class-method">
+      <div class="signature">
+        
+        def self.<strong>open</strong>(path : String, mode : String = <span class="s">&quot;r&quot;</span>, &block : <a href="D4/File.html">File</a> -> T) forall T
+
+        <a class="method-permalink" href="#open%28path%3AString%2Cmode%3AString%3D%22r%22%2C%26block%3AFile-%3ET%29forallT-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Convenience method to open a D4 file with a block</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4.cr#L55" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="writer(path:String)-class-method">
+      <div class="signature">
+        
+        def self.<strong>writer</strong>(path : String)
+
+        <a class="method-permalink" href="#writer%28path%3AString%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Create a new D4 writer</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4.cr#L60" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="writer(path:String,&amp;block:Writer-&gt;T)forallT-class-method">
+      <div class="signature">
+        
+        def self.<strong>writer</strong>(path : String, &block : <a href="D4/Writer.html">Writer</a> -> T) forall T
+
+        <a class="method-permalink" href="#writer%28path%3AString%2C%26block%3AWriter-%3ET%29forallT-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Create a new D4 writer with a block</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4.cr#L65" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+  
+
+  
+
+
+</div>
+
+</body>
+</html>

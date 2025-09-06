@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs 1.16.3">
+<meta name="crystal_docs.project_version" content="main">
+<meta name="crystal_docs.project_name" content="d4">
+
+
+
+<link href="css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="js/doc.js"></script>
+
+  <meta name="repository-name" content="d4">
+  <title>d4 main</title>
+  <script type="text/javascript">
+  CrystalDocs.base_path = "";
+  </script>
+</head>
+<body>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill="currentColor" fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+<input type="checkbox" id="sidebar-btn">
+<label for="sidebar-btn" id="sidebar-btn-label">
+  <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+  <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+</label>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="index.html">
+          d4
+        </a>
+      </h1>
+
+      <span class="project-version">
+        main
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class="parent " data-id="d4/D4" data-name="d4">
+      <a href="D4.html">D4</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/D4Error" data-name="d4::d4error">
+      <a href="D4/D4Error.html">D4Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/DictType" data-name="d4::dicttype">
+      <a href="D4/DictType.html">DictType</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/File" data-name="d4::file">
+      <a href="D4/File.html">File</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Interval" data-name="d4::interval">
+      <a href="D4/Interval.html">Interval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Metadata" data-name="d4::metadata">
+      <a href="D4/Metadata.html">Metadata</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/QueryIterator" data-name="d4::queryiterator">
+      <a href="D4/QueryIterator.html">QueryIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Writer" data-name="d4::writer">
+      <a href="D4/Writer.html">Writer</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1><a id="d4.cr" class="anchor" href="#d4.cr">  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>D4.cr</h1>
+<p><a href="https://github.com/kojix2/d4.cr/actions/workflows/test.yml"><img src="https://github.com/kojix2/d4.cr/actions/workflows/test.yml/badge.svg" alt="test" /></a>
+<a href="https://tokei.kojix2.net/github/kojix2/d4.cr"><img src="https://img.shields.io/endpoint?url=https://tokei.kojix2.net/badge/github/kojix2/d4.cr/lines" alt="Lines of Code" /></a>
+<img src="https://img.shields.io/badge/PURE-VIBE_CODING-magenta" alt="Static Badge" /></p>
+<p>Crystal bindings for the D4 format - a fast and compact format for storing quantitative genomic data.</p>
+<h2><a id="installation" class="anchor" href="#installation">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Installation</h2>
+<h3><a id="prerequisites" class="anchor" href="#prerequisites">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Prerequisites</h3>
+<p>Install the <code>d4binding</code> library on your system.</p>
+<h3><a id="add-to-your-project" class="anchor" href="#add-to-your-project">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Add to your project</h3>
+<pre><code class="language-yaml">dependencies:
+  d4:
+    github: kojix2/d4</code></pre>
+<p>Run <code>shards install</code></p>
+<h2><a id="usage" class="anchor" href="#usage">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Usage</h2>
+<pre><code class="language-crystal"><span class="k">require</span> <span class="s">&quot;d4&quot;</span></code></pre>
+<h3><a id="reading-d4-files" class="anchor" href="#reading-d4-files">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Reading D4 files</h3>
+<pre><code class="language-crystal"><span class="t">D4</span>.open(<span class="s">&quot;data.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>d4<span class="o">|</span>
+  puts d4.chromosomes
+
+  values <span class="o">=</span> d4.values(<span class="s">&quot;chr1&quot;</span>, <span class="n">1000_u32</span>, <span class="n">2000_u32</span>)
+  puts <span class="s">&quot;Mean depth: </span><span class="i">#{</span>values.sum <span class="o">/</span> values.size<span class="i">}</span><span class="s">&quot;</span>
+
+  d4.query(<span class="s">&quot;chr1&quot;</span>, <span class="n">1000_u32</span>, <span class="n">2000_u32</span>) <span class="k">do</span> <span class="o">|</span>interval<span class="o">|</span>
+    puts <span class="s">&quot;</span><span class="i">#{</span>interval.left<span class="i">}</span><span class="s">-</span><span class="i">#{</span>interval.right<span class="i">}</span><span class="s">: </span><span class="i">#{</span>interval.value<span class="i">}</span><span class="s">&quot;</span>
+  <span class="k">end</span>
+
+  intervals <span class="o">=</span> d4.query(<span class="s">&quot;chr1&quot;</span>, <span class="n">1000_u32</span>, <span class="n">2000_u32</span>)
+  puts <span class="s">&quot;Found </span><span class="i">#{</span>intervals.size<span class="i">}</span><span class="s"> intervals&quot;</span>
+
+  d4.query_iter(<span class="s">&quot;chr1&quot;</span>, <span class="n">1000_u32</span>, <span class="n">2000_u32</span>).each <span class="k">do</span> <span class="o">|</span>interval<span class="o">|</span>
+    puts interval
+  <span class="k">end</span>
+<span class="k">end</span></code></pre>
+<h3><a id="writing-d4-files" class="anchor" href="#writing-d4-files">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Writing D4 files</h3>
+<pre><code class="language-crystal"><span class="t">D4</span>.writer(<span class="s">&quot;output.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>writer<span class="o">|</span>
+  chromosomes <span class="o">=</span> {<span class="s">&quot;chr1&quot;</span> <span class="o">=&gt;</span> <span class="n">1000_u32</span>, <span class="s">&quot;chr2&quot;</span> <span class="o">=&gt;</span> <span class="n">2000_u32</span>}
+  writer.set_chromosomes(chromosomes)
+
+  values <span class="o">=</span> [<span class="n">1_i32</span>, <span class="n">2_i32</span>, <span class="n">3_i32</span>, <span class="n">4_i32</span>, <span class="n">5_i32</span>]
+  writer.write_values(<span class="s">&quot;chr1&quot;</span>, <span class="n">0_u32</span>, values)
+
+  intervals <span class="o">=</span> [
+    <span class="t">D4</span><span class="t">::</span><span class="t">Interval</span>.new(<span class="n">100_u32</span>, <span class="n">200_u32</span>, <span class="n">10_i32</span>),
+    <span class="t">D4</span><span class="t">::</span><span class="t">Interval</span>.new(<span class="n">200_u32</span>, <span class="n">300_u32</span>, <span class="n">20_i32</span>)
+  ]
+  writer.write_intervals(<span class="s">&quot;chr1&quot;</span>, intervals)
+
+  writer.write_dense_values(<span class="s">&quot;chr2&quot;</span>, <span class="n">0_u32</span>, [<span class="n">5_i32</span>, <span class="n">6_i32</span>, <span class="n">7_i32</span>])
+<span class="k">end</span></code></pre>
+<h3><a id="working-with-intervals" class="anchor" href="#working-with-intervals">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Working with intervals</h3>
+<pre><code class="language-crystal">interval <span class="o">=</span> <span class="t">D4</span><span class="t">::</span><span class="t">Interval</span>.new(<span class="n">100_u32</span>, <span class="n">200_u32</span>, <span class="n">42_i32</span>)
+puts interval.length  <span class="c"># =&gt; 100</span>
+puts interval         <span class="c"># =&gt; &quot;100-200:42&quot;</span>
+
+positions <span class="o">=</span> [<span class="n">100_u32</span>, <span class="n">200_u32</span>, <span class="n">300_u32</span>]
+values <span class="o">=</span> [<span class="n">1_i32</span>, <span class="n">2_i32</span>, <span class="n">3_i32</span>]
+intervals <span class="o">=</span> <span class="t">D4</span><span class="t">::</span><span class="t">File</span>.create_intervals(positions, values)
+
+dense_intervals <span class="o">=</span> <span class="t">D4</span><span class="t">::</span><span class="t">File</span>.create_dense_intervals(<span class="n">100_u32</span>, [<span class="n">1_i32</span>, <span class="n">2_i32</span>, <span class="n">3_i32</span>])</code></pre>
+<h3><a id="building-indices" class="anchor" href="#building-indices">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Building indices</h3>
+<pre><code class="language-crystal"><span class="t">D4</span>.build_index(<span class="s">&quot;data.d4&quot;</span>)</code></pre>
+<h3><a id="error-handling" class="anchor" href="#error-handling">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Error handling</h3>
+<pre><code class="language-crystal"><span class="k">begin</span>
+  <span class="t">D4</span>.open(<span class="s">&quot;nonexistent.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>d4<span class="o">|</span>
+    <span class="c"># This will raise D4::D4Error</span>
+  <span class="k">end</span>
+<span class="k">rescue</span> <span class="t">D4</span><span class="t">::</span><span class="t">D4Error</span> <span class="o">=&gt;</span> e
+  puts <span class="s">&quot;D4 error: </span><span class="i">#{</span>e.message<span class="i">}</span><span class="s">&quot;</span>
+<span class="k">end</span>
+
+<span class="t">D4</span>.clear_errors</code></pre>
+<h2><a id="api" class="anchor" href="#api">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>API</h2>
+<h3><a id="classes" class="anchor" href="#classes">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Classes</h3>
+<ul>
+<li><code><a href="D4/File.html">D4::File</a></code> - Main class for reading and writing D4 files</li>
+<li><code><a href="D4/Writer.html">D4::Writer</a></code> - Convenience class for creating D4 files</li>
+<li><code><a href="D4/Interval.html">D4::Interval</a></code> - Represents a genomic interval with a value</li>
+<li><code><a href="D4/Metadata.html">D4::Metadata</a></code> - Contains chromosome and dictionary information</li>
+<li><code><a href="D4/QueryIterator.html">D4::QueryIterator</a></code> - Memory-efficient iterator for querying intervals</li>
+</ul>
+<h3><a id="enums" class="anchor" href="#enums">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Enums</h3>
+<ul>
+<li><code><a href="D4/DictType.html">D4::DictType</a></code> - Dictionary types (SimpleRange, ValueMap)</li>
+</ul>
+<h3><a id="exceptions" class="anchor" href="#exceptions">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Exceptions</h3>
+<ul>
+<li><code><a href="D4/D4Error.html">D4::D4Error</a></code> - D4-specific errors with detailed messages</li>
+</ul>
+<h2><a id="design" class="anchor" href="#design">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Design</h2>
+<p>This implementation follows the same design principles as d4-nim:</p>
+<ul>
+<li>Core functionality only (no BAM/CRAM processing)</li>
+<li>Simple dependencies (only requires <code>d4binding</code> library, no htslib)</li>
+<li>Memory efficient with proper cleanup of C resources</li>
+<li>Type safe using Crystal's type system</li>
+</ul>
+<h2><a id="development" class="anchor" href="#development">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Development</h2>
+<ol>
+<li>Install the <code>d4binding</code> library</li>
+<li>Clone this repository</li>
+<li>Run <code>shards install</code></li>
+<li>Run tests with <code>crystal spec</code></li>
+</ol>
+<h2><a id="license" class="anchor" href="#license">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>License</h2>
+<p>MIT License</p>
+<h2><a id="contributors" class="anchor" href="#contributors">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Contributors</h2>
+<ul>
+<li><a href="https://github.com/kojix2">kojix2</a> - creator and maintainer</li>
+</ul>
+<h2><a id="acknowledgments" class="anchor" href="#acknowledgments">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Acknowledgments</h2>
+<ul>
+<li><a href="https://github.com/38">Hao Hou</a> - creator of the D4 format</li>
+<li><a href="https://github.com/brentp">Brent Pedersen</a> - creator of d4-nim</li>
+</ul>
+</div>
+</body>
+</html>

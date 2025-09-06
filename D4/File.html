@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs 1.16.3">
+<meta name="crystal_docs.project_version" content="main">
+<meta name="crystal_docs.project_name" content="d4">
+
+
+
+<link href="../css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../js/doc.js"></script>
+
+  <meta name="repository-name" content="d4">
+  <title>D4::File - d4 main</title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "../";
+  </script>
+</head>
+<body>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill="currentColor" fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+<input type="checkbox" id="sidebar-btn">
+<label for="sidebar-btn" id="sidebar-btn-label">
+  <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+  <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+</label>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="../index.html">
+          d4
+        </a>
+      </h1>
+
+      <span class="project-version">
+        main
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class="parent open current" data-id="d4/D4" data-name="d4">
+      <a href="../D4.html">D4</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/D4Error" data-name="d4::d4error">
+      <a href="../D4/D4Error.html">D4Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/DictType" data-name="d4::dicttype">
+      <a href="../D4/DictType.html">DictType</a>
+      
+    </li>
+  
+  <li class=" current" data-id="d4/D4/File" data-name="d4::file">
+      <a href="../D4/File.html">File</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Interval" data-name="d4::interval">
+      <a href="../D4/Interval.html">Interval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Metadata" data-name="d4::metadata">
+      <a href="../D4/Metadata.html">Metadata</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/QueryIterator" data-name="d4::queryiterator">
+      <a href="../D4/QueryIterator.html">QueryIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Writer" data-name="d4::writer">
+      <a href="../D4/Writer.html">Writer</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1 class="type-name">
+
+  <span class="kind">
+    class
+  </span> D4::<wbr>File
+
+</h1>
+
+
+  <ul class="superclass-hierarchy"><li class="superclass"><a href="../D4/File.html">D4::File</a></li><li class="superclass">Reference</li><li class="superclass">Object</li></ul>
+
+
+
+
+  <h2>
+    <a id="overview" class="anchor" href="#overview">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Overview
+  </h2>
+
+  <p>Main class for D4 file operations</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>
+    <a id="defined-in" class="anchor" href="#defined-in">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Defined in:
+  </h2>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L6" target="_blank">
+        d4/file.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/query.cr#L4" target="_blank">
+        d4/query.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L4" target="_blank">
+        d4/writer.cr
+      </a>
+    
+    <br/>
+  
+
+
+
+
+
+  
+  <h2>
+    <a id="constructors" class="anchor" href="#constructors">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Constructors
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#new%28handle%3ALibD4%3A%3AD4File%29-class-method" class="signature"><strong>.new</strong>(handle : LibD4::D4File)</a>
+        
+      </li>
+    
+  </ul>
+
+
+  
+  <h2>
+    <a id="class-method-summary" class="anchor" href="#class-method-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Class Method Summary
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#build_index%28path%3AString%29-class-method" class="signature"><strong>.build_index</strong>(path : String)</a>
+        
+          <div class="summary"><p>Build SFI index for the file</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#create_dense_intervals%28start_position%3AUInt32%2Cvalues%3AArray%28Int32%29%29%3AArray%28Interval%29-class-method" class="signature"><strong>.create_dense_intervals</strong>(start_position : UInt32, values : Array(Int32)) : Array(Interval)</a>
+        
+          <div class="summary"><p>Create intervals from dense values (each position gets one value)</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#create_intervals%28positions%3AArray%28UInt32%29%2Cvalues%3AArray%28Int32%29%29%3AArray%28Interval%29-class-method" class="signature"><strong>.create_intervals</strong>(positions : Array(UInt32), values : Array(Int32)) : Array(Interval)</a>
+        
+          <div class="summary"><p>Create intervals from position-value pairs</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#open%28path%3AString%2Cmode%3AString%3D%22r%22%29-class-method" class="signature"><strong>.open</strong>(path : String, mode : String = <span class="s">&quot;r&quot;</span>)</a>
+        
+          <div class="summary"><p>Open a D4 file</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#open%28path%3AString%2Cmode%3AString%3D%22r%22%2C%26block%3AFile-%3ET%29forallT-class-method" class="signature"><strong>.open</strong>(path : String, mode : String = <span class="s">&quot;r&quot;</span>, &block : File -> T) forall T</a>
+        
+          <div class="summary"><p>Open a D4 file with a block, automatically closes the file</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+  
+
+  
+  <h2>
+    <a id="instance-method-summary" class="anchor" href="#instance-method-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Summary
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#chromosome_size%28name%3AString%29-instance-method" class="signature"><strong>#chromosome_size</strong>(name : String)</a>
+        
+          <div class="summary"><p>Get chromosome size</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chromosomes-instance-method" class="signature"><strong>#chromosomes</strong></a>
+        
+          <div class="summary"><p>Get chromosome information</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#close-instance-method" class="signature"><strong>#close</strong></a>
+        
+          <div class="summary"><p>Close the D4 file</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#closed%3F%3ABool-instance-method" class="signature"><strong>#closed?</strong> : Bool</a>
+        
+          <div class="summary"><p>Check if the file is closed</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#finalize-instance-method" class="signature"><strong>#finalize</strong></a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_chromosome%3F%28name%3AString%29-instance-method" class="signature"><strong>#has_chromosome?</strong>(name : String)</a>
+        
+          <div class="summary"><p>Check if a chromosome exists</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#metadata%3AMetadata-instance-method" class="signature"><strong>#metadata</strong> : Metadata</a>
+        
+          <div class="summary"><p>Load metadata from the file</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#query%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%2C%26block%3AInterval-%3ENil%29-instance-method" class="signature"><strong>#query</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>, &block : Interval -> Nil)</a>
+        
+          <div class="summary"><p>Query intervals in a specific region with an iterator</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#query%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AArray%28Interval%29-instance-method" class="signature"><strong>#query</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Array(Interval)</a>
+        
+          <div class="summary"><p>Query intervals and return as an array</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#query_iter%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29-instance-method" class="signature"><strong>#query_iter</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>)</a>
+        
+          <div class="summary"><p>Query intervals and return an iterator</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_intervals%28count%3AInt32%29%3AArray%28Interval%29-instance-method" class="signature"><strong>#read_intervals</strong>(count : Int32) : Array(Interval)</a>
+        
+          <div class="summary"><p>Read intervals from the current position</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_values%28count%3AInt32%29%3AArray%28Int32%29-instance-method" class="signature"><strong>#read_values</strong>(count : Int32) : Array(Int32)</a>
+        
+          <div class="summary"><p>Read values from the current position</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#seek%28chromosome%3AString%2Cposition%3AUInt32%3D0_u32%29-instance-method" class="signature"><strong>#seek</strong>(chromosome : String, position : UInt32 = <span class="n">0_u32</span>)</a>
+        
+          <div class="summary"><p>Seek to a specific position in a chromosome</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#set_chromosomes%28chromosomes%3AHash%28String%2CUInt32%29%2Cdict_type%3ADictType%3DDictType%3A%3ASimpleRange%2Cdenominator%3AFloat64%3D1.0%29-instance-method" class="signature"><strong>#set_chromosomes</strong>(chromosomes : Hash(String, UInt32), dict_type : DictType = <span class="t">DictType</span><span class="t">::</span><span class="t">SimpleRange</span>, denominator : Float64 = <span class="n">1.0</span>)</a>
+        
+          <div class="summary"><p>Set chromosomes for a new D4 file (write mode)</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#set_chromosomes%28chromosomes%3AArray%28Tuple%28String%2CUInt32%29%29%2Cdict_type%3ADictType%3DDictType%3A%3ASimpleRange%2Cdenominator%3AFloat64%3D1.0%29-instance-method" class="signature"><strong>#set_chromosomes</strong>(chromosomes : Array(Tuple(String, UInt32)), dict_type : DictType = <span class="t">DictType</span><span class="t">::</span><span class="t">SimpleRange</span>, denominator : Float64 = <span class="n">1.0</span>)</a>
+        
+          <div class="summary"><p>Set chromosomes from an array of tuples</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#tell-instance-method" class="signature"><strong>#tell</strong></a>
+        
+          <div class="summary"><p>Get current position</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#values%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AArray%28Int32%29-instance-method" class="signature"><strong>#values</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Array(Int32)</a>
+        
+          <div class="summary"><p>Get values for a specific region</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write_dense_values%28chromosome%3AString%2Cstart_position%3AUInt32%2Cvalues%3AArray%28Int32%29%29-instance-method" class="signature"><strong>#write_dense_values</strong>(chromosome : String, start_position : UInt32, values : Array(Int32))</a>
+        
+          <div class="summary"><p>Convenience method to write dense values as intervals</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write_intervals%28chromosome%3AString%2Cintervals%3AArray%28Interval%29%29-instance-method" class="signature"><strong>#write_intervals</strong>(chromosome : String, intervals : Array(Interval))</a>
+        
+          <div class="summary"><p>Write intervals to a specific chromosome</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write_intervals%28intervals%3AArray%28Interval%29%29-instance-method" class="signature"><strong>#write_intervals</strong>(intervals : Array(Interval))</a>
+        
+          <div class="summary"><p>Write intervals to the current position</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write_values%28chromosome%3AString%2Cposition%3AUInt32%2Cvalues%3AArray%28Int32%29%29-instance-method" class="signature"><strong>#write_values</strong>(chromosome : String, position : UInt32, values : Array(Int32))</a>
+        
+          <div class="summary"><p>Write values to a specific chromosome starting at a position</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#write_values%28values%3AArray%28Int32%29%29-instance-method" class="signature"><strong>#write_values</strong>(values : Array(Int32))</a>
+        
+          <div class="summary"><p>Write values to the current position</p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <div class="methods-inherited">
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+  </div>
+
+  
+  <h2>
+    <a id="constructor-detail" class="anchor" href="#constructor-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Constructor Detail
+  </h2>
+  
+    <div class="entry-detail" id="new(handle:LibD4::D4File)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(handle : LibD4::D4File)
+
+        <a class="method-permalink" href="#new%28handle%3ALibD4%3A%3AD4File%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L11" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+  
+  <h2>
+    <a id="class-method-detail" class="anchor" href="#class-method-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Class Method Detail
+  </h2>
+  
+    <div class="entry-detail" id="build_index(path:String)-class-method">
+      <div class="signature">
+        
+        def self.<strong>build_index</strong>(path : String)
+
+        <a class="method-permalink" href="#build_index%28path%3AString%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Build SFI index for the file</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L206" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="create_dense_intervals(start_position:UInt32,values:Array(Int32)):Array(Interval)-class-method">
+      <div class="signature">
+        
+        def self.<strong>create_dense_intervals</strong>(start_position : UInt32, values : Array(Int32)) : Array(<a href="../D4/Interval.html">Interval</a>)
+
+        <a class="method-permalink" href="#create_dense_intervals%28start_position%3AUInt32%2Cvalues%3AArray%28Int32%29%29%3AArray%28Interval%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Create intervals from dense values (each position gets one value)</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L117" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="create_intervals(positions:Array(UInt32),values:Array(Int32)):Array(Interval)-class-method">
+      <div class="signature">
+        
+        def self.<strong>create_intervals</strong>(positions : Array(UInt32), values : Array(Int32)) : Array(<a href="../D4/Interval.html">Interval</a>)
+
+        <a class="method-permalink" href="#create_intervals%28positions%3AArray%28UInt32%29%2Cvalues%3AArray%28Int32%29%29%3AArray%28Interval%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Create intervals from position-value pairs</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L103" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="open(path:String,mode:String=&quot;r&quot;)-class-method">
+      <div class="signature">
+        
+        def self.<strong>open</strong>(path : String, mode : String = <span class="s">&quot;r&quot;</span>)
+
+        <a class="method-permalink" href="#open%28path%3AString%2Cmode%3AString%3D%22r%22%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Open a D4 file</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L16" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="open(path:String,mode:String=&quot;r&quot;,&amp;block:File-&gt;T)forallT-class-method">
+      <div class="signature">
+        
+        def self.<strong>open</strong>(path : String, mode : String = <span class="s">&quot;r&quot;</span>, &block : <a href="../D4/File.html">File</a> -> T) forall T
+
+        <a class="method-permalink" href="#open%28path%3AString%2Cmode%3AString%3D%22r%22%2C%26block%3AFile-%3ET%29forallT-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Open a D4 file with a block, automatically closes the file</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L23" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+  
+
+  
+  <h2>
+    <a id="instance-method-detail" class="anchor" href="#instance-method-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Detail
+  </h2>
+  
+    <div class="entry-detail" id="chromosome_size(name:String)-instance-method">
+      <div class="signature">
+        
+        def <strong>chromosome_size</strong>(name : String)
+
+        <a class="method-permalink" href="#chromosome_size%28name%3AString%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Get chromosome size</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L123" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="chromosomes-instance-method">
+      <div class="signature">
+        
+        def <strong>chromosomes</strong>
+
+        <a class="method-permalink" href="#chromosomes-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Get chromosome information</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L113" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="close-instance-method">
+      <div class="signature">
+        
+        def <strong>close</strong>
+
+        <a class="method-permalink" href="#close-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Close the D4 file</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L33" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="closed?:Bool-instance-method">
+      <div class="signature">
+        
+        def <strong>closed?</strong> : Bool
+
+        <a class="method-permalink" href="#closed%3F%3ABool-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Check if the file is closed</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L41" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="finalize-instance-method">
+      <div class="signature">
+        
+        def <strong>finalize</strong>
+
+        <a class="method-permalink" href="#finalize-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L232" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="has_chromosome?(name:String)-instance-method">
+      <div class="signature">
+        
+        def <strong>has_chromosome?</strong>(name : String)
+
+        <a class="method-permalink" href="#has_chromosome%3F%28name%3AString%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Check if a chromosome exists</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L118" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="metadata:Metadata-instance-method">
+      <div class="signature">
+        
+        def <strong>metadata</strong> : <a href="../D4/Metadata.html">Metadata</a>
+
+        <a class="method-permalink" href="#metadata%3AMetadata-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Load metadata from the file</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L96" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="query(chromosome:String,start:UInt32=0_u32,stop:UInt32|Nil=nil,&amp;block:Interval-&gt;Nil)-instance-method">
+      <div class="signature">
+        
+        def <strong>query</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>, &block : <a href="../D4/Interval.html">Interval</a> -> Nil)
+
+        <a class="method-permalink" href="#query%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%2C%26block%3AInterval-%3ENil%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Query intervals in a specific region with an iterator</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/query.cr#L6" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="query(chromosome:String,start:UInt32=0_u32,stop:UInt32|Nil=nil):Array(Interval)-instance-method">
+      <div class="signature">
+        
+        def <strong>query</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Array(<a href="../D4/Interval.html">Interval</a>)
+
+        <a class="method-permalink" href="#query%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AArray%28Interval%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Query intervals and return as an array</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/query.cr#L73" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="query_iter(chromosome:String,start:UInt32=0_u32,stop:UInt32|Nil=nil)-instance-method">
+      <div class="signature">
+        
+        def <strong>query_iter</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>)
+
+        <a class="method-permalink" href="#query_iter%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Query intervals and return an iterator</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/query.cr#L82" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="read_intervals(count:Int32):Array(Interval)-instance-method">
+      <div class="signature">
+        
+        def <strong>read_intervals</strong>(count : Int32) : Array(<a href="../D4/Interval.html">Interval</a>)
+
+        <a class="method-permalink" href="#read_intervals%28count%3AInt32%29%3AArray%28Interval%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Read intervals from the current position</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L157" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="read_values(count:Int32):Array(Int32)-instance-method">
+      <div class="signature">
+        
+        def <strong>read_values</strong>(count : Int32) : Array(Int32)
+
+        <a class="method-permalink" href="#read_values%28count%3AInt32%29%3AArray%28Int32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Read values from the current position</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L148" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="seek(chromosome:String,position:UInt32=0_u32)-instance-method">
+      <div class="signature">
+        
+        def <strong>seek</strong>(chromosome : String, position : UInt32 = <span class="n">0_u32</span>)
+
+        <a class="method-permalink" href="#seek%28chromosome%3AString%2Cposition%3AUInt32%3D0_u32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Seek to a specific position in a chromosome</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L128" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="set_chromosomes(chromosomes:Hash(String,UInt32),dict_type:DictType=DictType::SimpleRange,denominator:Float64=1.0)-instance-method">
+      <div class="signature">
+        
+        def <strong>set_chromosomes</strong>(chromosomes : Hash(String, UInt32), dict_type : <a href="../D4/DictType.html">DictType</a> = <span class="t">DictType</span><span class="t">::</span><span class="t">SimpleRange</span>, denominator : Float64 = <span class="n">1.0</span>)
+
+        <a class="method-permalink" href="#set_chromosomes%28chromosomes%3AHash%28String%2CUInt32%29%2Cdict_type%3ADictType%3DDictType%3A%3ASimpleRange%2Cdenominator%3AFloat64%3D1.0%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Set chromosomes for a new D4 file (write mode)</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L6" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="set_chromosomes(chromosomes:Array(Tuple(String,UInt32)),dict_type:DictType=DictType::SimpleRange,denominator:Float64=1.0)-instance-method">
+      <div class="signature">
+        
+        def <strong>set_chromosomes</strong>(chromosomes : Array(Tuple(String, UInt32)), dict_type : <a href="../D4/DictType.html">DictType</a> = <span class="t">DictType</span><span class="t">::</span><span class="t">SimpleRange</span>, denominator : Float64 = <span class="n">1.0</span>)
+
+        <a class="method-permalink" href="#set_chromosomes%28chromosomes%3AArray%28Tuple%28String%2CUInt32%29%29%2Cdict_type%3ADictType%3DDictType%3A%3ASimpleRange%2Cdenominator%3AFloat64%3D1.0%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Set chromosomes from an array of tuples</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L70" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="tell-instance-method">
+      <div class="signature">
+        
+        def <strong>tell</strong>
+
+        <a class="method-permalink" href="#tell-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Get current position</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L136" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="values(chromosome:String,start:UInt32=0_u32,stop:UInt32|Nil=nil):Array(Int32)-instance-method">
+      <div class="signature">
+        
+        def <strong>values</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Array(Int32)
+
+        <a class="method-permalink" href="#values%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AArray%28Int32%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Get values for a specific region</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L185" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="write_dense_values(chromosome:String,start_position:UInt32,values:Array(Int32))-instance-method">
+      <div class="signature">
+        
+        def <strong>write_dense_values</strong>(chromosome : String, start_position : UInt32, values : Array(Int32))
+
+        <a class="method-permalink" href="#write_dense_values%28chromosome%3AString%2Cstart_position%3AUInt32%2Cvalues%3AArray%28Int32%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Convenience method to write dense values as intervals</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L127" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="write_intervals(chromosome:String,intervals:Array(Interval))-instance-method">
+      <div class="signature">
+        
+        def <strong>write_intervals</strong>(chromosome : String, intervals : Array(<a href="../D4/Interval.html">Interval</a>))
+
+        <a class="method-permalink" href="#write_intervals%28chromosome%3AString%2Cintervals%3AArray%28Interval%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Write intervals to a specific chromosome</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L91" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="write_intervals(intervals:Array(Interval))-instance-method">
+      <div class="signature">
+        
+        def <strong>write_intervals</strong>(intervals : Array(<a href="../D4/Interval.html">Interval</a>))
+
+        <a class="method-permalink" href="#write_intervals%28intervals%3AArray%28Interval%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Write intervals to the current position</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L176" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="write_values(chromosome:String,position:UInt32,values:Array(Int32))-instance-method">
+      <div class="signature">
+        
+        def <strong>write_values</strong>(chromosome : String, position : UInt32, values : Array(Int32))
+
+        <a class="method-permalink" href="#write_values%28chromosome%3AString%2Cposition%3AUInt32%2Cvalues%3AArray%28Int32%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Write values to a specific chromosome starting at a position</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/writer.cr#L79" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="write_values(values:Array(Int32))-instance-method">
+      <div class="signature">
+        
+        def <strong>write_values</strong>(values : Array(Int32))
+
+        <a class="method-permalink" href="#write_values%28values%3AArray%28Int32%29%29-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Write values to the current position</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/1ccf3ab20e8d0258ae5165ecfac3b30e7381ab75/src/d4/file.cr#L168" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+
+</div>
+
+</body>
+</html>
