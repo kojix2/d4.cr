@@ -1,10 +1,10 @@
-# D4.cr
+# d4.cr
 
 [![test](https://github.com/kojix2/d4.cr/actions/workflows/test.yml/badge.svg)](https://github.com/kojix2/d4.cr/actions/workflows/test.yml)
 [![Lines of Code](https://img.shields.io/endpoint?url=https%3A%2F%2Ftokei.kojix2.net%2Fbadge%2Fgithub%2Fkojix2%2Fd4.cr%2Flines)](https://tokei.kojix2.net/github/kojix2/d4.cr)
 ![Static Badge](https://img.shields.io/badge/PURE-VIBE_CODING-magenta)
 
-Crystal bindings for the D4 format - a fast and compact format for storing quantitative genomic data.
+Crystal bindings for the [D4 format](https://github.com/38/d4-format) - a fast and compact format for storing quantitative genomic data.
 
 ## Installation
 
@@ -141,10 +141,6 @@ This implementation follows the same design principles as d4-nim:
 ## License
 
 MIT License
-
-## Contributors
-
-- [kojix2](https://github.com/kojix2) - creator and maintainer
 
 ## Acknowledgments
 
