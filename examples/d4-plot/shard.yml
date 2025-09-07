@@ -1,0 +1,15 @@
+name: d4-plot
+version: 0.1.0
+
+authors:
+  - kojix2 <2xijok@gmail.com>
+
+dependencies:
+  uing:
+    github: kojix2/uing
+    version: "0.0.3"
+
+targets:
+  d4-plot:
+    main: src/d4-plot.cr
+
