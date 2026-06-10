@@ -90,12 +90,13 @@ module D4
     # Write intervals to a specific chromosome
     def write_intervals(chromosome : String, intervals : Array(Interval))
       check_not_closed
+      return if intervals.empty?
 
       unless has_chromosome?(chromosome)
         raise D4Error.new("Chromosome '#{chromosome}' not found")
       end
 
-      seek(chromosome, 0_u32)
+      seek(chromosome, intervals.first.left)
       write_intervals(intervals)
     end
 

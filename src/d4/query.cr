@@ -96,10 +96,11 @@ module D4
     @buffer_index : Int32
     @buffer_count : Int32
     @done : Bool
+    @end_after_buffer : Bool
     @name_buffer : Bytes
 
     def initialize(@file : File, @chromosome : String, @start : UInt32, stop : UInt32?)
-      @file.check_not_closed
+      raise D4Error.new("D4 file is closed") if @file.closed?
 
       unless @file.has_chromosome?(@chromosome)
         raise D4Error.new("Chromosome '#{@chromosome}' not found")
@@ -115,6 +116,7 @@ module D4
       @buffer_index = 0
       @buffer_count = 0
       @done = @start >= @stop
+      @end_after_buffer = false
       @name_buffer = Bytes.new(256)
 
       unless @done
@@ -127,6 +129,11 @@ module D4
       return stop if @done
 
       while @buffer_index >= @buffer_count
+        if @end_after_buffer
+          @done = true
+          return stop
+        end
+
         fill_buffer
         return stop if @done
       end
@@ -150,6 +157,11 @@ module D4
 
         filtered_interval
       else
+        if interval.right >= @stop
+          @done = true
+          return stop
+        end
+
         # Skip this interval and try the next one
         self.next
       end
@@ -177,16 +189,22 @@ module D4
       count = LibD4.d4_file_read_intervals(@file.@handle, @buffer.to_unsafe, @buffer.size.to_u64)
       @buffer_count = D4.check_ssize_result(count, "Failed to read intervals during iteration").to_i
       @buffer_index = 0
+      @end_after_buffer = false
+
+      if @buffer_count == 0
+        @done = true
+        return
+      end
 
       # If we read fewer intervals than requested, we've reached the end
       if @buffer_count < @buffer.size
-        @done = true
+        @end_after_buffer = true
       end
 
       # Check if any interval in the buffer extends beyond our stop position
       @buffer_count.times do |i|
         if @buffer[i].right >= @stop
-          @done = true
+          @end_after_buffer = true
           break
         end
       end
