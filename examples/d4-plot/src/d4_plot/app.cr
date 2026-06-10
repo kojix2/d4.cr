@@ -95,7 +95,7 @@ module D4Plot
       end
 
       @handler.draw do |_, params|
-        @renderer.draw(params.context, @plot_data)
+        @renderer.draw(params, @plot_data)
       end
     end
 
