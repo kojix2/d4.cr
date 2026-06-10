@@ -7,7 +7,8 @@ authors:
 dependencies:
   uing:
     github: kojix2/uing
-    version: "0.0.3"
+  d4:
+    path: ../../
 
 targets:
   d4-plot:

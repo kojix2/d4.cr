@@ -17,7 +17,7 @@ Install the `d4binding` library on your system.
 ```yaml
 dependencies:
   d4:
-    github: kojix2/d4
+    github: kojix2/d4.cr
 ```
 
 Run `shards install`
