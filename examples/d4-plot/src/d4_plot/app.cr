@@ -1,6 +1,7 @@
 require "uing"
 require "../../../../src/d4"
 require "./data_sampler"
+require "./log"
 require "./plot_renderer"
 require "./region"
 
@@ -128,14 +129,14 @@ module D4Plot
         filename = File.basename(file_path)
         @main_window.title = "#{PROGRAM_NAME} - #{filename}"
 
-        puts "Loaded D4 file: #{file_path}"
+        Log.info "Loaded D4 file: #{file_path}"
 
         if d4 = @d4_file
           chromosomes = d4.chromosomes
-          puts "Available chromosomes: #{chromosomes.keys.join(", ")}"
+          Log.info "Available chromosomes: #{chromosomes.keys.join(", ")}"
         end
       rescue ex
-        puts "Error loading D4 file: #{ex.message}"
+        Log.error "Error loading D4 file: #{ex.message}"
         @main_window.msg_box_error("Error", "Failed to load D4 file: #{ex.message}")
       end
     end
@@ -162,7 +163,7 @@ module D4Plot
         return
       end
 
-      puts "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
+      Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
 
       @plot_data = DataSampler.downsample(d4, region)
       @area.queue_redraw_all

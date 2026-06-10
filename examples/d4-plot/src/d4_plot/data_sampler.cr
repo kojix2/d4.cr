@@ -1,4 +1,5 @@
 require "../../../../src/d4"
+require "./log"
 require "./region"
 
 module D4Plot
@@ -48,7 +49,7 @@ module D4Plot
 
         data
       rescue ex
-        puts "Error getting data: #{ex.message}"
+        Log.error "Error getting data: #{ex.message}"
         [] of PlotPoint
       end
     end
