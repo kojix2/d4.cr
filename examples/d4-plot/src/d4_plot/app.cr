@@ -94,7 +94,7 @@ module D4Plot
         plot_region
       end
 
-      @handler.draw do |area, params|
+      @handler.draw do |_, params|
         @renderer.draw(params.context, @plot_data)
       end
     end
@@ -121,24 +121,22 @@ module D4Plot
     end
 
     private def load_d4_file(file_path : String)
-      begin
-        close_current_file
-        @d4_file = D4::File.open(file_path)
-        @current_file_path = file_path
+      close_current_file
+      @d4_file = D4::File.open(file_path)
+      @current_file_path = file_path
 
-        filename = File.basename(file_path)
-        @main_window.title = "#{PROGRAM_NAME} - #{filename}"
+      filename = File.basename(file_path)
+      @main_window.title = "#{PROGRAM_NAME} - #{filename}"
 
-        Log.info "Loaded D4 file: #{file_path}"
+      Log.info "Loaded D4 file: #{file_path}"
 
-        if d4 = @d4_file
-          chromosomes = d4.chromosomes
-          Log.info "Available chromosomes: #{chromosomes.keys.join(", ")}"
-        end
-      rescue ex
-        Log.error "Error loading D4 file: #{ex.message}"
-        @main_window.msg_box_error("Error", "Failed to load D4 file: #{ex.message}")
+      if d4 = @d4_file
+        chromosomes = d4.chromosomes
+        Log.info "Available chromosomes: #{chromosomes.keys.join(", ")}"
       end
+    rescue ex
+      Log.error "Error loading D4 file: #{ex.message}"
+      @main_window.msg_box_error("Error", "Failed to load D4 file: #{ex.message}")
     end
 
     private def close_current_file

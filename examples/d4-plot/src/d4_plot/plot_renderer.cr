@@ -18,8 +18,8 @@ module D4Plot
 
       min_pos = points.first[0].to_f
       max_pos = points.last[0].to_f
-      min_val = points.map(&.[1]).min
-      max_val = points.map(&.[1]).max
+      min_val = points.min_of(&.[1])
+      max_val = points.max_of(&.[1])
 
       val_range = max_val - min_val
       if val_range == 0
