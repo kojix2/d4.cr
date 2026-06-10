@@ -167,18 +167,28 @@ module D4
     # Write values to the current position
     def write_values(values : Array(Int32))
       check_not_closed
+      return 0 if values.empty?
+
       result = LibD4.d4_file_write_values(@handle, values.to_unsafe, values.size.to_u64)
-      D4.check_ssize_result(result, "Failed to write values")
-      values.size
+      written = D4.check_ssize_result(result, "Failed to write values").to_i
+      unless written == values.size
+        raise D4Error.new("Only wrote #{written} of #{values.size} values")
+      end
+      written
     end
 
     # Write intervals to the current position
     def write_intervals(intervals : Array(Interval))
       check_not_closed
+      return 0 if intervals.empty?
+
       lib_intervals = intervals.map(&.to_lib_interval)
       result = LibD4.d4_file_write_intervals(@handle, lib_intervals.to_unsafe, intervals.size.to_u64)
-      D4.check_ssize_result(result, "Failed to write intervals")
-      intervals.size
+      written = D4.check_ssize_result(result, "Failed to write intervals").to_i
+      unless written == intervals.size
+        raise D4Error.new("Only wrote #{written} of #{intervals.size} intervals")
+      end
+      written
     end
 
     # Get values for a specific region

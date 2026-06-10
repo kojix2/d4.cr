@@ -38,4 +38,22 @@ describe "D4 integration" do
       # index 未対応環境でも失敗させない
     end
   end
+
+  it "raises when native value writes are partial" do
+    path = File.join(Dir.tempdir, "crystal_d4_partial_value_write_test.d4")
+    File.delete(path) if File.exists?(path)
+
+    begin
+      D4.writer(path) do |w|
+        w.set_chromosomes({"chr1" => 3_u32})
+
+        expect_raises(D4::D4Error, "Only wrote") do
+          w.write_values("chr1", 0_u32, [1, 2, 3, 4])
+        end
+      end
+    rescue D4::D4Error
+      # d4binding が利用できない環境: 何も検証せず終了
+      next
+    end
+  end
 end
