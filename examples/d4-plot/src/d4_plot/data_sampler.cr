@@ -16,6 +16,7 @@ module D4Plot
     # Returned coordinates are 1-based for user-facing axis display.
     def self.downsample(d4 : D4::File, chromosome : String, start0 : UInt32, end0_excl : UInt32, npoints : Int32 = DEFAULT_POINT_COUNT, use_sum_index : Bool = true) : Array(PlotPoint)
       return [] of PlotPoint if end0_excl <= start0
+      return [] of PlotPoint if npoints <= 0
 
       begin
         total_len = end0_excl - start0
@@ -29,26 +30,34 @@ module D4Plot
           return data
         end
 
-        bin_size = (total_len // npoints.to_u32).to_u32
-        bin_size = 1_u32 if bin_size == 0
-
-        current = start0
-        npoints.times do
-          break if current >= end0_excl
-
-          bin_start = current
-          bin_end_excl = bin_start + bin_size
-          bin_end_excl = end0_excl if bin_end_excl > end0_excl
+        each_bin(start0, end0_excl, npoints) do |bin_start, bin_end_excl|
           center0 = (bin_start + (bin_end_excl - 1_u32)) // 2
           mean_value = d4.mean(chromosome, bin_start, bin_end_excl, use_sum_index)
           data << {center0 + 1_u32, mean_value}
-          current = bin_end_excl
         end
 
         data
       rescue ex
         Log.error "Error getting data: #{ex.message}"
         [] of PlotPoint
+      end
+    end
+
+    private def self.each_bin(start0 : UInt32, end0_excl : UInt32, npoints : Int32, &block : UInt32, UInt32 ->)
+      total_len = end0_excl - start0
+      bins = Math.min(npoints.to_u32, total_len)
+      base_size = total_len // bins
+      extra_bases = total_len % bins
+
+      current = start0
+      bins.times do |index|
+        width = base_size
+        width += 1_u32 if index < extra_bases
+
+        bin_start = current
+        bin_end_excl = bin_start + width
+        yield bin_start, bin_end_excl
+        current = bin_end_excl
       end
     end
   end
