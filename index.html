@@ -204,7 +204,9 @@ dense_intervals <span class="o">=</span> <span class="t">D4</span><span class="t
     <use href="#octicon-link"/>
   </svg>
 </a>Building indices</h3>
-<pre><code class="language-crystal"><span class="t">D4</span>.build_index(<span class="s">&quot;data.d4&quot;</span>)</code></pre>
+<pre><code class="language-crystal"><span class="t">D4</span>.build_sfi_index(<span class="s">&quot;data.d4&quot;</span>)</code></pre>
+<p>This builds the secondary frame index (SFI). To build a sum index for indexed
+aggregation, use <code>d4tools index build --sum data.d4</code>.</p>
 <h3><a id="error-handling" class="anchor" href="#error-handling">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
