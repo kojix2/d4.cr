@@ -105,7 +105,7 @@ module D4Plot
       end
 
       @handler.draw do |_, params|
-        @renderer.draw(params, @plot_data, @settings.show_axis_ticks?)
+        @renderer.draw(params, @plot_data, @settings.show_axis_ticks?, @settings.plot_color)
       end
     end
 
@@ -182,7 +182,7 @@ module D4Plot
     end
 
     private def settings_applied
-      Log.info "Plot settings: point_count=#{@settings.point_count}, show_axis_ticks=#{@settings.show_axis_ticks?}"
+      Log.info "Plot settings: point_count=#{@settings.point_count}, use_sum_index=#{@settings.use_sum_index?}, show_axis_ticks=#{@settings.show_axis_ticks?}"
 
       if @plot_data && @d4_file
         plot_region
@@ -209,10 +209,20 @@ module D4Plot
       end
 
       Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
-      Log.info "Sampling mode: #{d4.has_sum_index? ? "sum index with streaming fallback" : "streaming values"}"
+      Log.info "Sampling mode: #{sampling_mode(d4)}"
 
-      @plot_data = DataSampler.downsample(d4, region, @settings.point_count)
+      @plot_data = DataSampler.downsample(d4, region, @settings.point_count, @settings.use_sum_index?)
       @area.queue_redraw_all
+    end
+
+    private def sampling_mode(d4)
+      if @settings.use_sum_index? && d4.has_sum_index?
+        "sum index with streaming fallback"
+      elsif @settings.use_sum_index?
+        "streaming values (sum index unavailable)"
+      else
+        "streaming values"
+      end
     end
   end
 end

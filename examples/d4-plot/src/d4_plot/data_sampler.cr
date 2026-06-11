@@ -8,13 +8,13 @@ module D4Plot
   class DataSampler
     DEFAULT_POINT_COUNT = 256
 
-    def self.downsample(d4 : D4::File, region : Region, npoints : Int32 = DEFAULT_POINT_COUNT) : Array(PlotPoint)
-      downsample(d4, region.chromosome, region.start0, region.end0_exclusive, npoints)
+    def self.downsample(d4 : D4::File, region : Region, npoints : Int32 = DEFAULT_POINT_COUNT, use_sum_index : Bool = true) : Array(PlotPoint)
+      downsample(d4, region.chromosome, region.start0, region.end0_exclusive, npoints, use_sum_index)
     end
 
     # Parameters are internal 0-based half-open [start0, end0_excl).
     # Returned coordinates are 1-based for user-facing axis display.
-    def self.downsample(d4 : D4::File, chromosome : String, start0 : UInt32, end0_excl : UInt32, npoints : Int32 = DEFAULT_POINT_COUNT) : Array(PlotPoint)
+    def self.downsample(d4 : D4::File, chromosome : String, start0 : UInt32, end0_excl : UInt32, npoints : Int32 = DEFAULT_POINT_COUNT, use_sum_index : Bool = true) : Array(PlotPoint)
       return [] of PlotPoint if end0_excl <= start0
 
       begin
@@ -23,7 +23,7 @@ module D4Plot
 
         if total_len <= npoints.to_u32
           (start0...end0_excl).each do |pos0|
-            value = d4.mean(chromosome, pos0, pos0 + 1_u32)
+            value = d4.mean(chromosome, pos0, pos0 + 1_u32, use_sum_index)
             data << {pos0 + 1_u32, value}
           end
           return data
@@ -40,7 +40,7 @@ module D4Plot
           bin_end_excl = bin_start + bin_size
           bin_end_excl = end0_excl if bin_end_excl > end0_excl
           center0 = (bin_start + (bin_end_excl - 1_u32)) // 2
-          mean_value = d4.mean(chromosome, bin_start, bin_end_excl)
+          mean_value = d4.mean(chromosome, bin_start, bin_end_excl, use_sum_index)
           data << {center0 + 1_u32, mean_value}
           current = bin_end_excl
         end

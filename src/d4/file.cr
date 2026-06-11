@@ -246,12 +246,12 @@ module D4
 
     # Sum values in a region. Uses the native sum index when available,
     # otherwise falls back to reading values through the streaming API.
-    def sum(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil) : Float64
+    def sum(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil, use_sum_index : Bool = true) : Float64
       check_not_closed
       start_pos, stop_pos = normalize_region(chromosome, start, stop)
       return 0.0 if start_pos >= stop_pos
 
-      if has_sum_index? && sum_index_region_safe?(start_pos, stop_pos)
+      if use_sum_index && has_sum_index? && sum_index_region_safe?(start_pos, stop_pos)
         index_query_sum(chromosome, start_pos, stop_pos)
       else
         values(chromosome, start_pos, stop_pos).sum.to_f
@@ -259,12 +259,12 @@ module D4
     end
 
     # Mean value in a region. Empty regions return 0.0.
-    def mean(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil) : Float64
+    def mean(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil, use_sum_index : Bool = true) : Float64
       check_not_closed
       start_pos, stop_pos = normalize_region(chromosome, start, stop)
       return 0.0 if start_pos >= stop_pos
 
-      sum(chromosome, start_pos, stop_pos) / (stop_pos - start_pos)
+      sum(chromosome, start_pos, stop_pos, use_sum_index) / (stop_pos - start_pos)
     end
 
     # Build the secondary frame index for the file.

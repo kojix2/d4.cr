@@ -1,5 +1,6 @@
 require "uing"
 require "./data_sampler"
+require "./plot_settings"
 
 module D4Plot
   class PlotRenderer
@@ -10,7 +11,7 @@ module D4Plot
     TICK_SIZE      =  5.0
     LABEL_FONT     = UIng::FontDescriptor.new(size: 11)
 
-    def draw(params : UIng::Area::Draw::Params, data : Array(PlotPoint)?, show_axis_ticks : Bool = true)
+    def draw(params : UIng::Area::Draw::Params, data : Array(PlotPoint)?, show_axis_ticks : Bool = true, plot_color : PlotSettings::PlotColor = {0.0, 0.4, 0.8, 1.0})
       ctx = params.context
       width = params.area_width
       height = params.area_height
@@ -43,7 +44,7 @@ module D4Plot
 
       draw_axes(ctx, margin, plot_width, plot_height)
       draw_ticks(ctx, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height) if show_axis_ticks
-      draw_area(ctx, points, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height)
+      draw_area(ctx, points, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height, plot_color)
     end
 
     private def clear(ctx, width, height)
@@ -90,11 +91,12 @@ module D4Plot
       end
     end
 
-    private def draw_area(ctx, points, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height)
+    private def draw_area(ctx, points, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height, plot_color)
       return unless points.size > 1
 
-      area_brush = UIng::Area::Draw::Brush.new(:solid, 0.2, 0.6, 1.0, 0.3)
-      line_brush = UIng::Area::Draw::Brush.new(:solid, 0.0, 0.4, 0.8, 1.0)
+      red, green, blue, alpha = plot_color
+      area_brush = UIng::Area::Draw::Brush.new(:solid, red, green, blue, alpha * 0.3)
+      line_brush = UIng::Area::Draw::Brush.new(:solid, red, green, blue, alpha)
 
       ctx.fill_path(area_brush) do |path|
         first_x = x_for(points.first[0], margin, min_pos, max_pos, plot_width)
