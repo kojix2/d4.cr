@@ -7,14 +7,15 @@ require "./region"
 
 module D4Plot
   class PlotRenderer
-    DEFAULT_MARGIN  = 50.0
-    MIN_MARGIN      = 12.0
-    LABEL_MARGIN    = 58.0
-    TICK_COUNT      =    5
-    TICK_SIZE       =  5.0
-    OVERVIEW_HEIGHT = 24.0
-    OVERVIEW_GAP    = 16.0
-    LABEL_FONT      = UIng::FontDescriptor.new(size: 11)
+    DEFAULT_MARGIN   = 50.0
+    MIN_MARGIN       = 12.0
+    LABEL_MARGIN     = 58.0
+    TICK_COUNT       =    5
+    TICK_SIZE        =  5.0
+    X_TICK_LABEL_GAP = 28.0
+    OVERVIEW_HEIGHT  = 24.0
+    OVERVIEW_GAP     = 16.0
+    LABEL_FONT       = UIng::FontDescriptor.new(size: 11)
 
     def initialize
       @annotation_renderer = AnnotationRenderer.new
@@ -106,7 +107,7 @@ module D4Plot
       plot_left = margin
       plot_top = margin + overview_height + overview_gap
       plot_width = width - 2 * margin
-      reserved = annotation_height > 0 ? annotation_height + AnnotationRenderer::GAP : 0.0
+      reserved = annotation_height > 0 ? annotation_height + annotation_gap : 0.0
       plot_height = height - plot_top - margin - reserved
       {plot_left, plot_top, plot_width, plot_height}
     end
@@ -220,8 +221,12 @@ module D4Plot
       plot_left, plot_top, plot_width, plot_height = plot_layout(margin, width, height, overview_height, annotation_height)
       return if plot_width <= 0
 
-      top = plot_top + plot_height + AnnotationRenderer::GAP
+      top = plot_top + plot_height + annotation_gap
       @annotation_renderer.draw(ctx, annotation_track, region, plot_left, top, plot_width, annotation_height)
+    end
+
+    private def annotation_gap
+      AnnotationRenderer::GAP + X_TICK_LABEL_GAP
     end
 
     private def margin_for(width, height, show_axis_ticks)

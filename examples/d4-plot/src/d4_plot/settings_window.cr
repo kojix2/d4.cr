@@ -7,6 +7,7 @@ module D4Plot
     @sum_index_checkbox : UIng::Checkbox
     @axis_ticks_checkbox : UIng::Checkbox
     @y_axis_from_zero_checkbox : UIng::Checkbox
+    @annotation_limit_entry : UIng::Entry
     @plot_color_button : UIng::ColorButton
     @apply_button : UIng::Button
     @close_button : UIng::Button
@@ -19,6 +20,8 @@ module D4Plot
       @axis_ticks_checkbox.checked = @settings.show_axis_ticks?
       @y_axis_from_zero_checkbox = UIng::Checkbox.new("Start Y axis at zero")
       @y_axis_from_zero_checkbox.checked = @settings.y_axis_from_zero?
+      @annotation_limit_entry = UIng::Entry.new
+      @annotation_limit_entry.text = @settings.annotation_feature_limit.to_s
       @plot_color_button = UIng::ColorButton.new
       @plot_color_button.set_color(*@settings.plot_color)
       @apply_button = UIng::Button.new("Apply")
@@ -49,6 +52,7 @@ module D4Plot
       form.append("", @sum_index_checkbox)
       form.append("", @axis_ticks_checkbox)
       form.append("", @y_axis_from_zero_checkbox)
+      form.append("Annotation limit", @annotation_limit_entry)
       form.append("Plot color", @plot_color_button)
       group.child = form
 
@@ -81,8 +85,17 @@ module D4Plot
       @settings.use_sum_index = @sum_index_checkbox.checked?
       @settings.show_axis_ticks = @axis_ticks_checkbox.checked?
       @settings.y_axis_from_zero = @y_axis_from_zero_checkbox.checked?
+      @settings.annotation_feature_limit = annotation_limit_from_entry
+      @annotation_limit_entry.text = @settings.annotation_feature_limit.to_s
       @settings.plot_color = @plot_color_button.color
       @on_apply.call
+    end
+
+    private def annotation_limit_from_entry
+      value = (@annotation_limit_entry.text || "").to_i?
+      return @settings.annotation_feature_limit unless value
+
+      {value, 1}.max
     end
 
     private def close

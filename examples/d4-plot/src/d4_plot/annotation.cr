@@ -27,6 +27,10 @@ module D4Plot
       new([] of AnnotationFeature, message)
     end
 
+    def self.too_many(limit : Int32)
+      notice("Too many annotations (>#{limit}); zoom in")
+    end
+
     def empty?
       @features.empty? && @notice.nil?
     end
@@ -71,29 +75,33 @@ module D4Plot
       new(path, features)
     end
 
-    def overlapping(region : Region, limit : Int32 = 300)
+    def overlapping(region : Region, limit : Int32)
       return overlapping_with_tabix(region, limit) if indexed?
 
       features = features_for(region.chromosome)
       return [] of AnnotationFeature if features.empty?
 
       matches = [] of AnnotationFeature
+      query_limit = limit + 1
       features.each do |feature|
         break if feature.start1 > region.end1
         next if feature.end1 < region.start1
 
         matches << feature
-        break if matches.size >= limit
+        break if matches.size >= query_limit
       end
       matches
     end
 
-    def track_for(region : Region, max_region_size : UInt32, limit : Int32 = 300)
+    def track_for(region : Region, max_region_size : UInt32, limit : Int32)
       if region.length > max_region_size
         return AnnotationTrack.notice("Zoom in to show gene annotations")
       end
 
-      AnnotationTrack.features(overlapping(region, limit))
+      features = overlapping(region, limit)
+      return AnnotationTrack.too_many(limit) if features.size > limit
+
+      AnnotationTrack.features(features)
     end
 
     def description
@@ -144,10 +152,11 @@ module D4Plot
       return [] of AnnotationFeature unless status.success?
 
       features = [] of AnnotationFeature
+      query_limit = limit + 1
       output.to_s.each_line do |line|
         if feature = self.class.parse_line(line)
           features << feature
-          break if features.size >= limit
+          break if features.size >= query_limit
         end
       end
       features

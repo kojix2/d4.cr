@@ -253,7 +253,7 @@ module D4Plot
       return unless region = @current_region
       return unless index = @annotation_index
 
-      index.track_for(region, MAX_ANNOTATION_REGION)
+      index.track_for(region, MAX_ANNOTATION_REGION, @settings.annotation_feature_limit)
     end
 
     private def close_settings_window
@@ -279,7 +279,7 @@ module D4Plot
 
     private def settings_applied
       apply_top_controls
-      Log.info "Plot settings: point_count=#{@settings.point_count}, use_sum_index=#{@settings.use_sum_index?}, show_axis_ticks=#{@settings.show_axis_ticks?}, y_axis_from_zero=#{@settings.y_axis_from_zero?}"
+      Log.info "Plot settings: point_count=#{@settings.point_count}, annotation_feature_limit=#{@settings.annotation_feature_limit}, use_sum_index=#{@settings.use_sum_index?}, show_axis_ticks=#{@settings.show_axis_ticks?}, y_axis_from_zero=#{@settings.y_axis_from_zero?}"
 
       if @plot_data && @d4_file
         plot_region
