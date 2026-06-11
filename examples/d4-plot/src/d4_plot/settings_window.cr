@@ -4,7 +4,6 @@ require "./plot_settings"
 module D4Plot
   class SettingsWindow
     @window : UIng::Window
-    @point_count_spinbox : UIng::Spinbox
     @sum_index_checkbox : UIng::Checkbox
     @axis_ticks_checkbox : UIng::Checkbox
     @y_axis_from_zero_checkbox : UIng::Checkbox
@@ -14,7 +13,6 @@ module D4Plot
 
     def initialize(@settings : PlotSettings, @parent : UIng::Window, @on_apply : Proc(Nil), @on_close : Proc(Nil))
       @window = UIng::Window.new("Settings", 340, 210, margined: true)
-      @point_count_spinbox = UIng::Spinbox.new(16, 4096, @settings.point_count)
       @sum_index_checkbox = UIng::Checkbox.new("Use sum index when available")
       @sum_index_checkbox.checked = @settings.use_sum_index?
       @axis_ticks_checkbox = UIng::Checkbox.new("Show axis ticks and labels")
@@ -48,7 +46,6 @@ module D4Plot
 
       form = UIng::Form.new
       form.padded = true
-      form.append("Sampling points", @point_count_spinbox)
       form.append("", @sum_index_checkbox)
       form.append("", @axis_ticks_checkbox)
       form.append("", @y_axis_from_zero_checkbox)
@@ -81,7 +78,6 @@ module D4Plot
     end
 
     private def apply_settings
-      @settings.point_count = @point_count_spinbox.value
       @settings.use_sum_index = @sum_index_checkbox.checked?
       @settings.show_axis_ticks = @axis_ticks_checkbox.checked?
       @settings.y_axis_from_zero = @y_axis_from_zero_checkbox.checked?

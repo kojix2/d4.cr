@@ -11,15 +11,19 @@ module D4Plot
   class App
     PROGRAM_NAME   = "D4 Plot Viewer"
     REPOSITORY_URL = "https://github.com/kojix2/d4.cr"
-    LEFT_BUTTON    =   1
-    RIGHT_BUTTON   =   3
-    DRAG_THRESHOLD = 4.0
-    ZOOM_FACTOR    = 1.5
+    LEFT_BUTTON    =    1
+    RIGHT_BUTTON   =    3
+    DRAG_THRESHOLD =  4.0
+    ZOOM_FACTOR    =  1.5
+    MIN_BINS       =   16
+    MAX_BINS       = 4096
 
     @main_window : UIng::Window
     @file_button : UIng::Button
     @chromosome_combobox : UIng::Combobox
     @region_entry : UIng::Entry
+    @point_count_label : UIng::Label
+    @point_count_entry : UIng::Entry
     @plot_button : UIng::Button
     @area : UIng::Area
     @handler : UIng::Area::Handler
@@ -61,11 +65,14 @@ module D4Plot
       @file_button = UIng::Button.new("Open D4 File")
       @chromosome_combobox = UIng::Combobox.new
       @region_entry = UIng::Entry.new
+      @point_count_label = UIng::Label.new("Bins")
+      @point_count_entry = UIng::Entry.new
       @plot_button = UIng::Button.new("Render")
       @handler = UIng::Area::Handler.new
       @area = UIng::Area.new(@handler)
       @renderer = PlotRenderer.new
       @settings = PlotSettings.new
+      @point_count_entry.text = @settings.point_count.to_s
       @settings_window = nil
       @d4_file = nil
       @current_file_path = nil
@@ -98,6 +105,8 @@ module D4Plot
       hbox.append(@file_button, false)
       hbox.append(@chromosome_combobox, false)
       hbox.append(@region_entry, true)
+      hbox.append(@point_count_label, false)
+      hbox.append(@point_count_entry, false)
       hbox.append(@plot_button, false)
 
       @region_entry.text = "chr1:1000-2000"
@@ -234,6 +243,7 @@ module D4Plot
     end
 
     private def settings_applied
+      apply_top_controls
       Log.info "Plot settings: point_count=#{@settings.point_count}, use_sum_index=#{@settings.use_sum_index?}, show_axis_ticks=#{@settings.show_axis_ticks?}, y_axis_from_zero=#{@settings.y_axis_from_zero?}"
 
       if @plot_data && @d4_file
@@ -246,6 +256,7 @@ module D4Plot
     private def render_region
       return unless @d4_file
 
+      apply_top_controls
       clear_drag
       @plot_data = nil
       return unless reopen_current_file
@@ -295,6 +306,7 @@ module D4Plot
     private def plot_region(region : Region, sync_chromosome : Bool)
       return unless d4 = @d4_file
 
+      apply_top_controls
       Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
       Log.info "Sampling mode: #{sampling_mode(d4)}"
 
@@ -302,6 +314,19 @@ module D4Plot
       @current_region = region
       @plot_data = DataSampler.downsample(d4, region, @settings.point_count, @settings.use_sum_index?)
       @area.queue_redraw_all
+    end
+
+    private def apply_top_controls
+      @settings.point_count = point_count_from_entry
+      @point_count_entry.text = @settings.point_count.to_s
+    end
+
+    private def point_count_from_entry
+      text = @point_count_entry.text || ""
+      value = text.to_i?
+      return @settings.point_count unless value
+
+      value.clamp(MIN_BINS, MAX_BINS)
     end
 
     private def update_chromosome_combobox(chromosomes)
