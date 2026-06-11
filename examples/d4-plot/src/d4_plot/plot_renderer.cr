@@ -15,7 +15,6 @@ module D4Plot
     X_TICK_LABEL_GAP = 28.0
     OVERVIEW_HEIGHT  = 24.0
     OVERVIEW_GAP     = 16.0
-    LABEL_FONT       = UIng::FontDescriptor.new(size: 11)
 
     def initialize
       @annotation_renderer = AnnotationRenderer.new
@@ -276,7 +275,7 @@ module D4Plot
 
         UIng::Area::Draw::TextLayout.open(
           string: attr_str,
-          default_font: LABEL_FONT,
+          default_font: label_font,
           width: width,
           align: align
         ) do |text_layout|
@@ -299,6 +298,10 @@ module D4Plot
       else
         "%.2f" % value
       end
+    end
+
+    private def label_font
+      @label_font ||= UIng::FontDescriptor.new(size: 11)
     end
   end
 end

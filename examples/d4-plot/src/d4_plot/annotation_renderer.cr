@@ -7,7 +7,6 @@ module D4Plot
     GAP        = 14.0
     LANE       = 16.0
     MAX_HEIGHT = 96.0
-    LABEL_FONT = UIng::FontDescriptor.new(size: 11)
 
     def self.height_for(track : AnnotationTrack?)
       return 0.0 if track.nil? || track.empty?
@@ -42,7 +41,7 @@ module D4Plot
 
         UIng::Area::Draw::TextLayout.open(
           string: attr_str,
-          default_font: LABEL_FONT,
+          default_font: label_font,
           width: width,
           align: UIng::Area::Draw::TextAlign::Center
         ) do |text_layout|
@@ -113,7 +112,7 @@ module D4Plot
 
         UIng::Area::Draw::TextLayout.open(
           string: attr_str,
-          default_font: LABEL_FONT,
+          default_font: label_font,
           width: width,
           align: UIng::Area::Draw::TextAlign::Left
         ) do |text_layout|
@@ -130,6 +129,10 @@ module D4Plot
 
     private def feature_label(feature)
       feature.name || feature.kind
+    end
+
+    private def label_font
+      @label_font ||= UIng::FontDescriptor.new(size: 11)
     end
   end
 end
