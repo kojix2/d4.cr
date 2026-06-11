@@ -1,5 +1,6 @@
 require "uing"
 require "../../../../src/d4"
+require "./annotation"
 require "./data_sampler"
 require "./log"
 require "./plot_settings"
@@ -9,17 +10,19 @@ require "./settings_window"
 
 module D4Plot
   class App
-    PROGRAM_NAME   = "D4 Plot Viewer"
-    REPOSITORY_URL = "https://github.com/kojix2/d4.cr"
-    LEFT_BUTTON    =    1
-    RIGHT_BUTTON   =    3
-    DRAG_THRESHOLD =  4.0
-    ZOOM_FACTOR    =  1.5
-    MIN_BINS       =   16
-    MAX_BINS       = 4096
+    PROGRAM_NAME          = "D4 Plot Viewer"
+    REPOSITORY_URL        = "https://github.com/kojix2/d4.cr"
+    LEFT_BUTTON           =             1
+    RIGHT_BUTTON          =             3
+    DRAG_THRESHOLD        =           4.0
+    ZOOM_FACTOR           =           1.5
+    MIN_BINS              =            16
+    MAX_BINS              =          4096
+    MAX_ANNOTATION_REGION = 5_000_000_u32
 
     @main_window : UIng::Window
     @file_button : UIng::Button
+    @annotation_button : UIng::Button
     @chromosome_combobox : UIng::Combobox
     @region_entry : UIng::Entry
     @point_count_label : UIng::Label
@@ -35,6 +38,7 @@ module D4Plot
     @settings_window : SettingsWindow?
     @d4_file : D4::File?
     @current_file_path : String?
+    @annotation_index : AnnotationIndex?
     @current_region : Region?
     @chromosomes : Hash(String, UInt32)?
     @chromosome_names : Array(String)
@@ -63,6 +67,7 @@ module D4Plot
       @about_menu_item = menu_items[:about]
       @main_window = UIng::Window.new(PROGRAM_NAME, 800, 600, menubar: true)
       @file_button = UIng::Button.new("Open D4 File")
+      @annotation_button = UIng::Button.new("Open Annotation")
       @chromosome_combobox = UIng::Combobox.new
       @region_entry = UIng::Entry.new
       @point_count_label = UIng::Label.new("Bins")
@@ -76,6 +81,7 @@ module D4Plot
       @settings_window = nil
       @d4_file = nil
       @current_file_path = nil
+      @annotation_index = nil
       @current_region = nil
       @chromosomes = nil
       @chromosome_names = [] of String
@@ -103,6 +109,7 @@ module D4Plot
       hbox = UIng::Box.new(:horizontal)
       hbox.padded = true
       hbox.append(@file_button, false)
+      hbox.append(@annotation_button, false)
       hbox.append(@chromosome_combobox, false)
       hbox.append(@region_entry, true)
       hbox.append(@point_count_label, false)
@@ -130,6 +137,10 @@ module D4Plot
         open_file_dialog
       end
 
+      @annotation_button.on_clicked do
+        open_annotation_dialog
+      end
+
       @plot_button.on_clicked do
         render_region
       end
@@ -144,7 +155,9 @@ module D4Plot
           @plot_data,
           @settings,
           @current_region,
-          @chromosomes
+          @chromosomes,
+          annotation_features,
+          annotation_notice
         )
       end
 
@@ -188,6 +201,22 @@ module D4Plot
       load_d4_file(file_path) if file_path && !file_path.empty?
     end
 
+    private def open_annotation_dialog(window : UIng::Window = @main_window)
+      file_path = window.open_file
+      load_annotation_file(file_path) if file_path && !file_path.empty?
+    end
+
+    private def load_annotation_file(file_path : String)
+      @annotation_index = AnnotationIndex.load(file_path)
+      if index = @annotation_index
+        Log.info "Loaded annotation file: #{file_path} (#{index.description})"
+      end
+      @area.queue_redraw_all
+    rescue ex
+      Log.error "Error loading annotation file: #{ex.message}"
+      @main_window.msg_box_error("Error", "Failed to load annotation file: #{ex.message}")
+    end
+
     private def load_d4_file(file_path : String)
       close_current_file
       @d4_file = D4::File.open(file_path)
@@ -219,6 +248,22 @@ module D4Plot
       @chromosome_combobox.clear
       @current_region = nil
       @plot_data = nil
+    end
+
+    private def annotation_features
+      return unless region = @current_region
+      return unless index = @annotation_index
+      return if region_length(region) > MAX_ANNOTATION_REGION
+
+      index.overlapping(region)
+    end
+
+    private def annotation_notice
+      return unless region = @current_region
+      return unless @annotation_index
+      return unless region_length(region) > MAX_ANNOTATION_REGION
+
+      "Zoom in to show gene annotations"
     end
 
     private def close_settings_window

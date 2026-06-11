@@ -1,4 +1,5 @@
 require "uing"
+require "./annotation"
 require "./data_sampler"
 require "./plot_settings"
 require "./region"
@@ -12,6 +13,9 @@ module D4Plot
     TICK_SIZE       =  5.0
     OVERVIEW_HEIGHT = 24.0
     OVERVIEW_GAP    = 16.0
+    ANNOTATION_GAP  = 14.0
+    ANNOTATION_LANE = 16.0
+    ANNOTATION_MAX  = 96.0
     LABEL_FONT      = UIng::FontDescriptor.new(size: 11)
 
     def draw(
@@ -20,6 +24,8 @@ module D4Plot
       settings : PlotSettings,
       region : Region? = nil,
       chromosomes : Hash(String, UInt32)? = nil,
+      annotations : Array(AnnotationFeature)? = nil,
+      annotation_notice : String? = nil,
     )
       ctx = params.context
       width = params.area_width
@@ -28,10 +34,13 @@ module D4Plot
 
       clear(ctx, width, height)
       overview_height = draw_overview(ctx, margin, width, region, chromosomes)
+      annotation_height = annotation_height_for(annotations, annotation_notice)
 
       if points = data
-        draw_plot(ctx, points, margin, width, height, overview_height, settings) unless points.empty?
+        draw_plot(ctx, points, margin, width, height, overview_height, annotation_height, settings) unless points.empty?
       end
+
+      draw_annotation_track(ctx, annotations, annotation_notice, margin, width, height, overview_height, annotation_height, region)
     end
 
     def plot_fraction(x, area_width, area_height, settings : PlotSettings) : Float64?
@@ -78,12 +87,8 @@ module D4Plot
       OVERVIEW_HEIGHT
     end
 
-    private def draw_plot(ctx, points, margin, width, height, overview_height, settings)
-      overview_gap = overview_height > 0 ? OVERVIEW_GAP : 0.0
-      plot_left = margin
-      plot_top = margin + overview_height + overview_gap
-      plot_width = width - 2 * margin
-      plot_height = height - plot_top - margin
+    private def draw_plot(ctx, points, margin, width, height, overview_height, annotation_height, settings)
+      plot_left, plot_top, plot_width, plot_height = plot_layout(margin, width, height, overview_height, annotation_height)
       return if plot_width <= 0 || plot_height <= 0
 
       min_pos = points.first[0].to_f
@@ -93,6 +98,16 @@ module D4Plot
       draw_axes(ctx, plot_left, plot_top, plot_width, plot_height)
       draw_ticks(ctx, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height) if settings.show_axis_ticks?
       draw_area(ctx, points, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height, settings.plot_color)
+    end
+
+    private def plot_layout(margin, width, height, overview_height, annotation_height)
+      overview_gap = overview_height > 0 ? OVERVIEW_GAP : 0.0
+      plot_left = margin
+      plot_top = margin + overview_height + overview_gap
+      plot_width = width - 2 * margin
+      reserved = annotation_height > 0 ? annotation_height + ANNOTATION_GAP : 0.0
+      plot_height = height - plot_top - margin - reserved
+      {plot_left, plot_top, plot_width, plot_height}
     end
 
     private def draw_axes(ctx, plot_left, plot_top, plot_width, plot_height)
@@ -196,6 +211,111 @@ module D4Plot
       ctx.stroke_path(highlight_brush, thickness: 2.0) do |path|
         path.add_rectangle(highlight_x, y + 3.0, highlight_width, height - 6.0)
       end
+    end
+
+    private def draw_annotation_track(ctx, annotations, notice, margin, width, height, overview_height, annotation_height, region)
+      return if annotation_height <= 0
+
+      plot_left, plot_top, plot_width, plot_height = plot_layout(margin, width, height, overview_height, annotation_height)
+      return if plot_width <= 0
+
+      top = plot_top + plot_height + ANNOTATION_GAP
+      draw_annotation_axis(ctx, plot_left, top, plot_width)
+      if notice
+        draw_annotation_notice(ctx, notice, plot_left, top + 12.0, plot_width)
+      elsif annotations && region
+        draw_annotation_features(ctx, annotations, region, plot_left, top, plot_width, annotation_height)
+      end
+    end
+
+    private def draw_annotation_axis(ctx, x, y, width)
+      brush = UIng::Area::Draw::Brush.new(:solid, 0.78, 0.80, 0.82, 1.0)
+      ctx.stroke_path(brush, thickness: 1.0) do |path|
+        path.new_figure(x, y)
+        path.line_to(x + width, y)
+      end
+    end
+
+    private def draw_annotation_notice(ctx, text, x, y, width)
+      UIng::Area::AttributedString.open(text) do |attr_str|
+        attr_str.set_attribute(UIng::Area::Attribute.new_color(0.45, 0.47, 0.50, 1.0), 0_u64, text.bytesize.to_u64)
+
+        UIng::Area::Draw::TextLayout.open(
+          string: attr_str,
+          default_font: LABEL_FONT,
+          width: width,
+          align: UIng::Area::Draw::TextAlign::Center
+        ) do |text_layout|
+          ctx.draw_text_layout(text_layout, x, y)
+        end
+      end
+    end
+
+    private def draw_annotation_features(ctx, annotations, region, plot_left, top, plot_width, annotation_height)
+      lane_ends = [] of UInt32
+      max_lanes = (annotation_height / ANNOTATION_LANE).floor.to_i
+
+      annotations.sort_by { |feature| {feature.start1, feature.end1, feature.kind} }.each do |feature|
+        lane = annotation_lane(feature, lane_ends)
+        next if lane >= max_lanes
+
+        draw_annotation_feature(ctx, feature, lane, region, plot_left, top, plot_width)
+      end
+    end
+
+    private def annotation_lane(feature, lane_ends)
+      lane_ends.each_with_index do |end1, index|
+        if feature.start1 > end1
+          lane_ends[index] = feature.end1
+          return index
+        end
+      end
+
+      lane_ends << feature.end1
+      lane_ends.size - 1
+    end
+
+    private def draw_annotation_feature(ctx, feature, lane, region, plot_left, top, plot_width)
+      min_pos = region.start1.to_f
+      max_pos = region.end1.to_f
+      x1 = x_for(feature.start1, plot_left, min_pos, max_pos, plot_width)
+      x2 = x_for(feature.end1, plot_left, min_pos, max_pos, plot_width)
+      x1, x2 = {x2, x1} if x2 < x1
+      feature_width = {x2 - x1, 1.0}.max
+      y = top + 6.0 + lane * ANNOTATION_LANE
+
+      if feature.kind == "exon"
+        draw_annotation_box(ctx, x1, y - 4.0, feature_width, 8.0, 0.12, 0.36, 0.52)
+      else
+        draw_annotation_line(ctx, x1, x2, y)
+        draw_label(ctx, feature_label(feature), x1 + 3.0, y - 14.0, feature_width - 6.0, UIng::Area::Draw::TextAlign::Left) if feature_width > 34.0
+      end
+    end
+
+    private def draw_annotation_line(ctx, x1, x2, y)
+      brush = UIng::Area::Draw::Brush.new(:solid, 0.18, 0.28, 0.34, 1.0)
+      ctx.stroke_path(brush, thickness: 1.0) do |path|
+        path.new_figure(x1, y)
+        path.line_to(x2, y)
+      end
+    end
+
+    private def draw_annotation_box(ctx, x, y, width, height, red, green, blue)
+      brush = UIng::Area::Draw::Brush.new(:solid, red, green, blue, 0.9)
+      ctx.fill_path(brush) do |path|
+        path.add_rectangle(x, y, width, height)
+      end
+    end
+
+    private def feature_label(feature)
+      feature.name || feature.kind
+    end
+
+    private def annotation_height_for(annotations, notice)
+      return ANNOTATION_LANE * 2 if notice
+      return 0.0 if annotations.nil? || annotations.empty?
+
+      ANNOTATION_MAX
     end
 
     private def margin_for(width, height, show_axis_ticks)
