@@ -303,12 +303,9 @@ module D4Plot
       chromosome = @chromosome_names[index]
       if current = @current_region
         return if current.chromosome == chromosome
-
-        length = region_length(current)
-        apply_region0(chromosome, 0_i64, length)
-      else
-        set_default_region(chromosome)
       end
+
+      set_default_region(chromosome)
     end
 
     private def set_default_region(chromosome)
@@ -316,11 +313,7 @@ module D4Plot
       chrom_size = chromosomes[chromosome]?
       return unless chrom_size
 
-      end1 = Math.min(chrom_size, 1_000_u32)
-      @region_entry.text = "#{chromosome}:1-#{end1}"
-      @current_region = nil
-      @plot_data = nil
-      @area.queue_redraw_all
+      plot_region(Region.new(chromosome, 1_u32, chrom_size))
     end
 
     private def sync_chromosome_selection(chromosome)
