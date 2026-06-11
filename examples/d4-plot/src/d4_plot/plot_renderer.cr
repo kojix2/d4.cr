@@ -25,37 +25,13 @@ module D4Plot
       width = params.area_width
       height = params.area_height
       margin = margin_for(width, height, settings.show_axis_ticks?)
-      overview_region = region
-      overview_chromosomes = chromosomes
-      show_overview = overview_region && overview_chromosomes && !overview_chromosomes.empty?
-      overview_height = show_overview ? OVERVIEW_HEIGHT : 0.0
-      overview_gap = overview_height > 0 ? OVERVIEW_GAP : 0.0
 
       clear(ctx, width, height)
+      overview_height = draw_overview(ctx, margin, width, region, chromosomes)
 
-      if overview_region && overview_chromosomes && show_overview
-        draw_genome_overview(ctx, margin, margin, width - 2 * margin, overview_height, overview_region, overview_chromosomes)
+      if points = data
+        draw_plot(ctx, points, margin, width, height, overview_height, settings) unless points.empty?
       end
-
-      return unless points = data
-      return if points.empty?
-
-      plot_left = margin
-      plot_top = margin + overview_height + overview_gap
-      plot_width = width - 2 * margin
-      plot_height = height - plot_top - margin
-      return if plot_width <= 0 || plot_height <= 0
-
-      min_pos = points.first[0].to_f
-      max_pos = points.last[0].to_f
-      min_val = points.min_of(&.[1])
-      max_val = points.max_of(&.[1])
-
-      min_val, max_val = y_range(min_val, max_val, settings.y_axis_from_zero?)
-
-      draw_axes(ctx, plot_left, plot_top, plot_width, plot_height)
-      draw_ticks(ctx, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height) if settings.show_axis_ticks?
-      draw_area(ctx, points, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height, settings.plot_color)
     end
 
     def plot_fraction(x, area_width, area_height, settings : PlotSettings) : Float64?
@@ -79,6 +55,30 @@ module D4Plot
       ctx.fill_path(bg_brush) do |path|
         path.add_rectangle(0, 0, width, height)
       end
+    end
+
+    private def draw_overview(ctx, margin, width, region, chromosomes)
+      return 0.0 if region.nil? || chromosomes.nil? || chromosomes.empty?
+
+      draw_genome_overview(ctx, margin, margin, width - 2 * margin, OVERVIEW_HEIGHT, region, chromosomes)
+      OVERVIEW_HEIGHT
+    end
+
+    private def draw_plot(ctx, points, margin, width, height, overview_height, settings)
+      overview_gap = overview_height > 0 ? OVERVIEW_GAP : 0.0
+      plot_left = margin
+      plot_top = margin + overview_height + overview_gap
+      plot_width = width - 2 * margin
+      plot_height = height - plot_top - margin
+      return if plot_width <= 0 || plot_height <= 0
+
+      min_pos = points.first[0].to_f
+      max_pos = points.last[0].to_f
+      min_val, max_val = y_range(points.min_of(&.[1]), points.max_of(&.[1]), settings.y_axis_from_zero?)
+
+      draw_axes(ctx, plot_left, plot_top, plot_width, plot_height)
+      draw_ticks(ctx, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height) if settings.show_axis_ticks?
+      draw_area(ctx, points, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height, settings.plot_color)
     end
 
     private def draw_axes(ctx, plot_left, plot_top, plot_width, plot_height)

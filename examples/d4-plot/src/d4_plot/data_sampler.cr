@@ -43,7 +43,7 @@ module D4Plot
       end
     end
 
-    private def self.each_bin(start0 : UInt32, end0_excl : UInt32, npoints : Int32, &block : UInt32, UInt32 ->)
+    private def self.each_bin(start0 : UInt32, end0_excl : UInt32, npoints : Int32, & : UInt32, UInt32 ->)
       total_len = end0_excl - start0
       bins = Math.min(npoints.to_u32, total_len)
       base_size = total_len // bins
