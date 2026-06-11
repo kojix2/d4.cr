@@ -244,8 +244,6 @@ module D4Plot
     end
 
     private def plot_region
-      return unless d4 = @d4_file
-
       region_text = @region_entry.text
       return unless region_text
 
@@ -260,18 +258,24 @@ module D4Plot
         return
       end
 
-      Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
-      Log.info "Sampling mode: #{sampling_mode(d4)}"
-
-      @current_region = region
-      @plot_data = DataSampler.downsample(d4, region, @settings.point_count, @settings.use_sum_index?)
-      @area.queue_redraw_all
+      plot_region(region, sync_chromosome: true)
     end
 
     private def plot_region(region : Region)
       @region_entry.text = "#{region.chromosome}:#{region.start1}-#{region.end1}"
-      sync_chromosome_selection(region.chromosome)
-      plot_region
+      plot_region(region, sync_chromosome: false)
+    end
+
+    private def plot_region(region : Region, sync_chromosome : Bool)
+      return unless d4 = @d4_file
+
+      Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
+      Log.info "Sampling mode: #{sampling_mode(d4)}"
+
+      sync_chromosome_selection(region.chromosome) if sync_chromosome
+      @current_region = region
+      @plot_data = DataSampler.downsample(d4, region, @settings.point_count, @settings.use_sum_index?)
+      @area.queue_redraw_all
     end
 
     private def update_chromosome_combobox(chromosomes)
@@ -298,6 +302,8 @@ module D4Plot
 
       chromosome = @chromosome_names[index]
       if current = @current_region
+        return if current.chromosome == chromosome
+
         length = region_length(current)
         apply_region0(chromosome, 0_i64, length)
       else
@@ -319,6 +325,8 @@ module D4Plot
 
     private def sync_chromosome_selection(chromosome)
       if index = @chromosome_names.index(chromosome)
+        return if @chromosome_combobox.selected == index
+
         @updating_chromosome_combobox = true
         @chromosome_combobox.selected = index
       end
