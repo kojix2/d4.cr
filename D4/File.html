@@ -159,21 +159,21 @@
   </h2>
   
     
-      <a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L6" target="_blank">
+      <a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L6" target="_blank">
         d4/file.cr
       </a>
     
     <br/>
   
     
-      <a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/query.cr#L4" target="_blank">
+      <a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/query.cr#L4" target="_blank">
         d4/query.cr
       </a>
     
     <br/>
   
     
-      <a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/writer.cr#L4" target="_blank">
+      <a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/writer.cr#L4" target="_blank">
         d4/writer.cr
       </a>
     
@@ -217,7 +217,14 @@
       <li class="entry-summary">
         <a href="#build_index%28path%3AString%29-class-method" class="signature"><strong>.build_index</strong>(path : String)</a>
         
-          <div class="summary"><p>Build SFI index for the file</p></div>
+          <div class="summary"><p>Build the secondary frame index for the file.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#build_sfi_index%28path%3AString%29-class-method" class="signature"><strong>.build_sfi_index</strong>(path : String)</a>
+        
+          <div class="summary"><p>Build the secondary frame index for the file.</p></div>
         
       </li>
     
@@ -306,6 +313,34 @@
       </li>
     
       <li class="entry-summary">
+        <a href="#has_index%3F%3ABool-instance-method" class="signature"><strong>#has_index?</strong> : Bool</a>
+        
+          <div class="summary"><p>Check whether the file has a sum index available.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_sum_index%3F%3ABool-instance-method" class="signature"><strong>#has_sum_index?</strong> : Bool</a>
+        
+          <div class="summary"><p>Check whether the file has a sum index available.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#indexed_sum%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AFloat64-instance-method" class="signature"><strong>#indexed_sum</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Float64</a>
+        
+          <div class="summary"><p>Query the native sum index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mean%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AFloat64-instance-method" class="signature"><strong>#mean</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Float64</a>
+        
+          <div class="summary"><p>Mean value in a region.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
         <a href="#metadata%3AMetadata-instance-method" class="signature"><strong>#metadata</strong> : Metadata</a>
         
           <div class="summary"><p>Load metadata from the file</p></div>
@@ -363,6 +398,13 @@
     
       <li class="entry-summary">
         <a href="#set_chromosomes%28chromosomes%3AArray%28Tuple%28String%2CUInt32%29%29%2Cdict_type%3ADictType%3DDictType%3A%3ASimpleRange%2Cdenominator%3AFloat64%3D1.0%29-instance-method" class="signature"><strong>#set_chromosomes</strong>(chromosomes : Array(Tuple(String, UInt32)), dict_type : DictType = <span class="t">DictType</span><span class="t">::</span><span class="t">SimpleRange</span>, denominator : Float64 = <span class="n">1.0</span>)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sum%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AFloat64-instance-method" class="signature"><strong>#sum</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Float64</a>
+        
+          <div class="summary"><p>Sum values in a region.</p></div>
         
       </li>
     
@@ -470,7 +512,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L11" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L11" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -497,13 +539,34 @@
       
         <div class="doc">
           
-          <p>Build SFI index for the file</p>
+          <p>Build the secondary frame index for the file.</p>
         </div>
       
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L216" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L270" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="build_sfi_index(path:String)-class-method">
+      <div class="signature">
+        
+        def self.<strong>build_sfi_index</strong>(path : String)
+
+        <a class="method-permalink" href="#build_sfi_index%28path%3AString%29-class-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Build the secondary frame index for the file.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L264" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -524,7 +587,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/writer.cr#L45" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/writer.cr#L45" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -545,7 +608,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/writer.cr#L31" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/writer.cr#L31" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -566,7 +629,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L16" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L16" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -587,7 +650,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L23" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L23" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -622,7 +685,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L123" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L123" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -643,7 +706,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L113" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L113" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -664,7 +727,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L33" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L33" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -685,7 +748,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L41" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L41" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -701,7 +764,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L242" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L315" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -722,7 +785,91 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L118" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L118" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="has_index?:Bool-instance-method">
+      <div class="signature">
+        
+        def <strong>has_index?</strong> : Bool
+
+        <a class="method-permalink" href="#has_index%3F%3ABool-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Check whether the file has a sum index available.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L208" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="has_sum_index?:Bool-instance-method">
+      <div class="signature">
+        
+        def <strong>has_sum_index?</strong> : Bool
+
+        <a class="method-permalink" href="#has_sum_index%3F%3ABool-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Check whether the file has a sum index available.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L213" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="indexed_sum(chromosome:String,start:UInt32=0_u32,stop:UInt32|Nil=nil):Float64-instance-method">
+      <div class="signature">
+        
+        def <strong>indexed_sum</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Float64
+
+        <a class="method-permalink" href="#indexed_sum%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AFloat64-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Query the native sum index. Raises if the sum index is not present.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L228" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="mean(chromosome:String,start:UInt32=0_u32,stop:UInt32|Nil=nil):Float64-instance-method">
+      <div class="signature">
+        
+        def <strong>mean</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Float64
+
+        <a class="method-permalink" href="#mean%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AFloat64-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Mean value in a region. Empty regions return 0.0.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L255" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -743,7 +890,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L96" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L96" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -764,7 +911,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/query.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/query.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -785,7 +932,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/query.cr#L73" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/query.cr#L73" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -806,7 +953,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/query.cr#L82" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/query.cr#L82" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -827,7 +974,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L157" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L157" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -848,7 +995,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L148" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L148" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -869,7 +1016,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L128" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L128" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -890,7 +1037,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L46" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L46" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -906,7 +1053,29 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L89" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L89" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sum(chromosome:String,start:UInt32=0_u32,stop:UInt32|Nil=nil):Float64-instance-method">
+      <div class="signature">
+        
+        def <strong>sum</strong>(chromosome : String, start : UInt32 = <span class="n">0_u32</span>, stop : UInt32 | Nil = <span class="n">nil</span>) : Float64
+
+        <a class="method-permalink" href="#sum%28chromosome%3AString%2Cstart%3AUInt32%3D0_u32%2Cstop%3AUInt32%7CNil%3Dnil%29%3AFloat64-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Sum values in a region. Uses the native sum index when available,
+otherwise falls back to reading values through the streaming API.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L242" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -927,7 +1096,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L136" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L136" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -948,7 +1117,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L195" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L195" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -969,7 +1138,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/writer.cr#L55" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/writer.cr#L55" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -990,7 +1159,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/writer.cr#L18" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/writer.cr#L18" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1011,7 +1180,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L181" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L181" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1032,7 +1201,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/writer.cr#L6" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/writer.cr#L6" target="_blank">View source</a>]
         
       </div>
     </div>
@@ -1053,7 +1222,7 @@
       <br/>
       <div>
         
-          [<a href="https://github.com/kojix2/d4.cr/blob/cad068089a6fc0051c73bae8b51270ce458928ff/src/d4/file.cr#L168" target="_blank">View source</a>]
+          [<a href="https://github.com/kojix2/d4.cr/blob/a3f9c9d3f12e6af368d53bba66ade2c3d1bffd6d/src/d4/file.cr#L168" target="_blank">View source</a>]
         
       </div>
     </div>
