@@ -7,7 +7,9 @@ D4_DIR ?= ../../d4-format
 D4_REPO ?= https://github.com/38/d4-format.git
 D4_TARGET_DIR := $(D4_DIR)/target/release
 D4_STATIC_LIB := $(D4_TARGET_DIR)/libd4binding.a
-D4_FDOPEN_PATCH := patches/d4-format-zlib-fdopen.patch
+D4_PATCHES := \
+	patches/d4-format-zlib-fdopen.patch \
+	patches/d4-format-local-reader-seek-cache.patch
 
 BUILD_DIR := build
 STATIC_LIB_DIR := $(BUILD_DIR)/static-libs
@@ -34,11 +36,14 @@ d4-format:
 	@test -d "$(D4_DIR)" || $(GIT) clone --depth 1 "$(D4_REPO)" "$(D4_DIR)"
 
 patch-d4-format: d4-format
-	@if $(GIT) -C "$(D4_DIR)" apply --reverse --check "$(abspath $(D4_FDOPEN_PATCH))" >/dev/null 2>&1; then \
-	  echo "d4-format zlib fdopen patch already applied"; \
-	else \
-	  $(GIT) -C "$(D4_DIR)" apply "$(abspath $(D4_FDOPEN_PATCH))"; \
-	fi
+	@for patch in $(D4_PATCHES); do \
+	  patch_path="$(abspath .)/$$patch"; \
+	  if $(GIT) -C "$(D4_DIR)" apply --reverse --check "$$patch_path" >/dev/null 2>&1; then \
+	    echo "$$patch already applied"; \
+	  else \
+	    $(GIT) -C "$(D4_DIR)" apply "$$patch_path"; \
+	  fi; \
+	done
 
 d4binding: patch-d4-format
 	$(CARGO) build --release -p d4binding --manifest-path "$(D4_DIR)/Cargo.toml"

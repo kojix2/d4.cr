@@ -1,0 +1,27 @@
+diff --git a/d4/src/stab/sparse_array/reader.rs b/d4/src/stab/sparse_array/reader.rs
+index e8ccac1..6938419 100644
+--- a/d4/src/stab/sparse_array/reader.rs
++++ b/d4/src/stab/sparse_array/reader.rs
+@@ -244,14 +244,15 @@ mod mapped_io {
+         fn seek(&mut self, pos: u32, seq_hint: bool) -> Option<i32> {
+             let idx = loop {
+                 if self.cursor.0 < self.records.len() && seq_hint {
+-                    let (_, r) = self.records[self.cursor.0].range();
+-                    if pos < r {
++                    let (l, r) = self.records[self.cursor.0].range();
++                    if l <= pos && pos < r {
+                         break self.cursor.0;
+                     }
+-                    if self.cursor.0 + 1 < self.records.len()
+-                        && pos < self.records[self.cursor.0 + 1].range().1
+-                    {
+-                        break self.cursor.0 + 1;
+-                    }
++                    if self.cursor.0 + 1 < self.records.len() {
++                        let (l, r) = self.records[self.cursor.0 + 1].range();
++                        if l <= pos && pos < r {
++                            break self.cursor.0 + 1;
++                        }
++                    }
+                 }
+                 break match self

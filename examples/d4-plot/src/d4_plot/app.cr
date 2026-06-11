@@ -61,7 +61,7 @@ module D4Plot
       @file_button = UIng::Button.new("Open D4 File")
       @chromosome_combobox = UIng::Combobox.new
       @region_entry = UIng::Entry.new
-      @plot_button = UIng::Button.new("Plot")
+      @plot_button = UIng::Button.new("Render")
       @handler = UIng::Area::Handler.new
       @area = UIng::Area.new(@handler)
       @renderer = PlotRenderer.new
@@ -122,7 +122,7 @@ module D4Plot
       end
 
       @plot_button.on_clicked do
-        plot_region
+        render_region
       end
 
       @chromosome_combobox.on_selected do |index|
@@ -141,7 +141,7 @@ module D4Plot
 
       @handler.key_event do |_, event|
         if enter_key?(event)
-          plot_region
+          render_region
           true
         else
           false
@@ -241,6 +241,32 @@ module D4Plot
       else
         @area.queue_redraw_all
       end
+    end
+
+    private def render_region
+      return unless @d4_file
+
+      clear_drag
+      @plot_data = nil
+      return unless reopen_current_file
+
+      plot_region
+    end
+
+    private def reopen_current_file
+      return true unless file_path = @current_file_path
+
+      d4 = D4::File.open(file_path)
+      previous_d4 = @d4_file
+      @d4_file = d4
+      @chromosomes = d4.chromosomes
+      previous_d4.try(&.close)
+      Log.info "Reopened D4 file for render: #{file_path}"
+      true
+    rescue ex
+      Log.error "Error reopening D4 file: #{ex.message}"
+      @main_window.msg_box_error("Error", "Failed to reopen D4 file: #{ex.message}")
+      false
     end
 
     private def plot_region
