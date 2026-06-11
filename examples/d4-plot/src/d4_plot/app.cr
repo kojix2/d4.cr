@@ -11,6 +11,10 @@ module D4Plot
   class App
     PROGRAM_NAME   = "D4 Plot Viewer"
     REPOSITORY_URL = "https://github.com/kojix2/d4.cr"
+    LEFT_BUTTON    =   1
+    RIGHT_BUTTON   =   3
+    DRAG_THRESHOLD = 4.0
+    ZOOM_FACTOR    = 1.5
 
     @main_window : UIng::Window
     @file_button : UIng::Button
@@ -29,6 +33,9 @@ module D4Plot
     @current_region : Region?
     @chromosomes : Hash(String, UInt32)?
     @plot_data : Array(PlotPoint)?
+    @drag_start_x : Float64?
+    @drag_start_y : Float64?
+    @drag_start_region : Region?
 
     def self.create_menu_bar
       file_menu = UIng::Menu.new("File")
@@ -61,6 +68,9 @@ module D4Plot
       @current_region = nil
       @chromosomes = nil
       @plot_data = nil
+      @drag_start_x = nil
+      @drag_start_y = nil
+      @drag_start_region = nil
 
       setup_ui
       setup_handlers
@@ -125,6 +135,10 @@ module D4Plot
         else
           false
         end
+      end
+
+      @handler.mouse_event do |_, event|
+        handle_mouse_event(event)
       end
     end
 
@@ -238,6 +252,88 @@ module D4Plot
       @current_region = region
       @plot_data = DataSampler.downsample(d4, region, @settings.point_count, @settings.use_sum_index?)
       @area.queue_redraw_all
+    end
+
+    private def plot_region(region : Region)
+      @region_entry.text = "#{region.chromosome}:#{region.start1}-#{region.end1}"
+      plot_region
+    end
+
+    private def handle_mouse_event(event)
+      if event.down == LEFT_BUTTON
+        start_drag(event)
+      elsif event.up == LEFT_BUTTON
+        finish_left_button(event)
+      elsif event.up == RIGHT_BUTTON
+        zoom_region(event, 1.0 / ZOOM_FACTOR)
+      end
+    end
+
+    private def start_drag(event)
+      return unless region = @current_region
+
+      @drag_start_x = event.x
+      @drag_start_y = event.y
+      @drag_start_region = region
+    end
+
+    private def finish_left_button(event)
+      start_x = @drag_start_x
+      start_y = @drag_start_y
+      start_region = @drag_start_region
+      clear_drag
+      return unless start_x && start_y && start_region
+
+      dx = event.x - start_x
+      dy = event.y - start_y
+      if Math.sqrt(dx * dx + dy * dy) >= DRAG_THRESHOLD
+        pan_region(start_region, dx, event.area_width, event.area_height)
+      else
+        zoom_region(event, ZOOM_FACTOR)
+      end
+    end
+
+    private def clear_drag
+      @drag_start_x = nil
+      @drag_start_y = nil
+      @drag_start_region = nil
+    end
+
+    private def zoom_region(event, factor)
+      return unless region = @current_region
+      return unless fraction = @renderer.plot_fraction(event.x, event.area_width, event.area_height, @settings)
+
+      region_len = region_length(region)
+      new_len = (region_len / factor).round.to_u32
+      new_len = 1_u32 if new_len < 1_u32
+      anchor0 = region.start0.to_f + region_len * fraction
+      new_start0 = (anchor0 - new_len * fraction).round.to_i64
+      apply_region0(region.chromosome, new_start0, new_len)
+    end
+
+    private def pan_region(region, dx, area_width, area_height)
+      return unless plot_width = @renderer.plot_width(area_width, area_height, @settings)
+      return if plot_width <= 0
+
+      region_len = region_length(region)
+      delta = (-dx / plot_width * region_len).round.to_i64
+      apply_region0(region.chromosome, region.start0.to_i64 + delta, region_len.to_u32)
+    end
+
+    private def apply_region0(chromosome, start0, length)
+      return unless chromosomes = @chromosomes
+      chrom_size = chromosomes[chromosome]?
+      return unless chrom_size
+
+      length = chrom_size if length > chrom_size
+      max_start0 = chrom_size - length
+      clamped_start0 = start0.clamp(0_i64, max_start0.to_i64).to_u32
+      new_region = Region.new(chromosome, clamped_start0 + 1_u32, clamped_start0 + length)
+      plot_region(new_region)
+    end
+
+    private def region_length(region)
+      region.end0_exclusive - region.start0
     end
 
     private def enter_key?(event)

@@ -58,6 +58,22 @@ module D4Plot
       draw_area(ctx, points, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height, settings.plot_color)
     end
 
+    def plot_fraction(x, area_width, area_height, settings : PlotSettings) : Float64?
+      margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
+      width = area_width - 2 * margin
+      return nil if width <= 0
+
+      ((x - margin) / width).clamp(0.0, 1.0)
+    end
+
+    def plot_width(area_width, area_height, settings : PlotSettings) : Float64?
+      margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
+      width = area_width - 2 * margin
+      return nil if width <= 0
+
+      width
+    end
+
     private def clear(ctx, width, height)
       bg_brush = UIng::Area::Draw::Brush.new(:solid, 1.0, 1.0, 1.0, 1.0)
       ctx.fill_path(bg_brush) do |path|
