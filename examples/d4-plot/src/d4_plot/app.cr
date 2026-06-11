@@ -2,8 +2,10 @@ require "uing"
 require "../../../../src/d4"
 require "./data_sampler"
 require "./log"
+require "./plot_settings"
 require "./plot_renderer"
 require "./region"
+require "./settings_window"
 
 module D4Plot
   class App
@@ -18,7 +20,10 @@ module D4Plot
     @handler : UIng::Area::Handler
     @renderer : PlotRenderer
     @open_menu_item : UIng::MenuItem
+    @settings_menu_item : UIng::MenuItem
     @about_menu_item : UIng::MenuItem
+    @settings : PlotSettings
+    @settings_window : SettingsWindow?
     @d4_file : D4::File?
     @current_file_path : String?
     @plot_data : Array(PlotPoint)?
@@ -26,17 +31,19 @@ module D4Plot
     def self.create_menu_bar
       file_menu = UIng::Menu.new("File")
       open_item = file_menu.append_item("Open")
+      settings_item = file_menu.append_preferences_item
       file_menu.append_separator
       file_menu.append_quit_item
 
       help_menu = UIng::Menu.new("Help")
       about_item = help_menu.append_about_item
 
-      {open: open_item, about: about_item}
+      {open: open_item, settings: settings_item, about: about_item}
     end
 
     def initialize(menu_items)
       @open_menu_item = menu_items[:open]
+      @settings_menu_item = menu_items[:settings]
       @about_menu_item = menu_items[:about]
       @main_window = UIng::Window.new(PROGRAM_NAME, 800, 600, menubar: true)
       @file_button = UIng::Button.new("Open D4 File")
@@ -45,6 +52,8 @@ module D4Plot
       @handler = UIng::Area::Handler.new
       @area = UIng::Area.new(@handler)
       @renderer = PlotRenderer.new
+      @settings = PlotSettings.new
+      @settings_window = nil
       @d4_file = nil
       @current_file_path = nil
       @plot_data = nil
@@ -79,6 +88,7 @@ module D4Plot
       @main_window.margined = true
 
       @main_window.on_closing do
+        close_settings_window
         close_current_file
         UIng.quit
         true
@@ -95,7 +105,7 @@ module D4Plot
       end
 
       @handler.draw do |_, params|
-        @renderer.draw(params, @plot_data)
+        @renderer.draw(params, @plot_data, @settings.show_axis_ticks?)
       end
     end
 
@@ -104,11 +114,16 @@ module D4Plot
         open_file_dialog(window)
       end
 
+      @settings_menu_item.on_clicked do
+        open_settings_window
+      end
+
       @about_menu_item.on_clicked do |window|
         window.msg_box("About #{PROGRAM_NAME}", "#{PROGRAM_NAME}\n#{REPOSITORY_URL}")
       end
 
       UIng.on_should_quit do
+        close_settings_window
         close_current_file
         @main_window.destroy
         true
@@ -145,6 +160,37 @@ module D4Plot
       @d4_file = nil
     end
 
+    private def close_settings_window
+      @settings_window.try(&.destroy)
+      @settings_window = nil
+    end
+
+    private def open_settings_window
+      if window = @settings_window
+        window.show
+        return
+      end
+
+      settings_window = SettingsWindow.new(
+        @settings,
+        @main_window,
+        -> { settings_applied },
+        -> { @settings_window = nil }
+      )
+      @settings_window = settings_window
+      settings_window.show
+    end
+
+    private def settings_applied
+      Log.info "Plot settings: point_count=#{@settings.point_count}, show_axis_ticks=#{@settings.show_axis_ticks?}"
+
+      if @plot_data && @d4_file
+        plot_region
+      else
+        @area.queue_redraw_all
+      end
+    end
+
     private def plot_region
       return unless d4 = @d4_file
 
@@ -165,7 +211,7 @@ module D4Plot
       Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
       Log.info "Sampling mode: #{d4.has_sum_index? ? "sum index with streaming fallback" : "streaming values"}"
 
-      @plot_data = DataSampler.downsample(d4, region)
+      @plot_data = DataSampler.downsample(d4, region, @settings.point_count)
       @area.queue_redraw_all
     end
   end

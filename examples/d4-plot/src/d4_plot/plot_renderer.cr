@@ -10,11 +10,11 @@ module D4Plot
     TICK_SIZE      =  5.0
     LABEL_FONT     = UIng::FontDescriptor.new(size: 11)
 
-    def draw(params : UIng::Area::Draw::Params, data : Array(PlotPoint)?)
+    def draw(params : UIng::Area::Draw::Params, data : Array(PlotPoint)?, show_axis_ticks : Bool = true)
       ctx = params.context
       width = params.area_width
       height = params.area_height
-      margin = margin_for(width, height)
+      margin = margin_for(width, height, show_axis_ticks)
 
       clear(ctx, width, height)
 
@@ -42,7 +42,7 @@ module D4Plot
       end
 
       draw_axes(ctx, margin, plot_width, plot_height)
-      draw_ticks(ctx, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height)
+      draw_ticks(ctx, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height) if show_axis_ticks
       draw_area(ctx, points, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height)
     end
 
@@ -127,8 +127,9 @@ module D4Plot
       end
     end
 
-    private def margin_for(width, height)
-      {LABEL_MARGIN, width / 4.0, height / 4.0}.min.clamp(MIN_MARGIN, LABEL_MARGIN)
+    private def margin_for(width, height, show_axis_ticks)
+      max_margin = show_axis_ticks ? LABEL_MARGIN : DEFAULT_MARGIN
+      {max_margin, width / 4.0, height / 4.0}.min.clamp(MIN_MARGIN, max_margin)
     end
 
     private def x_for(pos, margin, min_pos, max_pos, plot_width)
