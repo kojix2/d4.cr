@@ -204,7 +204,7 @@ module D4
 
       seek(chromosome, start_pos)
       count = (stop_pos - start_pos).to_i
-      read_values(count)
+      read_values_exact(count)
     end
 
     # Check whether the file has a sum index available.
@@ -295,6 +295,23 @@ module D4
       status = LibD4.d4_index_query(@handle, LibD4::IndexKind::Sum, chromosome, start, stop, pointerof(result))
       D4.check_result(status, "Failed to query D4 sum index")
       result.sum
+    end
+
+    private def read_values_exact(count : Int32) : Array(Int32)
+      values = Array(Int32).new(count)
+      remaining = count
+
+      while remaining > 0
+        chunk = read_values(remaining)
+        if chunk.empty?
+          raise D4Error.new("Only read #{values.size} of #{count} values")
+        end
+
+        values.concat(chunk)
+        remaining -= chunk.size
+      end
+
+      values
     end
 
     private def sum_index_region_safe?(start : UInt32, stop : UInt32) : Bool
