@@ -195,6 +195,87 @@ module D4
     def values(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil) : Array(Int32)
       check_not_closed
 
+      start_pos, stop_pos = normalize_region(chromosome, start, stop)
+
+      return Array(Int32).new if start_pos >= stop_pos
+
+      seek(chromosome, start_pos)
+      count = (stop_pos - start_pos).to_i
+      read_values(count)
+    end
+
+    # Check whether the file has a sum index available.
+    def has_index? : Bool
+      has_sum_index?
+    end
+
+    # Check whether the file has a sum index available.
+    def has_sum_index? : Bool
+      has_native_index?(LibD4::IndexKind::Sum)
+    end
+
+    # Check whether the file has the requested native index available.
+    private def has_native_index?(kind : LibD4::IndexKind) : Bool
+      check_not_closed
+      result = LibD4.d4_index_check(@handle, kind)
+      return result > 0 if result >= 0
+
+      LibD4.d4_error_clear
+      false
+    end
+
+    # Query the native sum index. Raises if the sum index is not present.
+    def indexed_sum(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil) : Float64
+      check_not_closed
+      start_pos, stop_pos = normalize_region(chromosome, start, stop)
+      return 0.0 if start_pos >= stop_pos
+
+      unless has_sum_index?
+        raise D4Error.new("D4 sum index is not available")
+      end
+
+      index_query_sum(chromosome, start_pos, stop_pos)
+    end
+
+    # Sum values in a region. Uses the native sum index when available,
+    # otherwise falls back to reading values through the streaming API.
+    def sum(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil) : Float64
+      check_not_closed
+      start_pos, stop_pos = normalize_region(chromosome, start, stop)
+      return 0.0 if start_pos >= stop_pos
+
+      if has_sum_index?
+        index_query_sum(chromosome, start_pos, stop_pos)
+      else
+        values(chromosome, start_pos, stop_pos).sum.to_f
+      end
+    end
+
+    # Mean value in a region. Empty regions return 0.0.
+    def mean(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil) : Float64
+      check_not_closed
+      start_pos, stop_pos = normalize_region(chromosome, start, stop)
+      return 0.0 if start_pos >= stop_pos
+
+      sum(chromosome, start_pos, stop_pos) / (stop_pos - start_pos)
+    end
+
+    # Build the secondary frame index for the file.
+    def self.build_sfi_index(path : String)
+      result = LibD4.d4_index_build_sfi(path)
+      D4.check_result(result, "Failed to build SFI index for #{path}")
+    end
+
+    # Build the secondary frame index for the file.
+    def self.build_index(path : String)
+      build_sfi_index(path)
+    end
+
+    private def check_not_closed
+      raise D4Error.new("D4 file is closed") if @closed
+    end
+
+    private def normalize_region(chromosome : String, start : UInt32, stop : UInt32?) : Tuple(UInt32, UInt32)
       unless has_chromosome?(chromosome)
         raise D4Error.new("Chromosome '#{chromosome}' not found")
       end
@@ -204,22 +285,14 @@ module D4
 
       actual_stop = stop || chrom_size
       actual_stop = Math.min(actual_stop, chrom_size)
-
-      return Array(Int32).new if start >= actual_stop
-
-      seek(chromosome, start)
-      count = (actual_stop - start).to_i
-      read_values(count)
+      {start, actual_stop}
     end
 
-    # Build SFI index for the file
-    def self.build_index(path : String)
-      result = LibD4.d4_index_build_sfi(path)
-      D4.check_result(result, "Failed to build SFI index for #{path}")
-    end
-
-    private def check_not_closed
-      raise D4Error.new("D4 file is closed") if @closed
+    private def index_query_sum(chromosome : String, start : UInt32, stop : UInt32) : Float64
+      result = LibD4::IndexResult.new
+      status = LibD4.d4_index_query(@handle, LibD4::IndexKind::Sum, chromosome, start, stop, pointerof(result))
+      D4.check_result(status, "Failed to query D4 sum index")
+      result.sum
     end
 
     private def cleanup_lib_metadata(lib_metadata : LibD4::FileMetadata*)

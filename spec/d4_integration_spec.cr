@@ -56,4 +56,40 @@ describe "D4 integration" do
       next
     end
   end
+
+  it "queries regional sum and mean with and without a sum index" do
+    path = File.join(Dir.tempdir, "crystal_d4_index_query_test.d4")
+    File.delete(path) if File.exists?(path)
+
+    begin
+      D4.writer(path) do |w|
+        w.set_chromosomes({"chr1" => 10_u32})
+        w.write_values("chr1", 0_u32, [1, 2, 3, 4, 5])
+      end
+    rescue D4::D4Error
+      # d4binding が利用できない環境: 何も検証せず終了
+      next
+    end
+
+    D4.open(path) do |f|
+      f.has_index?.should be_false
+      f.has_sum_index?.should be_false
+      f.sum("chr1", 1_u32, 4_u32).should eq(9.0)
+      f.mean("chr1", 1_u32, 4_u32).should eq(3.0)
+      f.sum("chr1", 8_u32, 8_u32).should eq(0.0)
+      f.mean("chr1", 8_u32, 8_u32).should eq(0.0)
+
+      expect_raises(D4::D4Error, "D4 sum index is not available") do
+        f.indexed_sum("chr1", 1_u32, 4_u32)
+      end
+    end
+
+    D4.build_sfi_index(path)
+
+    D4.open(path) do |f|
+      f.has_sum_index?.should be_false
+      f.sum("chr1", 1_u32, 4_u32).should eq(9.0)
+      f.mean("chr1", 1_u32, 4_u32).should eq(3.0)
+    end
+  end
 end
