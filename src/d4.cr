@@ -76,11 +76,6 @@ module D4
     File.build_sfi_index(path)
   end
 
-  # Build the secondary frame index for a D4 file
-  def self.build_index(path : String)
-    build_sfi_index(path)
-  end
-
   # Clear any D4 library errors
   def self.clear_errors
     LibD4.d4_error_clear

@@ -33,7 +33,7 @@ describe "D4 integration" do
     end
 
     begin
-      D4.build_index(path)
+      D4.build_sfi_index(path)
     rescue D4::D4Error
       # index 未対応環境でも失敗させない
     end

@@ -266,11 +266,6 @@ module D4
       D4.check_result(result, "Failed to build SFI index for #{path}")
     end
 
-    # Build the secondary frame index for the file.
-    def self.build_index(path : String)
-      build_sfi_index(path)
-    end
-
     private def check_not_closed
       raise D4Error.new("D4 file is closed") if @closed
     end

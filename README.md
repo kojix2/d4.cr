@@ -87,8 +87,11 @@ dense_intervals = D4::File.create_dense_intervals(100_u32, [1_i32, 2_i32, 3_i32]
 ### Building indices
 
 ```crystal
-D4.build_index("data.d4")
+D4.build_sfi_index("data.d4")
 ```
+
+This builds the secondary frame index (SFI). To build a sum index for indexed
+aggregation, use `d4tools index build --sum data.d4`.
 
 ### Error handling
 
