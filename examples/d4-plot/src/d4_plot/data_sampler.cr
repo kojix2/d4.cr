@@ -23,8 +23,7 @@ module D4Plot
 
         if total_len <= npoints.to_u32
           (start0...end0_excl).each do |pos0|
-            vals = d4.values(chromosome, pos0, pos0 + 1_u32)
-            value = vals.size > 0 ? vals.sum.to_f / vals.size : 0.0
+            value = d4.mean(chromosome, pos0, pos0 + 1_u32)
             data << {pos0 + 1_u32, value}
           end
           return data
@@ -41,8 +40,7 @@ module D4Plot
           bin_end_excl = bin_start + bin_size
           bin_end_excl = end0_excl if bin_end_excl > end0_excl
           center0 = (bin_start + (bin_end_excl - 1_u32)) // 2
-          vals = d4.values(chromosome, bin_start, bin_end_excl)
-          mean_value = vals.size > 0 ? vals.sum.to_f / vals.size : 0.0
+          mean_value = d4.mean(chromosome, bin_start, bin_end_excl)
           data << {center0 + 1_u32, mean_value}
           current = bin_end_excl
         end

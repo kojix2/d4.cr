@@ -133,6 +133,7 @@ module D4Plot
       if d4 = @d4_file
         chromosomes = d4.chromosomes
         Log.info "Available chromosomes: #{chromosomes.keys.join(", ")}"
+        Log.info "Sum index: #{d4.has_sum_index? ? "available" : "not available"}"
       end
     rescue ex
       Log.error "Error loading D4 file: #{ex.message}"
@@ -162,6 +163,7 @@ module D4Plot
       end
 
       Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
+      Log.info "Sampling mode: #{d4.has_sum_index? ? "sum index" : "streaming values"}"
 
       @plot_data = DataSampler.downsample(d4, region)
       @area.queue_redraw_all
