@@ -18,6 +18,7 @@ module D4Plot
 
     @main_window : UIng::Window
     @file_button : UIng::Button
+    @chromosome_combobox : UIng::Combobox
     @region_entry : UIng::Entry
     @plot_button : UIng::Button
     @area : UIng::Area
@@ -32,6 +33,8 @@ module D4Plot
     @current_file_path : String?
     @current_region : Region?
     @chromosomes : Hash(String, UInt32)?
+    @chromosome_names : Array(String)
+    @updating_chromosome_combobox : Bool
     @plot_data : Array(PlotPoint)?
     @drag_start_x : Float64?
     @drag_start_y : Float64?
@@ -56,6 +59,7 @@ module D4Plot
       @about_menu_item = menu_items[:about]
       @main_window = UIng::Window.new(PROGRAM_NAME, 800, 600, menubar: true)
       @file_button = UIng::Button.new("Open D4 File")
+      @chromosome_combobox = UIng::Combobox.new
       @region_entry = UIng::Entry.new
       @plot_button = UIng::Button.new("Plot")
       @handler = UIng::Area::Handler.new
@@ -67,6 +71,8 @@ module D4Plot
       @current_file_path = nil
       @current_region = nil
       @chromosomes = nil
+      @chromosome_names = [] of String
+      @updating_chromosome_combobox = false
       @plot_data = nil
       @drag_start_x = nil
       @drag_start_y = nil
@@ -90,6 +96,7 @@ module D4Plot
       hbox = UIng::Box.new(:horizontal)
       hbox.padded = true
       hbox.append(@file_button, false)
+      hbox.append(@chromosome_combobox, false)
       hbox.append(@region_entry, true)
       hbox.append(@plot_button, false)
 
@@ -116,6 +123,10 @@ module D4Plot
 
       @plot_button.on_clicked do
         plot_region
+      end
+
+      @chromosome_combobox.on_selected do |index|
+        select_chromosome(index)
       end
 
       @handler.draw do |_, params|
@@ -181,6 +192,7 @@ module D4Plot
       if d4 = @d4_file
         @chromosomes = d4.chromosomes
         if chromosomes = @chromosomes
+          update_chromosome_combobox(chromosomes)
           Log.info "Available chromosomes: #{chromosomes.keys.join(", ")}"
         end
         Log.info "Sum index: #{d4.has_sum_index? ? "available" : "not available"}"
@@ -194,6 +206,8 @@ module D4Plot
       @d4_file.try(&.close)
       @d4_file = nil
       @chromosomes = nil
+      @chromosome_names.clear
+      @chromosome_combobox.clear
       @current_region = nil
       @plot_data = nil
     end
@@ -256,7 +270,60 @@ module D4Plot
 
     private def plot_region(region : Region)
       @region_entry.text = "#{region.chromosome}:#{region.start1}-#{region.end1}"
+      sync_chromosome_selection(region.chromosome)
       plot_region
+    end
+
+    private def update_chromosome_combobox(chromosomes)
+      @updating_chromosome_combobox = true
+      @chromosome_combobox.clear
+      @chromosome_names = chromosomes.keys.to_a
+
+      @chromosome_names.each do |name|
+        @chromosome_combobox.append(name)
+      end
+
+      return if @chromosome_names.empty?
+
+      first_name = @chromosome_names.first
+      @chromosome_combobox.selected = 0
+      set_default_region(first_name)
+    ensure
+      @updating_chromosome_combobox = false
+    end
+
+    private def select_chromosome(index)
+      return if @updating_chromosome_combobox
+      return if index < 0 || index >= @chromosome_names.size
+
+      chromosome = @chromosome_names[index]
+      if current = @current_region
+        length = region_length(current)
+        apply_region0(chromosome, 0_i64, length)
+      else
+        set_default_region(chromosome)
+      end
+    end
+
+    private def set_default_region(chromosome)
+      return unless chromosomes = @chromosomes
+      chrom_size = chromosomes[chromosome]?
+      return unless chrom_size
+
+      end1 = Math.min(chrom_size, 1_000_u32)
+      @region_entry.text = "#{chromosome}:1-#{end1}"
+      @current_region = nil
+      @plot_data = nil
+      @area.queue_redraw_all
+    end
+
+    private def sync_chromosome_selection(chromosome)
+      if index = @chromosome_names.index(chromosome)
+        @updating_chromosome_combobox = true
+        @chromosome_combobox.selected = index
+      end
+    ensure
+      @updating_chromosome_combobox = false
     end
 
     private def handle_mouse_event(event)
