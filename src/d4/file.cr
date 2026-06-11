@@ -23,7 +23,7 @@ module D4
     end
 
     # Open a D4 file with a block, automatically closes the file
-    def self.open(path : String, mode : String = "r", &block : File -> T) forall T
+    def self.open(path : String, mode : String = "r", & : File -> T) forall T
       file = open(path, mode)
       begin
         yield file
@@ -83,7 +83,7 @@ module D4
         D4.check_result(res, "Failed to update metadata")
         @metadata = Metadata.new(chromosomes, dict_type, denominator)
       ensure
-        allocated.each { |p| LibC.free(p.as(Void*)) unless p.null? }
+        allocated.each { |pointer| LibC.free(pointer.as(Void*)) unless pointer.null? }
         LibC.free(name_array.as(Void*)) unless name_array.null?
         LibC.free(size_array.as(Void*)) unless size_array.null?
       end
@@ -91,25 +91,28 @@ module D4
 
     def set_chromosomes(chromosomes : Array(Tuple(String, UInt32)), dict_type : DictType = DictType::SimpleRange, denominator : Float64 = 1.0)
       h = Hash(String, UInt32).new
-      chromosomes.each { |k, v| h[k] = v }
+      chromosomes.each { |key, value| h[key] = value }
       set_chromosomes(h, dict_type, denominator)
     end
 
     # Load metadata from the file
     def metadata : Metadata
-      return @metadata.not_nil! if @metadata
+      if metadata = @metadata
+        return metadata
+      end
 
       check_not_closed
       lib_metadata = LibD4::FileMetadata.new
       result = LibD4.d4_file_load_metadata(@handle, pointerof(lib_metadata))
       D4.check_result(result, "Failed to load metadata")
 
-      @metadata = Metadata.new(lib_metadata)
+      metadata = Metadata.new(lib_metadata)
+      @metadata = metadata
 
       # Clean up the C metadata structure
       cleanup_lib_metadata(pointerof(lib_metadata))
 
-      @metadata.not_nil!
+      metadata
     end
 
     # Get chromosome information

@@ -3,7 +3,7 @@ require "./file"
 module D4
   class File
     # Query intervals in a specific region with an iterator
-    def query(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil, &block : Interval -> Nil)
+    def query(chromosome : String, start : UInt32 = 0_u32, stop : UInt32? = nil, & : Interval -> Nil)
       check_not_closed
 
       unless has_chromosome?(chromosome)

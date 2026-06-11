@@ -52,8 +52,10 @@ module D4
   end
 
   # Convenience method to open a D4 file with a block
-  def self.open(path : String, mode : String = "r", &block : File -> T) forall T
-    File.open(path, mode, &block)
+  def self.open(path : String, mode : String = "r", & : File -> T) forall T
+    File.open(path, mode) do |file|
+      yield file
+    end
   end
 
   # Create a new D4 writer
@@ -62,7 +64,7 @@ module D4
   end
 
   # Create a new D4 writer with a block
-  def self.writer(path : String, &block : Writer -> T) forall T
+  def self.writer(path : String, & : Writer -> T) forall T
     writer = Writer.new(path)
     begin
       yield writer

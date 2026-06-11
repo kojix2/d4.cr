@@ -47,7 +47,7 @@ module D4Plot
     def plot_fraction(x, area_width, area_height, settings : PlotSettings) : Float64?
       margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
       width = area_width - 2 * margin
-      return nil if width <= 0
+      return if width <= 0
 
       ((x - margin) / width).clamp(0.0, 1.0)
     end
@@ -55,21 +55,21 @@ module D4Plot
     def plot_width(area_width, area_height, settings : PlotSettings) : Float64?
       margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
       width = area_width - 2 * margin
-      return nil if width <= 0
+      return if width <= 0
 
       width
     end
 
     def overview_fraction(x, y, area_width, area_height, settings : PlotSettings, region : Region?, chromosomes : Hash(String, UInt32)?) : Float64?
-      return nil if region.nil? || chromosomes.nil? || chromosomes.empty?
+      return if region.nil? || chromosomes.nil? || chromosomes.empty?
 
       margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
       overview_width = area_width - 2 * margin
-      return nil if overview_width <= 0
+      return if overview_width <= 0
 
       overview_top = margin + 3.0
       overview_bottom = margin + OVERVIEW_HEIGHT - 3.0
-      return nil if y < overview_top || y > overview_bottom
+      return if y < overview_top || y > overview_bottom
 
       ((x - margin) / overview_width).clamp(0.0, 1.0)
     end
