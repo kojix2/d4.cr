@@ -304,7 +304,10 @@ module D4
       actual_begin = ((start64 + granularity - 1) // granularity) * granularity
       actual_end = (stop64 // granularity) * granularity
 
-      actual_begin <= actual_end
+      # actual_begin == actual_end means the query crosses an index boundary
+      # but contains no complete indexed block. Native sum-index queries return
+      # misleading results for that case, so stream it instead.
+      actual_begin < actual_end
     end
 
     private def cleanup_lib_metadata(lib_metadata : LibD4::FileMetadata*)
