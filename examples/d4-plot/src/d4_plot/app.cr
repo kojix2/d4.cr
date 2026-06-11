@@ -328,11 +328,19 @@ module D4Plot
 
     private def handle_mouse_event(event)
       if event.down == LEFT_BUTTON
-        start_drag(event)
+        handle_left_button_down(event)
       elsif event.up == LEFT_BUTTON
         finish_left_button(event)
       elsif event.up == RIGHT_BUTTON
         zoom_region(event, 1.0 / ZOOM_FACTOR)
+      end
+    end
+
+    private def handle_left_button_down(event)
+      if move_region_to_overview_position(event)
+        clear_drag
+      else
+        start_drag(event)
       end
     end
 
@@ -364,6 +372,19 @@ module D4Plot
       @drag_start_x = nil
       @drag_start_y = nil
       @drag_start_region = nil
+    end
+
+    private def move_region_to_overview_position(event)
+      return false unless region = @current_region
+      return false unless fraction = @renderer.overview_fraction(event.x, event.y, event.area_width, event.area_height, @settings, region, @chromosomes)
+      return false unless chromosomes = @chromosomes
+      chrom_size = chromosomes[region.chromosome]?
+      return false unless chrom_size
+
+      region_len = region_length(region)
+      center0 = (fraction * chrom_size).round.to_i64
+      apply_region0(region.chromosome, center0 - region_len.to_i64 // 2, region_len)
+      true
     end
 
     private def zoom_region(event, factor)

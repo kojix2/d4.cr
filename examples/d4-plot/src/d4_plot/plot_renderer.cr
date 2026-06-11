@@ -50,6 +50,20 @@ module D4Plot
       width
     end
 
+    def overview_fraction(x, y, area_width, area_height, settings : PlotSettings, region : Region?, chromosomes : Hash(String, UInt32)?) : Float64?
+      return nil if region.nil? || chromosomes.nil? || chromosomes.empty?
+
+      margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
+      overview_width = area_width - 2 * margin
+      return nil if overview_width <= 0
+
+      overview_top = margin + 3.0
+      overview_bottom = margin + OVERVIEW_HEIGHT - 3.0
+      return nil if y < overview_top || y > overview_bottom
+
+      ((x - margin) / overview_width).clamp(0.0, 1.0)
+    end
+
     private def clear(ctx, width, height)
       bg_brush = UIng::Area::Draw::Brush.new(:solid, 1.0, 1.0, 1.0, 1.0)
       ctx.fill_path(bg_brush) do |path|
