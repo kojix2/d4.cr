@@ -13,6 +13,25 @@ module D4Plot
     def initialize(@chromosome : String, @start1 : UInt32, @end1 : UInt32, @kind : String, @name : String?, @strand : String?); end
   end
 
+  struct AnnotationTrack
+    getter features : Array(AnnotationFeature)
+    getter notice : String?
+
+    def initialize(@features : Array(AnnotationFeature), @notice : String? = nil); end
+
+    def self.features(features : Array(AnnotationFeature))
+      new(features)
+    end
+
+    def self.notice(message : String)
+      new([] of AnnotationFeature, message)
+    end
+
+    def empty?
+      @features.empty? && @notice.nil?
+    end
+  end
+
   class AnnotationIndex
     FEATURE_TYPES       = {"gene", "transcript", "mrna", "exon"}
     MAX_IN_MEMORY_BYTES = 32 * 1024 * 1024
@@ -67,6 +86,14 @@ module D4Plot
         break if matches.size >= limit
       end
       matches
+    end
+
+    def track_for(region : Region, max_region_size : UInt32, limit : Int32 = 300)
+      if region.length > max_region_size
+        return AnnotationTrack.notice("Zoom in to show gene annotations")
+      end
+
+      AnnotationTrack.features(overlapping(region, limit))
     end
 
     def description

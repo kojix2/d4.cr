@@ -156,8 +156,7 @@ module D4Plot
           @settings,
           @current_region,
           @chromosomes,
-          annotation_features,
-          annotation_notice
+          annotation_track
         )
       end
 
@@ -250,20 +249,11 @@ module D4Plot
       @plot_data = nil
     end
 
-    private def annotation_features
+    private def annotation_track
       return unless region = @current_region
       return unless index = @annotation_index
-      return if region_length(region) > MAX_ANNOTATION_REGION
 
-      index.overlapping(region)
-    end
-
-    private def annotation_notice
-      return unless region = @current_region
-      return unless @annotation_index
-      return unless region_length(region) > MAX_ANNOTATION_REGION
-
-      "Zoom in to show gene annotations"
+      index.track_for(region, MAX_ANNOTATION_REGION)
     end
 
     private def close_settings_window
@@ -518,7 +508,7 @@ module D4Plot
     end
 
     private def region_length(region)
-      region.end0_exclusive - region.start0
+      region.length
     end
 
     private def enter_key?(event)

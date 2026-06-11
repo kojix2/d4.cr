@@ -23,5 +23,9 @@ module D4Plot
     def end0_exclusive
       @end1
     end
+
+    def length
+      end0_exclusive - start0
+    end
   end
 end
