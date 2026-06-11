@@ -7,17 +7,20 @@ module D4Plot
     @point_count_spinbox : UIng::Spinbox
     @sum_index_checkbox : UIng::Checkbox
     @axis_ticks_checkbox : UIng::Checkbox
+    @y_axis_from_zero_checkbox : UIng::Checkbox
     @plot_color_button : UIng::ColorButton
     @apply_button : UIng::Button
     @close_button : UIng::Button
 
     def initialize(@settings : PlotSettings, @parent : UIng::Window, @on_apply : Proc(Nil), @on_close : Proc(Nil))
-      @window = UIng::Window.new("Settings", 320, 160, margined: true)
+      @window = UIng::Window.new("Settings", 340, 210, margined: true)
       @point_count_spinbox = UIng::Spinbox.new(16, 4096, @settings.point_count)
       @sum_index_checkbox = UIng::Checkbox.new("Use sum index when available")
       @sum_index_checkbox.checked = @settings.use_sum_index?
       @axis_ticks_checkbox = UIng::Checkbox.new("Show axis ticks and labels")
       @axis_ticks_checkbox.checked = @settings.show_axis_ticks?
+      @y_axis_from_zero_checkbox = UIng::Checkbox.new("Start Y axis at zero")
+      @y_axis_from_zero_checkbox.checked = @settings.y_axis_from_zero?
       @plot_color_button = UIng::ColorButton.new
       @plot_color_button.set_color(*@settings.plot_color)
       @apply_button = UIng::Button.new("Apply")
@@ -48,6 +51,7 @@ module D4Plot
       form.append("Sampling points", @point_count_spinbox)
       form.append("", @sum_index_checkbox)
       form.append("", @axis_ticks_checkbox)
+      form.append("", @y_axis_from_zero_checkbox)
       form.append("Plot color", @plot_color_button)
       group.child = form
 
@@ -80,6 +84,7 @@ module D4Plot
       @settings.point_count = @point_count_spinbox.value
       @settings.use_sum_index = @sum_index_checkbox.checked?
       @settings.show_axis_ticks = @axis_ticks_checkbox.checked?
+      @settings.y_axis_from_zero = @y_axis_from_zero_checkbox.checked?
       @settings.plot_color = @plot_color_button.color
       @on_apply.call
     end

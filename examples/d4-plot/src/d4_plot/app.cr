@@ -26,6 +26,8 @@ module D4Plot
     @settings_window : SettingsWindow?
     @d4_file : D4::File?
     @current_file_path : String?
+    @current_region : Region?
+    @chromosomes : Hash(String, UInt32)?
     @plot_data : Array(PlotPoint)?
 
     def self.create_menu_bar
@@ -56,6 +58,8 @@ module D4Plot
       @settings_window = nil
       @d4_file = nil
       @current_file_path = nil
+      @current_region = nil
+      @chromosomes = nil
       @plot_data = nil
 
       setup_ui
@@ -105,7 +109,22 @@ module D4Plot
       end
 
       @handler.draw do |_, params|
-        @renderer.draw(params, @plot_data, @settings.show_axis_ticks?, @settings.plot_color)
+        @renderer.draw(
+          params,
+          @plot_data,
+          @settings,
+          @current_region,
+          @chromosomes
+        )
+      end
+
+      @handler.key_event do |_, event|
+        if enter_key?(event)
+          plot_region
+          true
+        else
+          false
+        end
       end
     end
 
@@ -146,8 +165,10 @@ module D4Plot
       Log.info "Loaded D4 file: #{file_path}"
 
       if d4 = @d4_file
-        chromosomes = d4.chromosomes
-        Log.info "Available chromosomes: #{chromosomes.keys.join(", ")}"
+        @chromosomes = d4.chromosomes
+        if chromosomes = @chromosomes
+          Log.info "Available chromosomes: #{chromosomes.keys.join(", ")}"
+        end
         Log.info "Sum index: #{d4.has_sum_index? ? "available" : "not available"}"
       end
     rescue ex
@@ -158,6 +179,9 @@ module D4Plot
     private def close_current_file
       @d4_file.try(&.close)
       @d4_file = nil
+      @chromosomes = nil
+      @current_region = nil
+      @plot_data = nil
     end
 
     private def close_settings_window
@@ -182,7 +206,7 @@ module D4Plot
     end
 
     private def settings_applied
-      Log.info "Plot settings: point_count=#{@settings.point_count}, use_sum_index=#{@settings.use_sum_index?}, show_axis_ticks=#{@settings.show_axis_ticks?}"
+      Log.info "Plot settings: point_count=#{@settings.point_count}, use_sum_index=#{@settings.use_sum_index?}, show_axis_ticks=#{@settings.show_axis_ticks?}, y_axis_from_zero=#{@settings.y_axis_from_zero?}"
 
       if @plot_data && @d4_file
         plot_region
@@ -211,8 +235,15 @@ module D4Plot
       Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
       Log.info "Sampling mode: #{sampling_mode(d4)}"
 
+      @current_region = region
       @plot_data = DataSampler.downsample(d4, region, @settings.point_count, @settings.use_sum_index?)
       @area.queue_redraw_all
+    end
+
+    private def enter_key?(event)
+      return false if event.up != 0
+
+      event.ext_key.n_enter? || event.key == '\r' || event.key == '\n'
     end
 
     private def sampling_mode(d4)
