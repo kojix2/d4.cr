@@ -4,6 +4,9 @@ require "./types"
 module D4
   # Main class for D4 file operations
   class File
+    # d4-format builds sum_index with a fixed 65,536 bp granularity.
+    SUM_INDEX_GRANULARITY = 65_536_u32
+
     @handle : LibD4::D4File
     @metadata : Metadata?
     @closed : Bool = false
@@ -234,7 +237,11 @@ module D4
         raise D4Error.new("D4 sum index is not available")
       end
 
-      index_query_sum(chromosome, start_pos, stop_pos)
+      if sum_index_region_safe?(start_pos, stop_pos)
+        index_query_sum(chromosome, start_pos, stop_pos)
+      else
+        values(chromosome, start_pos, stop_pos).sum.to_f
+      end
     end
 
     # Sum values in a region. Uses the native sum index when available,
@@ -244,7 +251,7 @@ module D4
       start_pos, stop_pos = normalize_region(chromosome, start, stop)
       return 0.0 if start_pos >= stop_pos
 
-      if has_sum_index?
+      if has_sum_index? && sum_index_region_safe?(start_pos, stop_pos)
         index_query_sum(chromosome, start_pos, stop_pos)
       else
         values(chromosome, start_pos, stop_pos).sum.to_f
@@ -288,6 +295,16 @@ module D4
       status = LibD4.d4_index_query(@handle, LibD4::IndexKind::Sum, chromosome, start, stop, pointerof(result))
       D4.check_result(status, "Failed to query D4 sum index")
       result.sum
+    end
+
+    private def sum_index_region_safe?(start : UInt32, stop : UInt32) : Bool
+      start64 = start.to_u64
+      stop64 = stop.to_u64
+      granularity = SUM_INDEX_GRANULARITY.to_u64
+      actual_begin = ((start64 + granularity - 1) // granularity) * granularity
+      actual_end = (stop64 // granularity) * granularity
+
+      actual_begin <= actual_end
     end
 
     private def cleanup_lib_metadata(lib_metadata : LibD4::FileMetadata*)

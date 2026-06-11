@@ -163,7 +163,7 @@ module D4Plot
       end
 
       Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
-      Log.info "Sampling mode: #{d4.has_sum_index? ? "sum index" : "streaming values"}"
+      Log.info "Sampling mode: #{d4.has_sum_index? ? "sum index with streaming fallback" : "streaming values"}"
 
       @plot_data = DataSampler.downsample(d4, region)
       @area.queue_redraw_all

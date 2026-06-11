@@ -5,6 +5,10 @@ module D4Plot
   class PlotRenderer
     DEFAULT_MARGIN = 50.0
     MIN_MARGIN     = 12.0
+    LABEL_MARGIN   = 58.0
+    TICK_COUNT     =    5
+    TICK_SIZE      =  5.0
+    LABEL_FONT     = UIng::FontDescriptor.new(size: 11)
 
     def draw(params : UIng::Area::Draw::Params, data : Array(PlotPoint)?)
       ctx = params.context
@@ -38,6 +42,7 @@ module D4Plot
       end
 
       draw_axes(ctx, margin, plot_width, plot_height)
+      draw_ticks(ctx, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height)
       draw_area(ctx, points, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height)
     end
 
@@ -54,6 +59,34 @@ module D4Plot
         path.new_figure(margin, margin)
         path.line_to(margin, margin + plot_height)
         path.line_to(margin + plot_width, margin + plot_height)
+      end
+    end
+
+    private def draw_ticks(ctx, margin, min_pos, max_pos, min_val, max_val, plot_width, plot_height)
+      tick_brush = UIng::Area::Draw::Brush.new(:solid, 0.0, 0.0, 0.0, 1.0)
+
+      tick_values(min_pos, max_pos).each do |pos|
+        x = x_for(pos, margin, min_pos, max_pos, plot_width)
+        y = margin + plot_height
+
+        ctx.stroke_path(tick_brush, thickness: 1.0) do |path|
+          path.new_figure(x, y)
+          path.line_to(x, y + TICK_SIZE)
+        end
+
+        draw_label(ctx, format_position(pos), x - 36.0, y + 8.0, 72.0, UIng::Area::Draw::TextAlign::Center)
+      end
+
+      tick_values(min_val, max_val).each do |value|
+        x = margin
+        y = y_for(value, margin, min_val, max_val, plot_height)
+
+        ctx.stroke_path(tick_brush, thickness: 1.0) do |path|
+          path.new_figure(x - TICK_SIZE, y)
+          path.line_to(x, y)
+        end
+
+        draw_label(ctx, format_value(value), 2.0, y - 7.0, margin - 10.0, UIng::Area::Draw::TextAlign::Right)
       end
     end
 
@@ -95,15 +128,55 @@ module D4Plot
     end
 
     private def margin_for(width, height)
-      {DEFAULT_MARGIN, width / 4.0, height / 4.0}.min.clamp(MIN_MARGIN, DEFAULT_MARGIN)
+      {LABEL_MARGIN, width / 4.0, height / 4.0}.min.clamp(MIN_MARGIN, LABEL_MARGIN)
     end
 
     private def x_for(pos, margin, min_pos, max_pos, plot_width)
+      return margin + plot_width / 2.0 if max_pos == min_pos
+
       margin + (pos.to_f - min_pos) / (max_pos - min_pos) * plot_width
     end
 
     private def y_for(value, margin, min_val, max_val, plot_height)
       margin + plot_height - (value - min_val) / (max_val - min_val) * plot_height
+    end
+
+    private def tick_values(min, max)
+      return [min] if max == min
+
+      step = (max - min) / (TICK_COUNT - 1)
+      Array.new(TICK_COUNT) { |i| min + step * i }
+    end
+
+    private def draw_label(ctx, text, x, y, width, align)
+      UIng::Area::AttributedString.open(text) do |attr_str|
+        attr_str.set_attribute(UIng::Area::Attribute.new_color(0.15, 0.15, 0.15, 1.0), 0_u64, text.bytesize.to_u64)
+
+        UIng::Area::Draw::TextLayout.open(
+          string: attr_str,
+          default_font: LABEL_FONT,
+          width: width,
+          align: align
+        ) do |text_layout|
+          ctx.draw_text_layout(text_layout, x, y)
+        end
+      end
+    end
+
+    private def format_position(value)
+      value.round.to_u64.to_s
+    end
+
+    private def format_value(value)
+      magnitude = value.abs
+
+      if magnitude >= 1000 || (magnitude > 0 && magnitude < 0.01)
+        "%.2e" % value
+      elsif magnitude >= 10
+        "%.1f" % value
+      else
+        "%.2f" % value
+      end
     end
   end
 end
