@@ -301,15 +301,16 @@ module D4
       accumulator = bytes[0].to_u64 >> skip
       available = 8 - skip
       if dictionary.type.simple_range?
-        # A power-of-two range uses every code at this width, so no per-value bounds check is needed.
+        # The byte span covers every requested code, and each output index is within output.size.
+        # Avoid repeating those checks for every value in this hot path.
         low = dictionary.low.to_i64
         output.size.times do |index|
           while available < width
-            accumulator |= bytes[cursor].to_u64 << available
+            accumulator |= bytes.unsafe_fetch(cursor).to_u64 << available
             cursor += 1
             available += 8
           end
-          output[index] = (low + (accumulator & mask).to_i64).to_i32
+          output.unsafe_put(index, (low + (accumulator & mask).to_i64).to_i32)
           accumulator >>= width
           available -= width
         end

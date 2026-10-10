@@ -2,7 +2,7 @@ require "./spec_helper"
 
 describe "D4 format compatibility and lifecycle" do
   it "packs dense range codes and fallbacks across chunk boundaries for several widths" do
-    [1, 2, 3, 4, 7, 8].each do |width|
+    [1, 2, 3, 4, 7, 8, 9, 16, 24, 30].each do |width|
       path = File.join(Dir.tempdir, "d4-crystal-width-#{width}-#{Random.rand(1_000_000)}.d4")
       low = width == 3 ? -4_i32 : 0_i32
       values = Array(Int32).new(522, 0_i32)
@@ -10,6 +10,7 @@ describe "D4 format compatibility and lifecycle" do
         next if position == 257 || position == 258
         values[position] = position == 7 || position == 260 ? low - 1 : low + (position % (1 << width)).to_i32
       end
+      values[521] = low + ((1 << width) - 1).to_i32
       begin
         D4.create(path, chromosomes: [D4::Chromosome.new("chr", values.size.to_i64)],
           dictionary: D4::Dictionary.new(low, low + (1 << width).to_i32)) do |writer|
