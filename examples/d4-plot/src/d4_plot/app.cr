@@ -1,613 +1,538 @@
 require "uing"
 require "d4"
-require "./annotation"
-require "./data_sampler"
-require "./log"
-require "./plot_settings"
+require "./view_loader"
 require "./plot_renderer"
-require "./region"
 require "./settings_window"
+require "./log"
 
 module D4Plot
   class App
-    PROGRAM_NAME          = "D4 Plot Viewer"
-    REPOSITORY_URL        = "https://github.com/kojix2/d4.cr"
-    LEFT_BUTTON           =             1
-    RIGHT_BUTTON          =             3
-    DRAG_THRESHOLD        =           4.0
-    ZOOM_FACTOR           =           1.5
-    MIN_BINS              =            16
-    MAX_BINS              =          4096
-    MAX_ANNOTATION_REGION = 5_000_000_u32
-
-    @main_window : UIng::Window
-    @file_button : UIng::Button
-    @annotation_button : UIng::Button
-    @chromosome_combobox : UIng::Combobox
-    @region_entry : UIng::Entry
-    @point_count_label : UIng::Label
-    @point_count_entry : UIng::Entry
-    @plot_button : UIng::Button
-    @y_min_label : UIng::Label
-    @y_min_entry : UIng::Entry
-    @y_max_label : UIng::Label
-    @y_max_entry : UIng::Entry
-    @y_auto_button : UIng::Button
-    @h_line_label : UIng::Label
-    @h_line_entry : UIng::Entry
-    @h_line_add_button : UIng::Button
-    @h_line_clear_button : UIng::Button
+    PROGRAM_NAME = "D4 Plot Viewer"
+    @window : UIng::Window
     @area : UIng::Area
-    @handler : UIng::Area::Handler
-    @renderer : PlotRenderer
-    @open_menu_item : UIng::MenuItem
-    @settings_menu_item : UIng::MenuItem
-    @about_menu_item : UIng::MenuItem
-    @settings : PlotSettings
+    @handler = UIng::Area::Handler.new
+    @renderer = PlotRenderer.new
+    @settings = PlotSettings.new
     @settings_window : SettingsWindow?
-    @d4_file : D4::File?
-    @annotation_index : AnnotationIndex?
-    @current_region : Region?
-    @chromosomes : Hash(String, UInt32)?
-    @chromosome_names : Array(String)
-    @updating_chromosome_combobox : Bool
-    @plot_data : Array(PlotPoint)?
-    @drag_start_x : Float64?
-    @drag_start_y : Float64?
-    @drag_start_region : Region?
+    @loader = ViewLoader.new
+    @history = ViewHistory.new
+    @path : String?
+    @track_name = ""
+    @tracks = {} of String => Hash(String, UInt32)
+    @denominators = {} of String => Float64
+    @track_names = [] of String
+    @chromosomes = {} of String => UInt32
+    @chromosome_names = [] of String
+    @view : SampledView?
+    @annotation : AnnotationTrack?
+    @annotation_path : String?
+    @request_id = 0
+    @requested_region : Region?
+    @history_move = 0
+    @updating = false
+    @loading = false
+    @closed = false
+    @drag : Tuple(Float64, Region, Bool)?
+    @file_label = UIng::Label.new("No D4 file open")
+    @track_combo = UIng::Combobox.new
+    @chromosome_combo = UIng::Combobox.new
+    @region_entry = UIng::Entry.new
+    @go = UIng::Button.new("Go")
+    @back = UIng::Button.new("Back")
+    @forward = UIng::Button.new("Forward")
+    @left = UIng::Button.new("< Move")
+    @right = UIng::Button.new("Move >")
+    @zoom_in = UIng::Button.new("Zoom in +")
+    @zoom_out = UIng::Button.new("Zoom out −")
+    @whole = UIng::Button.new("Whole chromosome")
+    @cancel = UIng::Button.new("Cancel")
+    @export = UIng::Button.new("Export bins…")
+    @annotation_label = UIng::Label.new("No annotations — use GFF3, GTF or BED from the same assembly.")
+    @remove_annotation = UIng::Button.new("Remove")
+    @status = UIng::Label.new("Open a D4 file to begin. Coordinates are 1-based, inclusive.")
+    @inspection = UIng::Label.new("Move the pointer over the signal to inspect a bin.")
 
     def self.create_menu_bar
-      file_menu = UIng::Menu.new("File")
-      open_item = file_menu.append_item("Open")
-      settings_item = file_menu.append_preferences_item
-      file_menu.append_separator
-      file_menu.append_quit_item
-
-      help_menu = UIng::Menu.new("Help")
-      about_item = help_menu.append_about_item
-
-      {open: open_item, settings: settings_item, about: about_item}
+      file = UIng::Menu.new("File")
+      open = file.append_item("Open D4…")
+      export = file.append_item("Export displayed bins…")
+      settings = file.append_preferences_item
+      file.append_quit_item
+      help = UIng::Menu.new("Help")
+      guide = help.append_item("Navigation and data interpretation")
+      about = help.append_about_item
+      {open: open, export: export, settings: settings, guide: guide, about: about}
     end
 
     def initialize(menu_items)
-      @open_menu_item = menu_items[:open]
-      @settings_menu_item = menu_items[:settings]
-      @about_menu_item = menu_items[:about]
-      @main_window = UIng::Window.new(PROGRAM_NAME, 800, 600, menubar: true)
-      @file_button = UIng::Button.new("Open D4 File")
-      @annotation_button = UIng::Button.new("Open Annotation")
-      @chromosome_combobox = UIng::Combobox.new
-      @region_entry = UIng::Entry.new
-      @point_count_label = UIng::Label.new("Bins")
-      @point_count_entry = UIng::Entry.new
-      @plot_button = UIng::Button.new("Render")
-      @y_min_label = UIng::Label.new("Y min")
-      @y_min_entry = UIng::Entry.new
-      @y_max_label = UIng::Label.new("Y max")
-      @y_max_entry = UIng::Entry.new
-      @y_auto_button = UIng::Button.new("Auto")
-      @h_line_label = UIng::Label.new("H-lines")
-      @h_line_entry = UIng::Entry.new
-      @h_line_add_button = UIng::Button.new("Add")
-      @h_line_clear_button = UIng::Button.new("Clear")
-      @handler = UIng::Area::Handler.new
+      @window = UIng::Window.new(PROGRAM_NAME, 1120, 780, menubar: true, margined: true)
       @area = UIng::Area.new(@handler)
-      @renderer = PlotRenderer.new
-      @settings = PlotSettings.new
-      @point_count_entry.text = @settings.point_count.to_s
-      @settings_window = nil
-      @d4_file = nil
-      @annotation_index = nil
-      @current_region = nil
-      @chromosomes = nil
-      @chromosome_names = [] of String
-      @updating_chromosome_combobox = false
-      @plot_data = nil
-      @drag_start_x = nil
-      @drag_start_y = nil
-      @drag_start_region = nil
-
       setup_ui
       setup_handlers
-      setup_menu_handlers
+      menu_items[:open].on_clicked { open_file_dialog }
+      menu_items[:export].on_clicked { export_view }
+      menu_items[:settings].on_clicked { open_settings }
+      menu_items[:guide].on_clicked { show_help }
+      menu_items[:about].on_clicked { @window.msg_box(PROGRAM_NAME, "D4 genomic signal viewer\nhttps://github.com/kojix2/d4.cr") }
+      @window.on_closing { shutdown; UIng.quit; true }
+      UIng.on_should_quit { shutdown; @window.destroy; true }
+      UIng.timer(30) do
+        if @closed
+          0
+        else
+          receive_result
+          1
+        end
+      end
+      update_controls
     end
 
-    def run
-      @main_window.show
-      UIng.main
+    def run(path : String? = nil, region : String? = nil)
+      @window.show
+      load_d4_file(path, region) if path
+      # Advance both event loops: tabix pipe readers and child-process
+      # notifications need Crystal's scheduler as well as the native UI loop.
+      UIng.main_steps
+      while UIng.main_step(false)
+        sleep 8.milliseconds
+      end
+    ensure
+      shutdown
+      @loader.wait
       UIng.uninit
     end
 
+    private def row : UIng::Box
+      box = UIng::Box.new(:horizontal)
+      box.padded = true
+      box
+    end
+
     private def setup_ui
-      vbox = UIng::Box.new(:vertical)
-      vbox.padded = true
+      root = UIng::Box.new(:vertical)
+      root.padded = true
+      files = row
+      open = UIng::Button.new("Open D4…")
+      settings = UIng::Button.new("Display settings…")
+      help = UIng::Button.new("Help")
+      files.append(open, false)
+      files.append(@file_label, true)
+      files.append(UIng::Label.new("Track"), false)
+      files.append(@track_combo, false)
+      files.append(settings, false)
+      files.append(help, false)
+      open.on_clicked { open_file_dialog }
+      settings.on_clicked { open_settings }
+      help.on_clicked { show_help }
+      root.append(files, false)
 
-      hbox = UIng::Box.new(:horizontal)
-      hbox.padded = true
-      hbox.append(@file_button, false)
-      hbox.append(@annotation_button, false)
-      hbox.append(@chromosome_combobox, false)
-      hbox.append(@region_entry, true)
-      hbox.append(@point_count_label, false)
-      hbox.append(@point_count_entry, false)
-      hbox.append(@plot_button, false)
+      location = row
+      location.append(UIng::Label.new("Chromosome"), false)
+      location.append(@chromosome_combo, false)
+      location.append(UIng::Label.new("Region (1-based)"), false)
+      location.append(@region_entry, true)
+      location.append(@go, false)
+      root.append(location, false)
 
-      @region_entry.text = "chr1:1000-2000"
+      navigation = row
+      [@back, @forward, @left, @zoom_out, @zoom_in, @right, @whole, @cancel].each { |control| navigation.append(control, false) }
+      navigation.append(UIng::Label.new(""), true)
+      navigation.append(@export, false)
+      root.append(navigation, false)
 
-      vbox.append(hbox, false)
-
-      hbox2 = UIng::Box.new(:horizontal)
-      hbox2.padded = true
-      hbox2.append(@y_min_label, false)
-      hbox2.append(@y_min_entry, false)
-      hbox2.append(@y_max_label, false)
-      hbox2.append(@y_max_entry, false)
-      hbox2.append(@y_auto_button, false)
-      hbox2.append(@h_line_label, false)
-      hbox2.append(@h_line_entry, true)
-      hbox2.append(@h_line_add_button, false)
-      hbox2.append(@h_line_clear_button, false)
-      vbox.append(hbox2, false)
-
-      vbox.append(@area, true)
-
-      @main_window.child = vbox
-      @main_window.margined = true
-
-      @main_window.on_closing do
-        close_settings_window
-        close_current_file
-        UIng.quit
-        true
-      end
+      annotations = row
+      open_annotation = UIng::Button.new("Annotations…")
+      annotations.append(open_annotation, false)
+      annotations.append(@annotation_label, true)
+      annotations.append(@remove_annotation, false)
+      open_annotation.on_clicked { open_annotation_dialog }
+      root.append(annotations, false)
+      root.append(@area, true)
+      root.append(@inspection, false)
+      root.append(@status, false)
+      root.append(UIng::Label.new("Drag: pan   |   Shift+drag: select range   |   Double-click: zoom   |   Plot keys: ← → + − Home   |   Esc: cancel"), false)
+      @window.child = root
     end
 
     private def setup_handlers
-      @file_button.on_clicked do
-        open_file_dialog
+      @go.on_clicked { go_to_entry }
+      @chromosome_combo.on_selected { |index| select_chromosome(index) unless @updating }
+      @track_combo.on_selected { |index| select_track(index) unless @updating }
+      @zoom_in.on_clicked { zoom(2.0) }
+      @zoom_out.on_clicked { zoom(0.5) }
+      @left.on_clicked { move(-0.5) }
+      @right.on_clicked { move(0.5) }
+      @whole.on_clicked { whole_chromosome }
+      @back.on_clicked { history_back }
+      @forward.on_clicked { history_forward }
+      @cancel.on_clicked { cancel_loading }
+      @export.on_clicked { export_view }
+      @remove_annotation.on_clicked do
+        @annotation_path = nil
+        @annotation = nil
+        @annotation_label.text = "No annotations — use GFF3, GTF or BED from the same assembly."
+        refresh
       end
-
-      @annotation_button.on_clicked do
-        open_annotation_dialog
-      end
-
-      @plot_button.on_clicked do
-        render_region
-      end
-
-      @y_auto_button.on_clicked do
-        @y_min_entry.text = ""
-        @y_max_entry.text = ""
-        @settings.y_min = nil
-        @settings.y_max = nil
-        @area.queue_redraw_all
-      end
-
-      @h_line_add_button.on_clicked do
-        add_h_lines
-      end
-
-      @h_line_clear_button.on_clicked do
-        @settings.h_lines.clear
-        @h_line_entry.text = ""
-        @area.queue_redraw_all
-      end
-
-      @h_line_entry.on_changed do |text|
-        sync_h_lines_from_entry(text)
-      end
-
-      @chromosome_combobox.on_selected do |index|
-        select_chromosome(index)
-      end
-
-      @handler.draw do |_, params|
-        @renderer.draw(
-          params,
-          @plot_data,
-          @settings,
-          @current_region,
-          @chromosomes,
-          annotation_track
-        )
-      end
-
-      @handler.key_event do |_, event|
-        if enter_key?(event)
-          render_region
-          true
-        else
-          false
+      @handler.draw { |_, params| @renderer.draw(params, @view, @settings, @chromosomes, @annotation, @loading) }
+      @handler.mouse_event { |_, event| mouse_event(event) }
+      @handler.mouse_crossed do |_, left|
+        if left
+          @renderer.hover_index = nil
+          @area.queue_redraw_all
         end
       end
+      @handler.drag_broken { clear_drag }
+      @handler.key_event { |_, event| key_event(event) }
+    end
 
-      @handler.mouse_event do |_, event|
-        handle_mouse_event(event)
+    private def open_file_dialog
+      if path = @window.open_file
+        load_d4_file(path)
       end
     end
 
-    private def setup_menu_handlers
-      @open_menu_item.on_clicked do |window|
-        open_file_dialog(window || @main_window)
+    private def load_d4_file(path : String, region_text : String? = nil)
+      tracks = {} of String => Hash(String, UInt32)
+      denominators = {} of String => Float64
+      D4.open(path) do |file|
+        file.each_track do |track|
+          tracks[track.name] = track.chromosomes.reject { |chromosome| chromosome.size == 0 }.to_h { |chromosome| {chromosome.name, chromosome.size.to_u32} }
+          denominators[track.name] = track.metadata.denominator
+        end
       end
-
-      @settings_menu_item.on_clicked do
-        open_settings_window
-      end
-
-      @about_menu_item.on_clicked do |window|
-        window.msg_box("About #{PROGRAM_NAME}", "#{PROGRAM_NAME}\n#{REPOSITORY_URL}") if window
-      end
-
-      UIng.on_should_quit do
-        close_settings_window
-        close_current_file
-        @main_window.destroy
-        true
-      end
+      raise "This D4 file has no non-empty chromosomes." if tracks.values.all?(&.empty?)
+      cancel_loading
+      @path = path
+      @view = nil
+      @tracks = tracks
+      @denominators = denominators
+      @track_names = tracks.keys
+      @file_label.text = File.basename(path)
+      @window.title = "#{PROGRAM_NAME} — #{File.basename(path)}"
+      @annotation = nil
+      @annotation_path = nil
+      @annotation_label.text = "Assembly not recorded in D4 — choose annotations from the matching assembly."
+      @updating = true
+      @track_combo.clear
+      @track_names.each { |name| @track_combo.append(name.empty? ? "Default" : name) }
+      index = @track_names.index { |name| !tracks[name].empty? } || 0
+      @track_combo.selected = index
+      @updating = false
+      select_track(index, region_text)
+    rescue ex
+      @updating = false
+      show_error("Could not open D4 file", ex)
     end
 
-    private def open_file_dialog(window : UIng::Window = @main_window)
-      file_path = window.open_file
-      load_d4_file(file_path) if file_path && !file_path.empty?
-    end
-
-    private def open_annotation_dialog(window : UIng::Window = @main_window)
-      file_path = window.open_file
-      load_annotation_file(file_path) if file_path && !file_path.empty?
-    end
-
-    private def load_annotation_file(file_path : String)
-      @annotation_index = AnnotationIndex.load(file_path)
-      if index = @annotation_index
-        Log.info "Loaded annotation file: #{file_path} (#{index.description})"
-      end
+    private def select_track(index : Int32, region_text : String? = nil)
+      return unless name = @track_names[index]?
+      previous = active_region
+      cancel_loading
+      @track_name = name
+      @chromosomes = @tracks[name]
+      @chromosome_names = @chromosomes.keys
+      @view = nil
+      @annotation = nil
+      @history.clear
+      @updating = true
+      @chromosome_combo.clear
+      @chromosome_names.each { |chromosome| @chromosome_combo.append(chromosome) }
+      @chromosome_combo.selected = @chromosome_names.empty? ? nil : 0
+      @updating = false
       @area.queue_redraw_all
-    rescue ex
-      Log.error "Error loading annotation file: #{ex.message}"
-      @main_window.msg_box_error("Error", "Failed to load annotation file: #{ex.message}")
-    end
-
-    private def load_d4_file(file_path : String)
-      close_current_file
-      @d4_file = D4::File.open(file_path)
-
-      filename = File.basename(file_path)
-      @main_window.title = "#{PROGRAM_NAME} - #{filename}"
-
-      Log.info "Loaded D4 file: #{file_path}"
-
-      if d4 = @d4_file
-        @chromosomes = d4.chromosomes.to_h { |chromosome| {chromosome.name, chromosome.size.to_u32} }
-        if chromosomes = @chromosomes
-          update_chromosome_combobox(chromosomes)
-          Log.info "Available chromosomes: #{chromosomes.keys.join(", ")}"
-        end
-        Log.info "Sum index: #{d4.default_track.has_index?(D4::IndexKind::Sum) ? "available" : "not available"}"
+      if @chromosome_names.empty?
+        @status.text = "This track has no non-empty chromosomes. Select another track."
+        update_controls
+      elsif region_text
+        @region_entry.text = region_text
+        go_to_entry
+      elsif previous && @chromosomes[previous.chromosome]?.try { |size| previous.end1 <= size }
+        request_view(previous)
+      else
+        select_chromosome(0)
       end
+    end
+
+    private def select_chromosome(index : Int32)
+      return unless name = @chromosome_names[index]?
+      request_view(Region.new(name, 1_u32, @chromosomes[name]))
+    end
+
+    private def go_to_entry
+      request_view(Region.resolve(@region_entry.text || "", @chromosomes))
     rescue ex
-      Log.error "Error loading D4 file: #{ex.message}"
-      @main_window.msg_box_error("Error", "Failed to load D4 file: #{ex.message}")
+      show_error("Check region", ex)
     end
 
-    private def close_current_file
-      @d4_file.try(&.close)
-      @d4_file = nil
-      @chromosomes = nil
-      @chromosome_names.clear
-      @chromosome_combobox.clear
-      @current_region = nil
-      @plot_data = nil
+    private def request_view(region : Region, history_move : Int32 = 0)
+      return unless path = @path
+      region.validate!(@chromosomes)
+      rollback_history
+      @history_move = history_move
+      @requested_region = region
+      @region_entry.text = region.to_s
+      @updating = true
+      @chromosome_combo.selected = @chromosome_names.index(region.chromosome)
+      @updating = false
+      clear_drag
+      @renderer.hover_index = nil
+      @loading = true
+      @status.text = "Loading #{region}…"
+      @inspection.text = "Loading requested region; the plot retains the previous completed view."
+      @request_id = @loader.submit(path, @track_name, region, @settings.point_count, @settings.use_sum_index?, @annotation_path, @settings.annotation_feature_limit)
+      update_controls
+      @area.queue_redraw_all
     end
 
-    private def annotation_track
-      return unless region = @current_region
-      return unless index = @annotation_index
-
-      index.track_for(region, MAX_ANNOTATION_REGION, @settings.annotation_feature_limit)
+    private def receive_result
+      return unless result = @loader.poll
+      return unless result.request.id == @request_id && @loading
+      @loading = false
+      @requested_region = nil
+      if error = result.error
+        rollback_history
+        @status.text = "Read failed: #{error}"
+        restore_location
+      elsif view = result.view
+        @view = view
+        @annotation = result.annotation_track
+        @history.record(view.region) if @history_move == 0
+        @history_move = 0
+        @region_entry.text = view.region.to_s
+        denominator = @denominators[@track_name]
+        scaling = denominator == 1 ? "" : " | D4 scale: ÷#{DisplayFormat.value(denominator)}"
+        @status.text = "#{DisplayFormat.position(view.region.length)} bp | #{view.points.size} bins | Region mean: #{DisplayFormat.value(view.mean)} | #{result.elapsed_ms.round(1)} ms#{scaling}"
+        @inspection.text = "#{view.resolution}. Hover to inspect; zoom in to resolve peaks within a bin."
+      end
+      update_controls
+      @area.queue_redraw_all
     end
 
-    private def close_settings_window
-      @settings_window.try(&.destroy)
-      @settings_window = nil
+    private def active_region : Region?
+      @requested_region || @view.try(&.region)
     end
 
-    private def open_settings_window
+    private def zoom(factor : Float64, fraction : Float64 = 0.5)
+      return unless region = active_region
+      length = Math.max((region.length / factor).round.to_i64, 1_i64)
+      left = (region.start0 + region.length * fraction - length * fraction).round.to_i64
+      request_view(Region.bounded(region.chromosome, left, length, @chromosomes[region.chromosome]))
+    end
+
+    private def move(fraction : Float64)
+      return unless region = active_region
+      delta = (region.length * fraction).round.to_i64
+      delta = fraction < 0 ? -1_i64 : 1_i64 if delta == 0
+      request_view(Region.bounded(region.chromosome, region.start0.to_i64 + delta, region.length.to_i64, @chromosomes[region.chromosome]))
+    end
+
+    private def whole_chromosome
+      return unless region = active_region
+      request_view(Region.new(region.chromosome, 1_u32, @chromosomes[region.chromosome]))
+    end
+
+    private def history_back
+      return if @loading
+      if region = @history.back
+        request_view(region, -1)
+      end
+    end
+
+    private def history_forward
+      return if @loading
+      if region = @history.forward
+        request_view(region, 1)
+      end
+    end
+
+    private def rollback_history
+      @history.forward if @history_move == -1
+      @history.back if @history_move == 1
+      @history_move = 0
+    end
+
+    private def cancel_loading
+      @loader.cancel
+      @loading = false
+      @requested_region = nil
+      rollback_history
+      restore_location
+      @status.text = "Loading cancelled; previous view retained."
+      update_controls
+      @area.queue_redraw_all
+    end
+
+    private def restore_location
+      if view = @view
+        @region_entry.text = view.region.to_s
+        @inspection.text = "#{view.resolution}. Hover to inspect a bin."
+        @updating = true
+        @chromosome_combo.selected = @chromosome_names.index(view.region.chromosome)
+        @updating = false
+      end
+    end
+
+    private def open_annotation_dialog
+      return unless @path
+      if path = @window.open_file
+        @annotation_path = path
+        @annotation_label.text = "#{File.basename(path)} | chromosome names must match; verify the reference assembly."
+        refresh
+      end
+    end
+
+    private def refresh
+      if region = active_region
+        request_view(region)
+      else
+        update_controls
+        @area.queue_redraw_all
+      end
+    end
+
+    private def open_settings
       if window = @settings_window
         window.show
-        return
-      end
-
-      settings_window = SettingsWindow.new(
-        @settings,
-        @main_window,
-        -> { settings_applied },
-        -> { @settings_window = nil }
-      )
-      @settings_window = settings_window
-      settings_window.show
-    end
-
-    private def settings_applied
-      apply_top_controls
-      Log.info "Plot settings: point_count=#{@settings.point_count}, annotation_feature_limit=#{@settings.annotation_feature_limit}, use_sum_index=#{@settings.use_sum_index?}, show_axis_ticks=#{@settings.show_axis_ticks?}, y_axis_from_zero=#{@settings.y_axis_from_zero?}"
-
-      if @plot_data && @d4_file
-        plot_region
       else
-        @area.queue_redraw_all
+        window = SettingsWindow.new(@settings, @window, -> { refresh }, -> { @settings_window = nil })
+        @settings_window = window
+        window.show
       end
     end
 
-    private def render_region
-      return unless @d4_file
-
-      apply_top_controls
-      clear_drag
-      @plot_data = nil
-      plot_region
-    end
-
-    private def plot_region
-      region_text = @region_entry.text
-      return unless region_text
-
-      region = Region.parse(region_text)
-      unless region
-        @main_window.msg_box_error("Error", "Invalid region format. Use: chr1:1000-2000")
-        return
-      end
-
-      unless region.valid?
-        @main_window.msg_box_error("Error", "Invalid region (must be 1-based inclusive: start >=1 and start <= end)")
-        return
-      end
-
-      plot_region(region, sync_chromosome: true)
-    end
-
-    private def plot_region(region : Region)
-      @region_entry.text = "#{region.chromosome}:#{region.start1}-#{region.end1}"
-      plot_region(region, sync_chromosome: false)
-    end
-
-    private def plot_region(region : Region, sync_chromosome : Bool)
-      return unless d4 = @d4_file
-
-      apply_top_controls
-      Log.info "Plotting region (user 1-based): #{region.chromosome}:#{region.start1}-#{region.end1} -> internal 0-based half-open: #{region.start0}-#{region.end0_exclusive}"
-      Log.info "Sampling mode: #{sampling_mode(d4)}"
-
-      sync_chromosome_selection(region.chromosome) if sync_chromosome
-      @current_region = region
-      @plot_data = DataSampler.downsample(d4, region, @settings.point_count, @settings.use_sum_index?)
-      @area.queue_redraw_all
-    end
-
-    private def apply_top_controls
-      @settings.point_count = point_count_from_entry
-      @point_count_entry.text = @settings.point_count.to_s
-      apply_y_range_controls
-    end
-
-    private def apply_y_range_controls
-      @settings.y_min = float_from_entry(@y_min_entry)
-      @settings.y_max = float_from_entry(@y_max_entry)
-      if y_min = @settings.y_min
-        if y_max = @settings.y_max
-          if y_max <= y_min
-            Log.error "Y max must be greater than Y min (got min=#{y_min}, max=#{y_max}); ignoring Y range"
-            @settings.y_min = nil
-            @settings.y_max = nil
+    private def export_view
+      return unless view = @view
+      return if @loading
+      if path = @window.save_file
+        [@path, @annotation_path].compact.each do |source|
+          if File.expand_path(path) == File.expand_path(source) || (File.exists?(path) && File.same?(path, source))
+            raise "Choose a different path from the input D4 or annotation file."
           end
         end
-      end
-    end
-
-    private def float_from_entry(entry : UIng::Entry) : Float64?
-      text = (entry.text || "").strip
-      return if text.empty?
-
-      value = text.to_f?
-      unless value
-        Log.error "Invalid number: #{text}"
-        return
-      end
-
-      value
-    end
-
-    private def sync_h_lines_from_entry(text : String)
-      @settings.h_lines = parse_h_lines(text)
-      @area.queue_redraw_all
-    end
-
-    private def add_h_lines
-      text = @h_line_entry.text || ""
-      new_values = parse_h_lines(text)
-      merged = (@settings.h_lines + new_values).uniq.sort!
-      @settings.h_lines = merged
-      @h_line_entry.text = merged.join(",")
-      @area.queue_redraw_all
-    end
-
-    private def parse_h_lines(text : String) : Array(Float64)
-      text.split(/[\s,;]+/).map(&.strip).reject(&.empty?).compact_map do |token|
-        value = token.to_f?
-        unless value
-          Log.error "Invalid h-line value: #{token}"
+        File.open(path, "w") do |io|
+          io << "# Source: " << (@path || "").gsub(/[\r\n]/, " ") << "; track: " << @track_name.gsub(/[\r\n]/, " ") << '\n'
+          view.write_bedgraph(io)
         end
-        value
-      end.sort!
-    end
-
-    private def point_count_from_entry
-      text = @point_count_entry.text || ""
-      value = text.to_i?
-      return @settings.point_count unless value
-
-      value.clamp(MIN_BINS, MAX_BINS)
-    end
-
-    private def update_chromosome_combobox(chromosomes)
-      @updating_chromosome_combobox = true
-      @chromosome_combobox.clear
-      @chromosome_names = chromosomes.keys.to_a
-
-      @chromosome_names.each do |name|
-        @chromosome_combobox.append(name)
+        @status.text = "Exported #{view.points.size} bin means to #{File.basename(path)} (bedGraph, 0-based half-open)."
       end
-
-      return if @chromosome_names.empty?
-
-      first_name = @chromosome_names.first
-      @chromosome_combobox.selected = 0
-      set_default_region(first_name)
-    ensure
-      @updating_chromosome_combobox = false
+    rescue ex
+      show_error("Could not export bins", ex)
     end
 
-    private def select_chromosome(index)
-      return if @updating_chromosome_combobox
-      return if index < 0 || index >= @chromosome_names.size
-
-      chromosome = @chromosome_names[index]
-      if current = @current_region
-        return if current.chromosome == chromosome
+    private def update_controls
+      ready = !@path.nil? && !@chromosomes.empty?
+      [@go, @left, @right, @zoom_in, @zoom_out, @whole].each do |control|
+        ready ? control.enable : control.disable
       end
-
-      set_default_region(chromosome)
+      ready ? @chromosome_combo.enable : @chromosome_combo.disable
+      ready ? @region_entry.enable : @region_entry.disable
+      @track_names.size > 1 ? @track_combo.enable : @track_combo.disable
+      @loading ? @cancel.enable : @cancel.disable
+      @view && !@loading ? @export.enable : @export.disable
+      update_history_controls
+      @annotation_path ? @remove_annotation.enable : @remove_annotation.disable
     end
 
-    private def set_default_region(chromosome)
-      return unless chromosomes = @chromosomes
-      chrom_size = chromosomes[chromosome]?
-      return unless chrom_size && chrom_size > 0
-
-      plot_region(Region.new(chromosome, 1_u32, chrom_size))
+    private def update_history_controls
+      @history.back? && !@loading ? @back.enable : @back.disable
+      @history.forward? && !@loading ? @forward.enable : @forward.disable
     end
 
-    private def sync_chromosome_selection(chromosome)
-      if index = @chromosome_names.index(chromosome)
-        return if @chromosome_combobox.selected == index
-
-        @updating_chromosome_combobox = true
-        @chromosome_combobox.selected = index
-      end
-    ensure
-      @updating_chromosome_combobox = false
-    end
-
-    private def handle_mouse_event(event)
-      if event.down == LEFT_BUTTON
-        handle_left_button_down(event)
-      elsif event.up == LEFT_BUTTON
-        finish_left_button(event)
-      elsif event.up == RIGHT_BUTTON
-        zoom_region(event, 1.0 / ZOOM_FACTOR)
-      end
-    end
-
-    private def handle_left_button_down(event)
-      if move_region_to_overview_position(event)
-        clear_drag
+    private def mouse_event(event)
+      return unless view = @view
+      return if @loading
+      layout = @renderer.geometry(event.area_width, event.area_height, @annotation)
+      fraction = layout.fraction(event.x)
+      inside = layout.contains?(event.x, event.y)
+      if inside
+        index = view.bin_at(fraction)
+        @inspection.text = view.inspect_bin(index)
+        @renderer.hover_index = index
       else
-        start_drag(event)
+        @renderer.hover_index = nil
+      end
+      if event.down == 1
+        start_mouse_action(event, view.region, layout, fraction, inside)
+      elsif event.up == 1
+        finish_drag(fraction, layout)
+      elsif event.up == 3 && inside
+        zoom(0.5, fraction)
+      elsif drag = @drag
+        @renderer.selection = {drag[0], fraction} if drag[2]
+      end
+      @area.queue_redraw_all
+    end
+
+    private def start_mouse_action(event, region, layout, fraction, inside)
+      if event.y >= 34 && event.y <= 56 && event.x >= layout.left && event.x <= layout.left + layout.width
+        size = @chromosomes[region.chromosome]
+        left = (fraction * size - region.length / 2).round.to_i64
+        request_view(Region.bounded(region.chromosome, left, region.length.to_i64, size))
+      elsif inside
+        if event.count == 2
+          zoom(2.0, fraction)
+        else
+          @drag = {fraction, region, event.modifiers.shift?}
+        end
       end
     end
 
-    private def start_drag(event)
-      return unless region = @current_region
-
-      @drag_start_x = event.x
-      @drag_start_y = event.y
-      @drag_start_region = region
-    end
-
-    private def finish_left_button(event)
-      start_x = @drag_start_x
-      start_y = @drag_start_y
-      start_region = @drag_start_region
+    private def finish_drag(fraction, layout)
+      drag = @drag
       clear_drag
-      return unless start_x && start_y && start_region
-
-      dx = event.x - start_x
-      dy = event.y - start_y
-      if Math.sqrt(dx * dx + dy * dy) >= DRAG_THRESHOLD
-        pan_region(start_region, dx, event.area_width, event.area_height)
+      return unless drag
+      start, region, selecting = drag
+      return if (fraction - start).abs * layout.width < 4
+      if selecting
+        left, right = {start, fraction}.minmax
+        start0 = region.start0.to_i64 + (left * region.length).floor.to_i64
+        end0 = region.start0.to_i64 + (right * region.length).ceil.to_i64
+        request_view(Region.bounded(region.chromosome, start0, end0 - start0, @chromosomes[region.chromosome]))
       else
-        zoom_region(event, ZOOM_FACTOR)
+        left = region.start0.to_i64 + ((start - fraction) * region.length).round.to_i64
+        request_view(Region.bounded(region.chromosome, left, region.length.to_i64, @chromosomes[region.chromosome]))
       end
     end
 
     private def clear_drag
-      @drag_start_x = nil
-      @drag_start_y = nil
-      @drag_start_region = nil
+      @drag = nil
+      @renderer.selection = nil
     end
 
-    private def move_region_to_overview_position(event)
-      return false unless region = @current_region
-      return false unless fraction = @renderer.overview_fraction(event.x, event.y, event.area_width, event.area_height, @settings, region, @chromosomes)
-      return false unless chromosomes = @chromosomes
-      chrom_size = chromosomes[region.chromosome]?
-      return false unless chrom_size
-
-      region_len = region_length(region)
-      center0 = (fraction * chrom_size).round.to_i64
-      apply_region0(region.chromosome, center0 - region_len.to_i64 // 2, region_len)
+    private def key_event(event) : Bool
+      return false if event.up?
+      case event.ext_key
+      when UIng::Area::ExtKey::Left   then move(-0.5)
+      when UIng::Area::ExtKey::Right  then move(0.5)
+      when UIng::Area::ExtKey::Home   then whole_chromosome
+      when UIng::Area::ExtKey::Escape then cancel_loading
+      else
+        case event.key
+        when '+', '='   then zoom(2.0)
+        when '-'        then zoom(0.5)
+        when '\r', '\n' then go_to_entry
+        else                 return false
+        end
+      end
       true
     end
 
-    private def zoom_region(event, factor)
-      return unless region = @current_region
-      return unless fraction = @renderer.plot_fraction(event.x, event.area_width, event.area_height, @settings)
-
-      region_len = region_length(region)
-      new_len = (region_len / factor).round.to_i64
-      new_len = 1_i64 if new_len < 1_i64
-      anchor0 = region.start0.to_f + region_len * fraction
-      new_start0 = (anchor0 - new_len * fraction).round.to_i64
-      apply_region0(region.chromosome, new_start0, new_len)
+    private def show_help
+      @window.msg_box("Using D4 Plot", "Open a D4 file and select its track and chromosome.\nEnter chr:start-end, chr:position, or a chromosome name, then click Go. Commas in coordinates are accepted.\n\nCoordinates in the viewer are 1-based and inclusive. The signal shows the mean in each bin, with the D4 denominator applied. Zoom in to resolve narrow peaks; a flat bin can contain variation.\n\nDrag to pan; Shift+drag to select a range; double-click to zoom in; right-click to zoom out. Click the chromosome overview to jump. Back and Forward restore visited regions. Keyboard navigation works when the plot has focus.\n\nDisplay settings control resolution and Y scale. Use a fixed Y scale when comparing regions. D4 does not identify the reference assembly here: annotations must use the same assembly and exact chromosome names.\n\nExport bins writes the displayed means as bedGraph (0-based, half-open), not the original per-base signal.")
     end
 
-    private def pan_region(region, dx, area_width, area_height)
-      return unless plot_width = @renderer.plot_width(area_width, area_height, @settings)
-      return if plot_width <= 0
-
-      region_len = region_length(region)
-      delta = (-dx / plot_width * region_len).round.to_i64
-      apply_region0(region.chromosome, region.start0.to_i64 + delta, region_len.to_u32)
+    private def show_error(title, error)
+      message = error.message || error.class.name
+      @status.text = message
+      @window.msg_box_error(title, message)
     end
 
-    private def apply_region0(chromosome, start0, length)
-      return unless chromosomes = @chromosomes
-      chrom_size = chromosomes[chromosome]?
-      return unless chrom_size && chrom_size > 0
-
-      length = chrom_size if length > chrom_size
-      max_start0 = chrom_size - length
-      clamped_start0 = start0.clamp(0_i64, max_start0.to_i64).to_u32
-      new_region = Region.new(chromosome, clamped_start0 + 1_u32, clamped_start0 + length)
-      plot_region(new_region)
-    end
-
-    private def region_length(region)
-      region.length
-    end
-
-    private def enter_key?(event)
-      return false if event.up?
-
-      event.ext_key.try(&.n_enter?) || event.key == '\r' || event.key == '\n'
-    end
-
-    private def sampling_mode(d4)
-      if @settings.use_sum_index? && d4.default_track.has_index?(D4::IndexKind::Sum)
-        "indexed bins for wide regions; streaming bins for narrow regions"
-      else
-        "streaming values"
-      end
+    private def shutdown
+      return if @closed
+      @closed = true
+      @settings_window.try(&.destroy)
+      @settings_window = nil
+      @loader.close
     end
   end
 end

@@ -1,350 +1,167 @@
 require "uing"
-require "./annotation"
 require "./annotation_renderer"
-require "./data_sampler"
 require "./plot_settings"
-require "./region"
+require "./plot_geometry"
+require "./view"
 
 module D4Plot
   class PlotRenderer
-    DEFAULT_MARGIN   = 50.0
-    MIN_MARGIN       = 12.0
-    LABEL_MARGIN     = 58.0
-    TICK_COUNT       =    5
-    TICK_SIZE        =  5.0
-    X_TICK_LABEL_GAP = 28.0
-    OVERVIEW_HEIGHT  = 24.0
-    OVERVIEW_GAP     = 16.0
+    property hover_index : Int32? = nil
+    property selection : Tuple(Float64, Float64)? = nil
 
     def initialize
       @annotation_renderer = AnnotationRenderer.new
     end
 
-    def draw(
-      params : UIng::Area::Draw::Params,
-      data : Array(PlotPoint)?,
-      settings : PlotSettings,
-      region : Region? = nil,
-      chromosomes : Hash(String, UInt32)? = nil,
-      annotation_track : AnnotationTrack? = nil,
-    )
+    def geometry(width, height, annotation_track : AnnotationTrack?) : PlotGeometry
+      PlotGeometry.new(width, height, AnnotationRenderer.height_for(annotation_track))
+    end
+
+    def draw(params, view : SampledView?, settings : PlotSettings, chromosomes : Hash(String, UInt32), annotation_track : AnnotationTrack?, loading : Bool)
       ctx = params.context
-      width = params.area_width
-      height = params.area_height
-      margin = margin_for(width, height, settings.show_axis_ticks?)
-
-      clear(ctx, width, height)
-      overview_height = draw_overview(ctx, margin, width, region, chromosomes)
-      annotation_height = AnnotationRenderer.height_for(annotation_track)
-
-      if points = data
-        draw_plot(ctx, points, margin, width, height, overview_height, annotation_height, settings) unless points.empty?
+      width, height = params.area_width, params.area_height
+      ctx.fill_path(brush(1.0, 1.0, 1.0)) { |path| path.add_rectangle(0, 0, width, height) }
+      unless view
+        title = loading ? "Loading signal…" : "Open a D4 file to explore genomic signal"
+        label(ctx, title, 20.0, height / 2 - 40, width - 40, :center, 17.0)
+        label(ctx, "Choose a chromosome, then enter a region or use the zoom controls.", 20.0, height / 2, width - 40, :center)
+        return
       end
-
-      draw_annotation_track(ctx, annotation_track, margin, width, height, overview_height, annotation_height, region)
-    end
-
-    def plot_fraction(x, area_width, area_height, settings : PlotSettings) : Float64?
-      margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
-      width = area_width - 2 * margin
-      return if width <= 0
-
-      ((x - margin) / width).clamp(0.0, 1.0)
-    end
-
-    def plot_width(area_width, area_height, settings : PlotSettings) : Float64?
-      margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
-      width = area_width - 2 * margin
-      return if width <= 0
-
-      width
-    end
-
-    def overview_fraction(x, y, area_width, area_height, settings : PlotSettings, region : Region?, chromosomes : Hash(String, UInt32)?) : Float64?
-      return if region.nil? || chromosomes.nil? || chromosomes.empty?
-
-      margin = margin_for(area_width, area_height, settings.show_axis_ticks?)
-      overview_width = area_width - 2 * margin
-      return if overview_width <= 0
-
-      overview_top = margin + 3.0
-      overview_bottom = margin + OVERVIEW_HEIGHT - 3.0
-      return if y < overview_top || y > overview_bottom
-
-      ((x - margin) / overview_width).clamp(0.0, 1.0)
-    end
-
-    private def clear(ctx, width, height)
-      bg_brush = UIng::Area::Draw::Brush.new(:solid, 1.0, 1.0, 1.0, 1.0)
-      ctx.fill_path(bg_brush) do |path|
-        path.add_rectangle(0, 0, width, height)
-      end
-    end
-
-    private def draw_overview(ctx, margin, width, region, chromosomes)
-      return 0.0 if region.nil? || chromosomes.nil? || chromosomes.empty?
-
-      draw_genome_overview(ctx, margin, margin, width - 2 * margin, OVERVIEW_HEIGHT, region, chromosomes)
-      OVERVIEW_HEIGHT
-    end
-
-    private def draw_plot(ctx, points, margin, width, height, overview_height, annotation_height, settings)
-      plot_left, plot_top, plot_width, plot_height = plot_layout(margin, width, height, overview_height, annotation_height)
-      return if plot_width <= 0 || plot_height <= 0
-
-      min_pos = points.first[0].to_f
-      max_pos = points.last[0].to_f
-      min_val, max_val = y_range(points.min_of(&.[1]), points.max_of(&.[1]), settings)
-
-      draw_axes(ctx, plot_left, plot_top, plot_width, plot_height)
-
+      layout = geometry(width, height, annotation_track)
+      region = view.region
+      label(ctx, "#{region.chromosome}:#{DisplayFormat.position(region.start1)}–#{DisplayFormat.position(region.end1)}  |  #{DisplayFormat.position(region.length)} bp", layout.left, 8.0, layout.width, :left, 13.0)
+      draw_overview(ctx, layout, region, chromosomes)
+      range = settings.y_range(view.points.min_of(&.[1]), view.points.max_of(&.[1]))
+      label(ctx, "Mean signal", layout.left, layout.top - 22, 160.0)
+      scale = settings.y_min ? "Fixed Y scale" : "Auto Y scale"
+      label(ctx, "#{view.resolution}  |  #{scale}", layout.left + 160, layout.top - 22, Math.max(layout.width - 160, 1.0), :right)
+      draw_grid(ctx, layout, range)
       ctx.save
-      ctx.clip_path do |path|
-        path.add_rectangle(plot_left, plot_top, plot_width, plot_height)
-      end
-      draw_h_lines(ctx, settings.h_lines, plot_left, plot_top, min_val, max_val, plot_width, plot_height)
-      draw_area(ctx, points, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height, settings.plot_color)
+      ctx.clip_path { |path| path.add_rectangle(layout.left, layout.top, layout.width, layout.height) }
+      draw_bins(ctx, view, layout, range, settings)
+      draw_reference_lines(ctx, layout, range, settings)
+      draw_inspection(ctx, view, layout)
       ctx.restore
-
-      draw_ticks(ctx, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height) if settings.show_axis_ticks?
-    end
-
-    private def plot_layout(margin, width, height, overview_height, annotation_height)
-      overview_gap = overview_height > 0 ? OVERVIEW_GAP : 0.0
-      plot_left = margin
-      plot_top = margin + overview_height + overview_gap
-      plot_width = width - 2 * margin
-      reserved = annotation_height > 0 ? annotation_height + annotation_gap : 0.0
-      plot_height = height - plot_top - margin - reserved
-      {plot_left, plot_top, plot_width, plot_height}
-    end
-
-    private def draw_axes(ctx, plot_left, plot_top, plot_width, plot_height)
-      axis_brush = UIng::Area::Draw::Brush.new(:solid, 0.0, 0.0, 0.0, 1.0)
-      ctx.stroke_path(axis_brush, thickness: 1.0) do |path|
-        path.new_figure(plot_left, plot_top)
-        path.line_to(plot_left, plot_top + plot_height)
-        path.line_to(plot_left + plot_width, plot_top + plot_height)
+      draw_ticks(ctx, layout, region)
+      annotation_height = AnnotationRenderer.height_for(annotation_track)
+      @annotation_renderer.draw(ctx, annotation_track, region, layout.left, layout.annotation_top, layout.width, annotation_height)
+      if loading
+        label(ctx, "Loading requested region… previous view shown", layout.left, layout.top + 8, layout.width, :center)
       end
     end
 
-    private def draw_h_lines(ctx, h_lines, plot_left, plot_top, min_val, max_val, plot_width, plot_height)
-      return if h_lines.empty?
+    private def draw_overview(ctx, layout, region, chromosomes)
+      return unless size = chromosomes[region.chromosome]?
+      return if size == 0
+      y = 38.0
+      ctx.fill_path(brush(0.89, 0.91, 0.94)) { |path| path.add_rectangle(layout.left, y, layout.width, 14) }
+      x = layout.left + region.start0.to_f / size * layout.width
+      width = Math.max(region.length.to_f / size * layout.width, 2.0)
+      x = Math.min(x, layout.left + layout.width - width)
+      ctx.fill_path(brush(0.12, 0.4, 0.68, 0.8)) { |path| path.add_rectangle(x, y - 2, width, 18) }
+      label(ctx, "1", layout.left, y + 18, 80.0)
+      label(ctx, "#{DisplayFormat.position(size)} bp", layout.left + layout.width - 130, y + 18, 130.0, :right)
+    end
 
-      line_brush = UIng::Area::Draw::Brush.new(:solid, 0.85, 0.2, 0.2, 0.9)
-      h_lines.each do |value|
-        next if value < min_val || value > max_val
-
-        y = y_for(value, plot_top, min_val, max_val, plot_height)
-        ctx.stroke_path(line_brush, thickness: 1.0) do |path|
-          path.new_figure(plot_left, y)
-          path.line_to(plot_left + plot_width, y)
+    private def draw_grid(ctx, layout, range)
+      low, high = range
+      5.times do |index|
+        value = low + (high - low) * index / 4
+        y = y_for(value, layout, range)
+        ctx.stroke_path(brush(0.88, 0.9, 0.92), thickness: 1.0) do |path|
+          path.new_figure(layout.left, y)
+          path.line_to(layout.left + layout.width, y)
         end
-
-        label_y = y - 14.0
-        label_y = plot_top + 1.0 if label_y < plot_top
-        draw_label(ctx, format_value(value), plot_left + plot_width - 44.0, label_y, 40.0, UIng::Area::Draw::TextAlign::Right)
+        label(ctx, "%.3g" % value, 2.0, y - 8, layout.left - 12, :right)
       end
     end
 
-    private def draw_ticks(ctx, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height)
-      tick_brush = UIng::Area::Draw::Brush.new(:solid, 0.0, 0.0, 0.0, 1.0)
-
-      tick_values(min_pos, max_pos).each do |pos|
-        x = x_for(pos, plot_left, min_pos, max_pos, plot_width)
-        y = plot_top + plot_height
-
-        ctx.stroke_path(tick_brush, thickness: 1.0) do |path|
-          path.new_figure(x, y)
-          path.line_to(x, y + TICK_SIZE)
+    private def draw_bins(ctx, view, layout, range, settings)
+      red, green, blue, alpha = settings.plot_color
+      baseline = y_for(0.0.clamp(range[0], range[1]), layout, range)
+      ctx.fill_path(brush(red, green, blue, alpha * 0.25)) do |path|
+        path.new_figure(layout.left, baseline)
+        view.points.each_with_index do |point, index|
+          left, right = view.bin_edges(index)
+          y = y_for(point[1], layout, range)
+          path.line_to(layout.x_for(left, view.region), y)
+          path.line_to(layout.x_for(right, view.region), y)
         end
-
-        draw_label(ctx, format_position(pos), x - 36.0, y + 8.0, 72.0, UIng::Area::Draw::TextAlign::Center)
+        path.line_to(layout.left + layout.width, baseline)
+        path.close_figure
       end
-
-      tick_values(min_val, max_val).each do |value|
-        x = plot_left
-        y = y_for(value, plot_top, min_val, max_val, plot_height)
-
-        ctx.stroke_path(tick_brush, thickness: 1.0) do |path|
-          path.new_figure(x - TICK_SIZE, y)
-          path.line_to(x, y)
-        end
-
-        draw_label(ctx, format_value(value), 2.0, y - 7.0, plot_left - 10.0, UIng::Area::Draw::TextAlign::Right)
-      end
-    end
-
-    private def draw_area(ctx, points, plot_left, plot_top, min_pos, max_pos, min_val, max_val, plot_width, plot_height, plot_color)
-      return unless points.size > 1
-
-      red, green, blue, alpha = plot_color
-      area_brush = UIng::Area::Draw::Brush.new(:solid, red, green, blue, alpha * 0.3)
-      line_brush = UIng::Area::Draw::Brush.new(:solid, red, green, blue, alpha)
-
-      ctx.fill_path(area_brush) do |path|
-        first_x = x_for(points.first[0], plot_left, min_pos, max_pos, plot_width)
-        path.new_figure(first_x, plot_top + plot_height)
-
-        points.each do |pos, val|
-          path.line_to(
-            x_for(pos, plot_left, min_pos, max_pos, plot_width),
-            y_for(val, plot_top, min_val, max_val, plot_height)
-          )
-        end
-
-        last_x = x_for(points.last[0], plot_left, min_pos, max_pos, plot_width)
-        path.line_to(last_x, plot_top + plot_height)
-      end
-
-      ctx.stroke_path(line_brush, thickness: 2.0) do |path|
-        first_pos, first_val = points.first
-        path.new_figure(
-          x_for(first_pos, plot_left, min_pos, max_pos, plot_width),
-          y_for(first_val, plot_top, min_val, max_val, plot_height)
-        )
-
-        points[1..].each do |pos, val|
-          path.line_to(
-            x_for(pos, plot_left, min_pos, max_pos, plot_width),
-            y_for(val, plot_top, min_val, max_val, plot_height)
-          )
+      ctx.stroke_path(brush(red, green, blue, alpha), thickness: 1.5) do |path|
+        path.new_figure(layout.left, y_for(view.points.first[1], layout, range))
+        view.points.each_with_index do |point, index|
+          left, right = view.bin_edges(index)
+          y = y_for(point[1], layout, range)
+          path.line_to(layout.x_for(left, view.region), y)
+          path.line_to(layout.x_for(right, view.region), y)
         end
       end
     end
 
-    private def draw_genome_overview(ctx, x, y, width, height, region : Region, chromosomes : Hash(String, UInt32))
-      chromosome_size = chromosomes[region.chromosome]?
-      return unless chromosome_size
-      return if chromosome_size == 0 || width <= 0
-
-      bar_brush = UIng::Area::Draw::Brush.new(:solid, 0.83, 0.85, 0.88, 1.0)
-      outline_brush = UIng::Area::Draw::Brush.new(:solid, 0.32, 0.34, 0.36, 1.0)
-      highlight_brush = UIng::Area::Draw::Brush.new(:solid, 0.9, 0.05, 0.05, 1.0)
-
-      ctx.fill_path(bar_brush) do |path|
-        path.add_rectangle(x, y + 6.0, width, height - 12.0)
-      end
-
-      ctx.stroke_path(outline_brush, thickness: 1.0) do |path|
-        path.add_rectangle(x, y + 6.0, width, height - 12.0)
-      end
-
-      region_start = region.start0.clamp(0_u32, chromosome_size)
-      region_end = region.end0_exclusive.clamp(region_start, chromosome_size)
-      highlight_x = x + region_start.to_f / chromosome_size * width
-      highlight_width = (region_end - region_start).to_f / chromosome_size * width
-      highlight_width = 2.0 if highlight_width < 2.0
-
-      ctx.stroke_path(highlight_brush, thickness: 2.0) do |path|
-        path.add_rectangle(highlight_x, y + 3.0, highlight_width, height - 6.0)
-      end
-    end
-
-    private def draw_annotation_track(ctx, annotation_track, margin, width, height, overview_height, annotation_height, region)
-      return if annotation_height <= 0
-
-      plot_left, plot_top, plot_width, plot_height = plot_layout(margin, width, height, overview_height, annotation_height)
-      return if plot_width <= 0
-
-      top = plot_top + plot_height + annotation_gap
-      @annotation_renderer.draw(ctx, annotation_track, region, plot_left, top, plot_width, annotation_height)
-    end
-
-    private def annotation_gap
-      AnnotationRenderer::GAP + X_TICK_LABEL_GAP
-    end
-
-    private def margin_for(width, height, show_axis_ticks)
-      max_margin = show_axis_ticks ? LABEL_MARGIN : DEFAULT_MARGIN
-      {max_margin, width / 4.0, height / 4.0}.min.clamp(MIN_MARGIN, max_margin)
-    end
-
-    private def x_for(pos, margin, min_pos, max_pos, plot_width)
-      return margin + plot_width / 2.0 if max_pos == min_pos
-
-      margin + (pos.to_f - min_pos) / (max_pos - min_pos) * plot_width
-    end
-
-    private def y_for(value, plot_top, min_val, max_val, plot_height)
-      plot_top + plot_height - (value - min_val) / (max_val - min_val) * plot_height
-    end
-
-    private def y_range(min_val, max_val, settings : PlotSettings)
-      if y_min = settings.y_min
-        if y_max = settings.y_max
-          return {y_min, y_max} if y_max > y_min
+    private def draw_reference_lines(ctx, layout, range, settings)
+      settings.h_lines.each do |value|
+        next unless range[0] <= value <= range[1]
+        y = y_for(value, layout, range)
+        ctx.stroke_path(brush(0.75, 0.3, 0.12), thickness: 1.0) do |path|
+          path.new_figure(layout.left, y)
+          path.line_to(layout.left + layout.width, y)
         end
-        return {y_min, (max_val > y_min ? max_val : y_min + 1.0)}
+        label(ctx, DisplayFormat.value(value), layout.left + layout.width - 80, y - 18, 75.0, :right)
       end
-
-      if y_max = settings.y_max
-        min = min_val < y_max ? min_val : y_max - 1.0
-        return {min, y_max}
-      end
-
-      y_range_auto(min_val, max_val, settings.y_axis_from_zero?)
     end
 
-    private def y_range_auto(min_val, max_val, from_zero)
-      if from_zero
-        padded_max = max_val > 0 ? max_val * 1.1 : 1.0
-        return {0.0, padded_max}
+    private def draw_inspection(ctx, view, layout)
+      if index = @hover_index
+        if 0 <= index < view.points.size
+          left, right = view.bin_edges(index)
+          x = layout.x_for(left, view.region)
+          width = Math.max(layout.x_for(right, view.region) - x, 1.0)
+          ctx.fill_path(brush(0.2, 0.4, 0.6, 0.12)) { |path| path.add_rectangle(x, layout.top, width, layout.height) }
+        end
       end
-
-      val_range = max_val - min_val
-      if val_range == 0
-        min_val -= 0.5
-        max_val += 0.5
-      else
-        padding = val_range * 0.1
-        min_val -= padding
-        max_val += padding
-      end
-
-      {min_val, max_val}
-    end
-
-    private def tick_values(min, max)
-      return [min] if max == min
-
-      step = (max - min) / (TICK_COUNT - 1)
-      Array.new(TICK_COUNT) { |i| min + step * i }
-    end
-
-    private def draw_label(ctx, text, x, y, width, align)
-      UIng::Area::AttributedString.open(text) do |attr_str|
-        attr_str.set_attribute(UIng::Area::Attribute.new_color(0.15, 0.15, 0.15, 1.0), 0_u64, text.bytesize.to_u64)
-
-        UIng::Area::Draw::TextLayout.open(
-          string: attr_str,
-          default_font: label_font,
-          width: width,
-          align: align
-        ) do |text_layout|
-          ctx.draw_text_layout(text_layout, x, y)
+      if selection = @selection
+        left, right = selection.minmax
+        ctx.fill_path(brush(0.1, 0.5, 0.7, 0.2)) do |path|
+          path.add_rectangle(layout.left + left * layout.width, layout.top, (right - left) * layout.width, layout.height)
         end
       end
     end
 
-    private def format_position(value)
-      value.round.to_u64.to_s
-    end
-
-    private def format_value(value)
-      magnitude = value.abs
-
-      if magnitude >= 1000 || (magnitude > 0 && magnitude < 0.01)
-        "%.2e" % value
-      elsif magnitude >= 10
-        "%.1f" % value
-      else
-        "%.2f" % value
+    private def draw_ticks(ctx, layout, region)
+      count = Math.min(5, region.length.to_i64).to_i
+      positions = Array.new(count) do |index|
+        region.start1.to_i64 + (count == 1 ? 0_i64 : (region.length.to_i64 - 1) * index // (count - 1))
       end
+      positions.each do |position|
+        x = layout.left + (position - region.start0 - 0.5) / region.length * layout.width
+        label(ctx, DisplayFormat.position(position), x - 60, layout.top + layout.height + 8, 120.0, :center)
+      end
+      label(ctx, "Position (1-based, inclusive)", layout.left, layout.top + layout.height + 30, layout.width, :center)
     end
 
-    private def label_font
-      @label_font ||= UIng::FontDescriptor.new(size: 11)
+    private def y_for(value, layout, range)
+      layout.top + layout.height * (1.0 - (value - range[0]) / (range[1] - range[0]))
+    end
+
+    private def brush(red, green, blue, alpha = 1.0)
+      UIng::Area::Draw::Brush.new(:solid, red, green, blue, alpha)
+    end
+
+    private def label(ctx, text, x, y, width, align = :left, size = 11.0)
+      UIng::Area::AttributedString.open(text) do |string|
+        string.set_attribute(UIng::Area::Attribute.new_color(0.18, 0.22, 0.28, 1.0), 0_u64, text.bytesize.to_u64)
+        alignment = case align
+                    when :center then UIng::Area::Draw::TextAlign::Center
+                    when :right  then UIng::Area::Draw::TextAlign::Right
+                    else              UIng::Area::Draw::TextAlign::Left
+                    end
+        UIng::Area::Draw::TextLayout.open(string: string, default_font: UIng::FontDescriptor.new(size: size), width: width, align: alignment) do |layout|
+          ctx.draw_text_layout(layout, x, y)
+        end
+      end
     end
   end
 end

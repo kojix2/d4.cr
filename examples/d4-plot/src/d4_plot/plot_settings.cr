@@ -25,5 +25,17 @@ module D4Plot
       @y_max = nil
       @h_lines = [] of Float64
     end
+
+    def y_range(min_value : Float64, max_value : Float64) : Tuple(Float64, Float64)
+      low = @y_axis_from_zero ? Math.min(0.0, min_value) : min_value
+      high = @y_axis_from_zero ? Math.max(0.0, max_value) : max_value
+      padding = high == low ? Math.max(high.abs * 0.1, 1.0) : (high - low) * 0.08
+      low -= padding unless @y_axis_from_zero && low == 0
+      high += padding
+      low = @y_min || low
+      high = @y_max || high
+      high = low + 1.0 if high <= low
+      {low, high}
+    end
   end
 end
