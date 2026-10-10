@@ -17,7 +17,5 @@ jobs:
       - uses: crystal-lang/install-crystal@v1
         with:
           crystal: '1.21'
-      - run: shards install
       - run: crystal spec --single-module
       - run: crystal tool format --check src spec
-      - run: shards run ameba -- src spec

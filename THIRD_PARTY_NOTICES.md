@@ -1,10 +1,24 @@
-# Third-party material
+# Third-party test fixtures
 
-The following files come from the [d4-format](https://github.com/38/d4-format) project by Hao Hou and contributors:
+`spec/fixtures/rust-input-10nt.d4` and `spec/fixtures/rust-multitrack.d4` come from [d4-format](https://github.com/38/d4-format). The two indexed fixtures were generated with d4-format for this project's tests. The upstream license is reproduced below.
 
-- `d4.h` (the C API header used by the optional comparison benchmarks)
-- `spec/fixtures/rust-input-10nt.d4` and `spec/fixtures/rust-multitrack.d4`
-- `examples/d4-plot/data/hg002_full_no_cov.d4`
-- `examples/d4-plot/patches/*.patch` (patches against d4-format source files)
+The MIT License (MIT)
 
-The copies of `d4.h` and these three data files match the files in the local d4-format 0.3.11 source snapshot. The upstream MIT license and copyright notice are preserved in [THIRD_PARTY_LICENSES/d4-format.LICENSE](THIRD_PARTY_LICENSES/d4-format.LICENSE). The two indexed Rust fixtures were generated with d4-format for this project's tests.
+Copyright (c) 2020-2022 Hao Hou<haohou302@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
