@@ -145,12 +145,20 @@ module D4
       # Rust sums Int32 values into Float64. This bound makes each bin exact.
       return nil if @granularity > (1_i64 << 53) // (1_i64 << 31)
       result = 0_i64
-      scratch = Bytes.new(8)
-      (first...last).each do |index|
-        @source.read_exact_at(@offset + (base + index) * 8, scratch)
-        value = Format::Endian.u64_le(scratch, 0).unsafe_as(Float64)
-        raise CorruptIndexError.new("non-integral sum-index entry") unless value.finite? && value == value.trunc && value.abs <= (1_i64 << 53).to_f64
-        result += value.to_i64
+      # Read consecutive bins together. A chromosome-wide sum can span many
+      # thousands of bins, and one seek/read per eight-byte entry dominates it.
+      scratch = Bytes.new(Math.min(last - first, 8_192_i64).to_i * 8)
+      index = first
+      while index < last
+        count = Math.min(last - index, 8_192_i64).to_i
+        bytes = scratch[0, count * 8]
+        @source.read_exact_at(@offset + (base + index) * 8, bytes)
+        count.times do |bin|
+          value = Format::Endian.u64_le(bytes, bin * 8).unsafe_as(Float64)
+          raise CorruptIndexError.new("non-integral sum-index entry") unless value.finite? && value == value.trunc && value.abs <= (1_i64 << 53).to_f64
+          result += value.to_i64
+        end
+        index += count
       end
       result
     end

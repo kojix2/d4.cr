@@ -32,6 +32,22 @@ class CountingD4Source < D4::Source
 end
 
 describe "embedded D4 indexes" do
+  it "sums across index read chunks and validates later entries" do
+    count = 8_193
+    blob = Bytes.new(8 + count * 8)
+    blob[0] = 1_u8
+    encoded = 1.0_f64.unsafe_as(UInt64)
+    count.times do |index|
+      8.times { |byte| blob[8 + index * 8 + byte] = (encoded >> (byte * 8)).to_u8! }
+    end
+    source = D4::MemorySource.new(blob, copy: false)
+    entry = D4::Format::Entry.new(2_u8, 0_i64, blob.size.to_i64, "sum_index")
+    index = D4::SumIndex.new(source, entry, [D4::Chromosome.new("chr", count.to_i64)])
+    index.full_blocks("chr", 0_i64, count.to_i64).should eq(count.to_i64)
+    blob[8 + 8_192 * 8, 8].fill(0xff_u8)
+    expect_raises(D4::CorruptIndexError) { index.full_blocks("chr", 0_i64, count.to_i64) }
+  end
+
   it "reads Rust-built packed indexes and falls back for an incomplete final SUM bin" do
     path = File.join(__DIR__, "fixtures", "rust-indexed-sparse-100k.d4")
     D4.open(path) do |file|
