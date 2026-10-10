@@ -4,6 +4,7 @@ require "./view_loader"
 require "./plot_renderer"
 require "./settings_window"
 require "./log"
+require "./toolbar"
 
 module D4Plot
   class App
@@ -38,15 +39,7 @@ module D4Plot
     @chromosome_combo = UIng::Combobox.new
     @region_entry = UIng::Entry.new
     @go = UIng::Button.new("Go")
-    @back = UIng::Button.new("Back")
-    @forward = UIng::Button.new("Forward")
-    @left = UIng::Button.new("< Move")
-    @right = UIng::Button.new("Move >")
-    @zoom_in = UIng::Button.new("Zoom in +")
-    @zoom_out = UIng::Button.new("Zoom out −")
-    @whole = UIng::Button.new("Whole chromosome")
-    @cancel = UIng::Button.new("Cancel")
-    @export = UIng::Button.new("Export bins…")
+    @tools = Toolbar.new
     @annotation_label = UIng::Label.new("No annotations — use GFF3, GTF or BED from the same assembly.")
     @remove_annotation = UIng::Button.new("Remove")
     @status = UIng::Label.new("Open a D4 file to begin. Coordinates are 1-based, inclusive.")
@@ -112,18 +105,9 @@ module D4Plot
       root = UIng::Box.new(:vertical)
       root.padded = true
       files = row
-      open = UIng::Button.new("Open D4…")
-      settings = UIng::Button.new("Display settings…")
-      help = UIng::Button.new("Help")
-      files.append(open, false)
       files.append(@file_label, true)
       files.append(UIng::Label.new("Track"), false)
       files.append(@track_combo, false)
-      files.append(settings, false)
-      files.append(help, false)
-      open.on_clicked { open_file_dialog }
-      settings.on_clicked { open_settings }
-      help.on_clicked { show_help }
       root.append(files, false)
 
       location = row
@@ -134,39 +118,34 @@ module D4Plot
       location.append(@go, false)
       root.append(location, false)
 
-      navigation = row
-      [@back, @forward, @left, @zoom_out, @zoom_in, @right, @whole, @cancel].each { |control| navigation.append(control, false) }
-      navigation.append(UIng::Label.new(""), true)
-      navigation.append(@export, false)
-      root.append(navigation, false)
-
       annotations = row
-      open_annotation = UIng::Button.new("Annotations…")
-      annotations.append(open_annotation, false)
       annotations.append(@annotation_label, true)
       annotations.append(@remove_annotation, false)
-      open_annotation.on_clicked { open_annotation_dialog }
       root.append(annotations, false)
       root.append(@area, true)
       root.append(@inspection, false)
       root.append(@status, false)
       root.append(UIng::Label.new("Drag: pan   |   Shift+drag: select range   |   Double-click: zoom   |   Plot keys: ← → + − Home   |   Esc: cancel"), false)
+      @window.toolbar = @tools.native
       @window.child = root
     end
 
     private def setup_handlers
+      @tools.open.on_clicked { open_file_dialog }
+      @tools.annotations.on_clicked { open_annotation_dialog }
+      @tools.settings.on_clicked { open_settings }
       @go.on_clicked { go_to_entry }
       @chromosome_combo.on_selected { |index| select_chromosome(index) unless @updating }
       @track_combo.on_selected { |index| select_track(index) unless @updating }
-      @zoom_in.on_clicked { zoom(2.0) }
-      @zoom_out.on_clicked { zoom(0.5) }
-      @left.on_clicked { move(-0.5) }
-      @right.on_clicked { move(0.5) }
-      @whole.on_clicked { whole_chromosome }
-      @back.on_clicked { history_back }
-      @forward.on_clicked { history_forward }
-      @cancel.on_clicked { cancel_loading }
-      @export.on_clicked { export_view }
+      @tools.zoom_in.on_clicked { zoom(2.0) }
+      @tools.zoom_out.on_clicked { zoom(0.5) }
+      @tools.left.on_clicked { move(-0.5) }
+      @tools.right.on_clicked { move(0.5) }
+      @tools.whole.on_clicked { whole_chromosome }
+      @tools.back.on_clicked { history_back }
+      @tools.forward.on_clicked { history_forward }
+      @tools.cancel.on_clicked { cancel_loading }
+      @tools.export.on_clicked { export_view }
       @remove_annotation.on_clicked do
         @annotation_path = nil
         @annotation = nil
@@ -421,21 +400,22 @@ module D4Plot
 
     private def update_controls
       ready = !@path.nil? && !@chromosomes.empty?
-      [@go, @left, @right, @zoom_in, @zoom_out, @whole].each do |control|
+      ready ? @go.enable : @go.disable
+      [@tools.annotations, @tools.left, @tools.right, @tools.zoom_in, @tools.zoom_out, @tools.whole].each do |control|
         ready ? control.enable : control.disable
       end
       ready ? @chromosome_combo.enable : @chromosome_combo.disable
       ready ? @region_entry.enable : @region_entry.disable
       @track_names.size > 1 ? @track_combo.enable : @track_combo.disable
-      @loading ? @cancel.enable : @cancel.disable
-      @view && !@loading ? @export.enable : @export.disable
+      @loading ? @tools.cancel.enable : @tools.cancel.disable
+      @view && !@loading ? @tools.export.enable : @tools.export.disable
       update_history_controls
       @annotation_path ? @remove_annotation.enable : @remove_annotation.disable
     end
 
     private def update_history_controls
-      @history.back? && !@loading ? @back.enable : @back.disable
-      @history.forward? && !@loading ? @forward.enable : @forward.disable
+      @history.back? && !@loading ? @tools.back.enable : @tools.back.disable
+      @history.forward? && !@loading ? @tools.forward.enable : @tools.forward.disable
     end
 
     private def mouse_event(event)
@@ -533,6 +513,8 @@ module D4Plot
       @settings_window.try(&.destroy)
       @settings_window = nil
       @loader.close
+      @window.toolbar = nil
+      @tools.free
     end
   end
 end

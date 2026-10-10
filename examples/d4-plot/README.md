@@ -11,17 +11,19 @@ bin/d4-plot
 bin/d4-plot sample.d4 chr1:1,000,000-2,000,000
 ```
 
+The native toolbar groups file actions, view history, navigation and display settings. Icons have text labels and tooltips; unavailable actions are disabled.
+
 Choose a track and chromosome, enter a region, then click **Go**. Region input accepts `chr1:100-200`, `chr1:100`, or `chr1`. Coordinates in the viewer are **1-based, inclusive**; chromosome names must match the file.
 
 | Action | Control |
 | --- | --- |
 | Zoom | Zoom buttons, double-click to zoom in, right-click to zoom out |
-| Move | Move buttons, drag the signal, or click the chromosome overview |
+| Move | Left / Right buttons, drag the signal, or click the chromosome overview |
 | Select a range | Shift+drag across the signal |
 | Restore a previous view | Back / Forward |
 | Inspect values | Hover for the exact bin interval and mean |
 | Keyboard navigation | Focus the plot, then use Left / Right, + / −, Home, or Esc |
-| Resolution, Y scale and reference lines | Display settings |
+| Resolution, Y scale and reference lines | Display |
 
 The graph shows **bin means**, with the D4 denominator applied. Bin widths are shown in bp; narrow peaks can be hidden by averaging, so zoom in to inspect them. The region mean is weighted by bin width. Automatic Y scaling includes negative values; a fixed Y scale helps compare different regions. D4 signal is not assumed to be read depth or normalized between samples.
 
