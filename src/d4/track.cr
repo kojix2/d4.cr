@@ -101,6 +101,12 @@ module D4
       if @secondary.nil? || @secondary.not_nil!.empty?(chromosome)
         return primary_value(chromosome, position.to_i64)
       end
+      dictionary = @metadata.dictionary
+      if dictionary.type.simple_range? && dictionary.bit_width > 0
+        primary = primary_value(chromosome, position.to_i64)
+        # Only the final primary code can represent a secondary value.
+        return primary if primary != dictionary.high - 1
+      end
       region = checked_region(chromosome, position.to_i64, position.to_i64 + 1)
       result = 0_i32
       scan_values(region, Slice(Int32).new(1)) do |_start, values, count|
@@ -462,24 +468,39 @@ module D4
                     else
                       raise UnsupportedFeatureError.new("unsupported D4 secondary compression")
                     end
-      @partitions = Hash(String, Array(Format::Entry)).new { |hash, key| hash[key] = Array(Format::Entry).new }
+      @partitions = Hash(String, Array(Tuple(Int64, Int64, Format::Entry))).new do |hash, key|
+        hash[key] = Array(Tuple(Int64, Int64, Format::Entry)).new
+      end
       json["partitions"].as_a.each_with_index do |partition, index|
         parts = partition.as_a
         raise FormatError.new("invalid secondary partition") unless parts.size >= 3 && parts[1].as_i64 >= 0 && parts[2].as_i64 >= parts[1].as_i64
-        @partitions[parts[0].as_s] << @directory.entry(index.to_s, 0_u8)
+        @partitions[parts[0].as_s] << {parts[1].as_i64, parts[2].as_i64, @directory.entry(index.to_s, 0_u8)}
       end
     end
 
     def record_iterator(region : Region) : SecondaryRecordIterator
-      SecondaryRecordIterator.new(@source, @partitions[region.chromosome]? || Array(Format::Entry).new,
-        @compressed, region, @options.max_decoded_frame_bytes, @index.try(&.find(region.chromosome, region.start)))
+      entries = Array(Format::Entry).new
+      first_start = nil.as(Int64?)
+      if partitions = @partitions[region.chromosome]?
+        partitions.each do |start, stop, entry|
+          if stop > region.start && start < region.stop
+            first_start ||= start
+            entries << entry
+          end
+        end
+      end
+      address = if first_start && region.start > first_start
+                  @index.try(&.find(region.chromosome, region.start))
+                end
+      address = nil if address && address.stop <= first_start.not_nil!
+      SecondaryRecordIterator.new(@source, entries, @compressed, region, @options.max_decoded_frame_bytes, address)
     end
 
     def empty?(chromosome : String) : Bool
       @empty_mutex.synchronize do
         @empty_chromosomes.fetch(chromosome) do
           entries = @partitions[chromosome]?
-          @empty_chromosomes[chromosome] = entries.nil? || entries.all? { |entry| empty_stream?(entry) }
+          @empty_chromosomes[chromosome] = entries.nil? || entries.all? { |part| empty_stream?(part[2]) }
         end
       end
     end
@@ -521,7 +542,7 @@ module D4
       @first_frame = address.try(&.first_frame) != false
       @skip_bytes = address.try(&.record_offset) || 0
       @stream = Format::FrameStream.new(@source, address.offset, address.size, Int64::MAX, @max_bytes) if address
-      @entry_index = @entries.size if address
+      @entry_index = 1 if address
       @records_left = 0_i64
       @record = Bytes.new(10)
       @decoded = Bytes.empty
@@ -555,6 +576,8 @@ module D4
               next
             end
           end
+          next if @records_left == 0
+          raise FormatError.new("compressed secondary record exceeds decoded frame") if @cursor + 10 > @payload.size
           record = @payload[@cursor, 10]
           @cursor += 10
           @records_left -= 1

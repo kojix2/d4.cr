@@ -45,7 +45,12 @@ describe "D4 format compatibility and lifecycle" do
           writer.write_values("chr", 0, values[0, 257])
           writer.write_values("chr", 259, values[259, 263])
         end
-        D4.open(path) { |file| file.values("chr").should eq(values) }
+        D4.open(path) do |file|
+          file.values("chr").should eq(values)
+          file.value("chr", 6).should eq(values[6])
+          file.value("chr", 7).should eq(values[7])
+          file.value("chr", 521).should eq(values[521])
+        end
       ensure
         File.delete(path) if File.exists?(path)
       end

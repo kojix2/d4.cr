@@ -15,8 +15,11 @@ module D4
     getter size : Int64
     getter record_offset : Int32
     getter first_frame : Bool
+    getter start : Int64
+    getter stop : Int64
 
-    def initialize(@offset : Int64, @size : Int64, @record_offset : Int32, @first_frame : Bool); end
+    def initialize(@offset : Int64, @size : Int64, @record_offset : Int32, @first_frame : Bool,
+                   @start : Int64 = 0_i64, @stop : Int64 = 0_i64); end
   end
 
   # On-disk binary search: the Rust packed entry is 30 bytes, not an array of
@@ -86,7 +89,8 @@ module D4
       raise CorruptIndexError.new("invalid SFI address") if relative > Int64::MAX || size < Format::FRAME_HEADER_SIZE || size > Int32::MAX ||
                                                             @secondary_base > @source.size - relative.to_i64 || size > @source.size - @secondary_base - relative.to_i64 ||
                                                             skip >= 10 || flag > 1_u8
-      FrameAddress.new(@secondary_base + relative.to_i64, size.to_i64, skip, flag == 1_u8)
+      FrameAddress.new(@secondary_base + relative.to_i64, size.to_i64, skip, flag == 1_u8,
+        Format::Endian.u32_le(scratch, shift + 4).to_i64, Format::Endian.u32_le(scratch, shift + 8).to_i64)
     end
 
     private def read_entry(index : Int64, output : Bytes) : Nil

@@ -41,7 +41,85 @@ class CountingLocalD4Source < D4::LocalSource
   end
 end
 
+private def put_le(bytes : Bytes, offset : Int32, value : UInt64, width : Int32) : Nil
+  width.times { |index| bytes[offset + index] = (value >> (index * 8)).to_u8! }
+end
+
+private def secondary_record(left : Int32, length : Int32, value : Int32) : Bytes
+  record = Bytes.new(10)
+  put_le(record, 0, (left + 1).to_u64, 4)
+  put_le(record, 4, (length - 1).to_u64, 2)
+  put_le(record, 6, value.unsafe_as(UInt32).to_u64, 4)
+  record
+end
+
 describe "embedded D4 indexes" do
+  it "continues through indexed secondary partitions" do
+    metadata = %({"record_format":"range","compression":"NoCompression","partitions":[["chr",0,100],["chr",100,200]]})
+    io = IO::Memory.new
+    metadata_offset = io.pos.to_i64
+    metadata_frame = D4::Format.bytes(D4::FrameEncoder.build_exact(metadata.to_slice))
+    io.write(metadata_frame)
+    streams = [{10, 10, 99}, {150, 20, 120}].map do |left, length, value|
+      offset = io.pos.to_i64
+      frame = Bytes.new(26)
+      frame[16, 10].copy_from(secondary_record(left, length, value))
+      io.write(frame)
+      {offset, frame.size.to_i64}
+    end
+    index_offset = io.pos.to_i64
+    index = Bytes.new(8 + 2 * 30)
+    put_le(index, 0, 2_u64, 8)
+    [{10, 20}, {150, 170}].each_with_index do |(start, stop), number|
+      offset = 8 + number * 30
+      put_le(index, offset + 4, start.to_u64, 4)
+      put_le(index, offset + 8, stop.to_u64, 4)
+      put_le(index, offset + 12, streams[number][0].to_u64, 8)
+      put_le(index, offset + 20, streams[number][1].to_u64, 8)
+      index[offset + 29] = 1_u8
+    end
+    io.write(index)
+    source = D4::MemorySource.new(io.to_slice)
+    directory = D4::Format::Directory.new(0_i64, [
+      D4::Format::Entry.new(0_u8, metadata_offset, metadata_frame.size.to_i64, ".metadata"),
+      D4::Format::Entry.new(0_u8, streams[0][0], streams[0][1], "0"),
+      D4::Format::Entry.new(0_u8, streams[1][0], streams[1][1], "1"),
+    ])
+    index_entry = D4::Format::Entry.new(2_u8, index_offset, index.size.to_i64, "secondary_frame_index")
+    frame_index = D4::SecondaryFrameIndex.new(source, index_entry, 0_i64, [D4::Chromosome.new("chr", 200)])
+    table = D4::SecondaryTable.new(source, directory, D4::ReadOptions.new, frame_index)
+    [{0_i64, 200_i64, [{10_i64, 20_i64, 99_i32}, {150_i64, 170_i64, 120_i32}]},
+     {50_i64, 180_i64, [{150_i64, 170_i64, 120_i32}]},
+     {120_i64, 180_i64, [{150_i64, 170_i64, 120_i32}]},
+     {160_i64, 165_i64, [{150_i64, 170_i64, 120_i32}]}].each do |start, stop, expected|
+      records = table.record_iterator(D4::Region.new("chr", start, stop))
+      actual = [] of Tuple(Int64, Int64, Int32)
+      while records.next_fields
+        actual << {records.left, records.right, records.value}
+      end
+      actual.should eq(expected)
+    end
+  end
+
+  it "skips empty compressed secondary frames" do
+    io = IO::Memory.new
+    first = Bytes.new(29)
+    first[16] = 1_u8
+    io.write(first)
+    second = Bytes.new(39)
+    second[16] = 1_u8
+    put_le(second, 25, 1_u64, 4)
+    second[29, 10].copy_from(secondary_record(150, 20, 120))
+    io.write(second)
+    source = D4::MemorySource.new(io.to_slice)
+    entries = [D4::Format::Entry.new(0_u8, 0_i64, 29_i64, "0"),
+               D4::Format::Entry.new(0_u8, 29_i64, 39_i64, "1")]
+    records = D4::SecondaryRecordIterator.new(source, entries, true, D4::Region.new("chr", 0, 200), 1_000_i64)
+    records.next_fields.should be_true
+    {records.left, records.right, records.value}.should eq({150_i64, 170_i64, 120_i32})
+    records.next_fields.should be_false
+  end
+
   it "streams indexes larger than the local cache limit" do
     count = 131_073
     blob = Bytes.new(8 + count * 8)
