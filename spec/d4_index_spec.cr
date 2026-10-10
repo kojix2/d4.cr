@@ -54,6 +54,36 @@ private def secondary_record(left : Int32, length : Int32, value : Int32) : Byte
 end
 
 describe "embedded D4 indexes" do
+  it "keeps a small local secondary frame index in memory" do
+    blob = Bytes.new(8 + 30)
+    put_le(blob, 0, 1_u64, 8)
+    put_le(blob, 8 + 8, 10_u64, 4)
+    put_le(blob, 8 + 20, 16_u64, 8)
+    blob[8 + 29] = 1_u8
+    temporary = File.tempfile("d4-small-secondary-index", ".bin")
+    begin
+      temporary.write(blob)
+      temporary.flush
+      source = CountingLocalD4Source.new(temporary.path)
+      begin
+        entry = D4::Format::Entry.new(2_u8, 0_i64, blob.size.to_i64, "secondary_frame_index")
+        index = D4::SecondaryFrameIndex.new(source, entry, 0_i64, [D4::Chromosome.new("chr", 10)])
+        loaded = source.bytes_read
+        100.times do
+          index.find("chr", 5_i64).try { |address| {address.offset, address.size} }.should eq({0_i64, 16_i64})
+        end
+        source.bytes_read.should eq(loaded)
+        source.close
+        expect_raises(D4::ClosedError) { index.find("chr", 5_i64) }
+      ensure
+        source.close
+      end
+    ensure
+      temporary.close
+      File.delete(temporary.path) if File.exists?(temporary.path)
+    end
+  end
+
   it "continues through indexed secondary partitions" do
     metadata = %({"record_format":"range","compression":"NoCompression","partitions":[["chr",0,100],["chr",100,200]]})
     io = IO::Memory.new

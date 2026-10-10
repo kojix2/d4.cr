@@ -22,10 +22,11 @@ module D4
                    @start : Int64 = 0_i64, @stop : Int64 = 0_i64); end
   end
 
-  # On-disk binary search: the Rust packed entry is 30 bytes, not an array of
-  # heap objects. Offsets in an SFI are relative to the secondary directory.
+  # Packed entries are 30 bytes each. Small local indexes are cached; larger
+  # ones are searched on disk. Offsets are relative to the secondary directory.
   class SecondaryFrameIndex
-    ENTRY_SIZE = 30_i64
+    ENTRY_SIZE       =        30_i64
+    MAX_CACHED_BYTES = 1_048_576_i64
     @count : Int64
     @flag_first : Bool
     @chromosome_sizes : Array(Int64)
@@ -42,6 +43,7 @@ module D4
       count = Format::Endian.u64_le(header, 0)
       raise CorruptIndexError.new("SFI size mismatch") unless count <= Int64::MAX // ENTRY_SIZE && entry.size == 8 + count.to_i64 * ENTRY_SIZE
       @count = count.to_i64
+      @cached_entries = nil.as(Bytes?)
       @flag_first = false
       if @count > 0
         first = Bytes.new(ENTRY_SIZE.to_i)
@@ -51,9 +53,15 @@ module D4
         raise CorruptIndexError.new("invalid SFI entry layout") unless standard || leading
         @flag_first = leading && !standard
       end
+      if @source.is_a?(LocalSource) && @count * ENTRY_SIZE <= MAX_CACHED_BYTES
+        cached = Bytes.new((@count * ENTRY_SIZE).to_i)
+        @source.read_exact_at(@offset, cached)
+        @cached_entries = cached
+      end
     end
 
     def find(chromosome : String, position : Int64) : FrameAddress? # ameba:disable Metrics/CyclomaticComplexity
+      raise ClosedError.new("source is closed") if @source.closed?
       chromosome_id = @chromosome_ids[chromosome]? || raise UnknownChromosomeError.new("unknown chromosome #{chromosome}")
       low = 0_i64
       high = @count
@@ -94,7 +102,11 @@ module D4
     end
 
     private def read_entry(index : Int64, output : Bytes) : Nil
-      @source.read_exact_at(@offset + index * ENTRY_SIZE, output)
+      if cached = @cached_entries
+        output.copy_from(cached[(index * ENTRY_SIZE).to_i, ENTRY_SIZE.to_i])
+      else
+        @source.read_exact_at(@offset + index * ENTRY_SIZE, output)
+      end
     end
 
     private def valid_entry?(entry : Bytes, flag_first : Bool) : Bool # ameba:disable Metrics/CyclomaticComplexity

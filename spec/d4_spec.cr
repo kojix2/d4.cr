@@ -100,6 +100,10 @@ describe D4 do
         buffer = Bytes.new(16_384)
         source.read_at(source.size - 10, buffer).should eq(10)
         source.read_at(source.size, buffer).should eq(0)
+        small = Bytes.new(16)
+        source.read_at(source.size - 10, small).should eq(10)
+        small[0, 10].should eq(buffer[0, 10])
+        source.read_at(source.size, small).should eq(0)
       ensure
         source.close
       end
