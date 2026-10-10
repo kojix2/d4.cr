@@ -130,6 +130,7 @@ module D4
       bytes = region.length * sizeof(Int32)
       raise AllocationLimitError.new("values would allocate #{bytes} bytes") if region.length > Int32::MAX || bytes > @options.max_materialized_bytes
       output = Array(Int32).new(region.length.to_i, 0_i32)
+      return output if region.length == 0
       buffer = Slice(Int32).new(Math.min(region.length, 65_536_i64).to_i)
       cursor = 0
       scan_values(region, buffer) do |_block_start, values, count|
@@ -230,11 +231,31 @@ module D4
     end
 
     private def sum_scan(region : Region) : Int64
+      return sum_constant_primary(region) if @metadata.dictionary.bit_width == 0
       total = 0_i64
       scan_values(region, Slice(Int32).new(65_536)) do |_offset, values, count|
         count.times { |index| total += values[index] }
       end
       total
+    end
+
+    # With a zero-width primary table, only secondary records differ from the
+    # dictionary value. Sum those intervals without materializing every base.
+    private def sum_constant_primary(region : Region) : Int64
+      check_open
+      checked = checked_region(region.chromosome, region.start, region.stop)
+      return 0_i64 if checked.length == 0
+      base = @metadata.dictionary.first_value
+      total = checked.length.to_i128 * base
+      if secondary = @secondary
+        records = secondary.record_iterator(checked)
+        while records.next_fields
+          overlap = Math.min(checked.stop, records.right) - Math.max(checked.start, records.left)
+          total += overlap.to_i128 * (records.value.to_i128 - base) if overlap > 0
+        end
+      end
+      check_open
+      total.to_i64
     end
 
     def sum(region : Region, *, index : IndexPolicy = IndexPolicy::Auto) : Int64

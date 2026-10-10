@@ -107,6 +107,10 @@ module D4
         State.new
       end
 
+      def constant_primary_sum? : Bool
+        false
+      end
+
       def consume(state : State, start : Int64, stop : Int64, value : Int32) : State
         length = stop - start
         state.length += length
@@ -149,6 +153,10 @@ module D4
     end
 
     class Sum < Basic
+      def constant_primary_sum? : Bool
+        true
+      end
+
       def consume_values(state : State, values : Slice(Int32), count : Int32) : State
         total = state.sum
         count.times { |index| total += values[index] }
@@ -192,6 +200,10 @@ module D4
     def aggregate_region(region : Region, reducer : D, scratch : Slice(Int32)) forall D
       state = reducer.seed
       if reducer.is_a?(Reducers::Basic)
+        if reducer.constant_primary_sum? && @metadata.dictionary.bit_width == 0
+          state.sum = sum_constant_primary(region)
+          return reducer.finish(state)
+        end
         scan_values(region, scratch) do |_, values, count|
           state = reducer.consume_values(state, values, count)
         end

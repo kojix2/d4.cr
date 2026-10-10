@@ -1,6 +1,34 @@
 require "./spec_helper"
 
 describe "D4 format compatibility and lifecycle" do
+  it "sums zero-width primary regions with raw and compressed secondary records" do
+    [D4::Compression.none, D4::Compression.deflate].each do |compression|
+      path = File.join(Dir.tempdir, "d4-crystal-constant-sum-#{Random.rand(1_000_000)}.d4")
+      begin
+        D4.create(path, chromosomes: [D4::Chromosome.new("chr", 140_000)],
+          dictionary: D4::Dictionary.new([5_i32]), default_value: 5_i32,
+          options: D4::WriteOptions.new(compression: compression, indexes: [D4::IndexKind::SecondaryFrames])) do |writer|
+          writer.write_interval("chr", 100, 200, -7_i32)
+          writer.write_interval("chr", 65_535, 65_540, 9_i32)
+          writer.write_interval("chr", 129_999, 140_000, -3_i32)
+        end
+        D4.open(path) do |file|
+          regions = [
+            D4::Region.new("chr", 0, 140_000),
+            D4::Region.new("chr", 150, 65_537),
+            D4::Region.new("chr", 65_538, 130_001),
+            D4::Region.new("chr", 140_000, 140_000),
+          ]
+          expected = regions.map { |region| file.values(region).sum(0_i64) }
+          regions.map { |region| file.sum(region, index: D4::IndexPolicy::Scan) }.should eq(expected)
+          file.aggregate(regions, D4::Reducers::Sum.new, workers: 2).map(&.value).should eq(expected)
+        end
+      ensure
+        File.delete(path) if File.exists?(path)
+      end
+    end
+  end
+
   it "packs dense range codes and fallbacks across chunk boundaries for several widths" do
     [1, 2, 3, 4, 7, 8, 9, 16, 24, 30].each do |width|
       path = File.join(Dir.tempdir, "d4-crystal-width-#{width}-#{Random.rand(1_000_000)}.d4")
