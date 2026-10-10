@@ -32,6 +32,8 @@ end
 
 The reader supports multiple tracks, embedded indexes, and raw or DEFLATE secondary data. The writer creates one track. HTTP range reading is available with `require "d4/http"`.
 
+A GUI coverage viewer is available in [examples/d4-plot](examples/d4-plot).
+
 ## Development
 
 ```sh
