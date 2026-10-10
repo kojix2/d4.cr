@@ -31,7 +31,69 @@ class CountingD4Source < D4::Source
   end
 end
 
+class CountingLocalD4Source < D4::LocalSource
+  getter bytes_read : Int64 = 0_i64
+
+  def read_at(offset : Int64, buffer : Bytes) : Int32
+    count = super(offset, buffer)
+    @bytes_read += count
+    count
+  end
+end
+
 describe "embedded D4 indexes" do
+  it "streams indexes larger than the local cache limit" do
+    count = 131_073
+    blob = Bytes.new(8 + count * 8)
+    blob[0] = 1_u8
+    temporary = File.tempfile("d4-sum-large-index", ".bin")
+    begin
+      temporary.write(blob)
+      temporary.flush
+      source = CountingLocalD4Source.new(temporary.path)
+      begin
+        entry = D4::Format::Entry.new(2_u8, 0_i64, blob.size.to_i64, "sum_index")
+        index = D4::SumIndex.new(source, entry, [D4::Chromosome.new("chr", count.to_i64)])
+        index.full_blocks("chr", 0_i64, 1_i64).should eq(0_i64)
+        source.bytes_read.should be <= 16_i64
+      ensure
+        source.close
+      end
+    ensure
+      temporary.close
+      File.delete(temporary.path) if File.exists?(temporary.path)
+    end
+  end
+
+  it "validates only queried bins while caching local sum entries" do
+    blob = Bytes.new(8 + 3 * 8)
+    blob[0] = 1_u8
+    encoded = 1.0_f64.unsafe_as(UInt64)
+    2.times do |index|
+      8.times { |byte| blob[8 + index * 8 + byte] = (encoded >> (byte * 8)).to_u8! }
+    end
+    blob[24, 8].fill(0xff_u8)
+    temporary = File.tempfile("d4-sum-cache", ".bin")
+    begin
+      temporary.write(blob)
+      temporary.flush
+      source = D4::LocalSource.new(temporary.path)
+      begin
+        entry = D4::Format::Entry.new(2_u8, 0_i64, blob.size.to_i64, "sum_index")
+        index = D4::SumIndex.new(source, entry, [D4::Chromosome.new("chr", 3_i64)])
+        2.times { index.full_blocks("chr", 0_i64, 2_i64).should eq(2_i64) }
+        expect_raises(D4::CorruptIndexError) { index.full_blocks("chr", 2_i64, 3_i64) }
+        source.close
+        expect_raises(D4::ClosedError) { index.full_blocks("chr", 0_i64, 2_i64) }
+      ensure
+        source.close
+      end
+    ensure
+      temporary.close
+      File.delete(temporary.path) if File.exists?(temporary.path)
+    end
+  end
+
   it "sums across index read chunks and validates later entries" do
     count = 8_193
     blob = Bytes.new(8 + count * 8)

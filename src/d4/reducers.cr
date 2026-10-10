@@ -149,6 +149,14 @@ module D4
     end
 
     class Sum < Basic
+      def consume_values(state : State, values : Slice(Int32), count : Int32) : State
+        total = state.sum
+        count.times { |index| total += values[index] }
+        state.length += count
+        state.sum = total
+        state
+      end
+
       def finish(state : State) : Int64
         state.sum
       end

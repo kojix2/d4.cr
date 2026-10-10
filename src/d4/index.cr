@@ -110,9 +110,13 @@ module D4
   end
 
   class SumIndex
+    MAX_CACHED_BYTES = 1_048_576_i64
+    UNCACHED_SUM     = Int64::MIN
+
     getter granularity : Int64
     @offset : Int64
     @available_count : Int64
+    @cached_values : Slice(Int64)?
 
     def initialize(@source : Source, entry : Format::Entry, chromosomes : Array(Chromosome))
       raise CorruptIndexError.new("invalid sum-index blob") unless entry.blob? && entry.size >= 4
@@ -133,6 +137,8 @@ module D4
       # entry is therefore four bytes short; never read that incomplete bin.
       @offset = entry.offset + 8
       @available_count = (entry.size - 8) // 8
+      @cached_values = nil
+      @cache_mutex = Mutex.new
     end
 
     # Returns nil when the precision of every stored block cannot be proved.
@@ -144,6 +150,12 @@ module D4
       return nil if base + last > @available_count
       # Rust sums Int32 values into Float64. This bound makes each bin exact.
       return nil if @granularity > (1_i64 << 53) // (1_i64 << 31)
+      raise ClosedError.new("source is closed") if @source.closed?
+      # Keep at most 1 MiB of validated local bins; remote sources retain their
+      # own consistency checks and larger indexes continue to stream.
+      if @source.is_a?(LocalSource) && @available_count <= MAX_CACHED_BYTES // 8
+        return @cache_mutex.synchronize { sum_cached(base + first, base + last) }
+      end
       result = 0_i64
       # Read consecutive bins together. A chromosome-wide sum can span many
       # thousands of bins, and one seek/read per eight-byte entry dominates it.
@@ -154,13 +166,49 @@ module D4
         bytes = scratch[0, count * 8]
         @source.read_exact_at(@offset + (base + index) * 8, bytes)
         count.times do |bin|
-          value = Format::Endian.u64_le(bytes, bin * 8).unsafe_as(Float64)
-          raise CorruptIndexError.new("non-integral sum-index entry") unless value.finite? && value == value.trunc && value.abs <= (1_i64 << 53).to_f64
-          result += value.to_i64
+          result += decode_sum(bytes, bin * 8)
         end
         index += count
       end
       result
+    end
+
+    private def sum_cached(first : Int64, last : Int64) : Int64
+      values = @cached_values ||= Slice(Int64).new(@available_count.to_i, UNCACHED_SUM)
+      scratch = Bytes.empty
+      result = 0_i64
+      index = first
+      while index < last
+        cached = values[index.to_i]
+        if cached != UNCACHED_SUM
+          result += cached
+          index += 1
+          next
+        end
+        count = 1
+        limit = Math.min(last - index, 8_192_i64).to_i
+        while count < limit && values[(index + count).to_i] == UNCACHED_SUM
+          count += 1
+        end
+        scratch = Bytes.new(count * 8) if scratch.size < count * 8
+        bytes = scratch[0, count * 8]
+        @source.read_exact_at(@offset + index * 8, bytes)
+        count.times do |bin|
+          value = decode_sum(bytes, bin * 8)
+          values[(index + bin).to_i] = value
+          result += value
+        end
+        index += count
+      end
+      result
+    end
+
+    private def decode_sum(bytes : Bytes, offset : Int32) : Int64
+      value = IO::ByteFormat::LittleEndian.decode(UInt64, bytes[offset, 8]).unsafe_as(Float64)
+      raise CorruptIndexError.new("non-integral sum-index entry") unless value.finite? && value.abs <= (1_i64 << 53).to_f64
+      integer = value.to_i64
+      raise CorruptIndexError.new("non-integral sum-index entry") unless integer.to_f64 == value
+      integer
     end
   end
 end

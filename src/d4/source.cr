@@ -58,6 +58,13 @@ module D4
     end
 
     def read_at(offset : Int64, buffer : Bytes) : Int32
+      # Positioned bulk reads can run concurrently; small reads avoid PReader setup.
+      if buffer.size >= 8_192
+        raise ClosedError.new("source is closed") if @closed
+        return 0 if offset < 0 || offset >= @size
+        count = Math.min(buffer.size.to_i64, @size - offset).to_i
+        return @io.read_at(offset, count) { |reader| reader.read(buffer[0, count]) }
+      end
       @mutex.synchronize do
         raise ClosedError.new("source is closed") if @closed
         return 0 if offset < 0 || offset >= @size || buffer.empty?

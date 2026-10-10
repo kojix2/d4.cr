@@ -75,4 +75,36 @@ describe D4 do
       File.delete(path) if File.exists?(path)
     end
   end
+
+  it "reads large local ranges concurrently and handles the final short read" do
+    temporary = File.tempfile("d4-parallel-read", ".d4")
+    path = temporary.path
+    temporary.close
+    File.delete(path)
+    begin
+      D4.create(path, chromosomes: [D4::Chromosome.new("chr", 524_288_i64)],
+        dictionary: D4::Dictionary.new(0_i32, 128_i32)) do |writer|
+        4.times do |part|
+          writer.write_interval("chr", part * 131_072, (part + 1) * 131_072, (part + 1).to_i32)
+        end
+      end
+      D4.open(path) do |file|
+        regions = (0...4).map do |part|
+          D4::Region.new("chr", part * 131_072, (part + 1) * 131_072)
+        end
+        file.aggregate(regions, D4::Reducers::Sum.new, workers: 4).map(&.value).should eq(
+          [131_072_i64, 262_144_i64, 393_216_i64, 524_288_i64])
+      end
+      source = D4::LocalSource.new(path)
+      begin
+        buffer = Bytes.new(16_384)
+        source.read_at(source.size - 10, buffer).should eq(10)
+        source.read_at(source.size, buffer).should eq(0)
+      ensure
+        source.close
+      end
+    ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
 end
