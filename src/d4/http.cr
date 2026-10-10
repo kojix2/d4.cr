@@ -47,7 +47,8 @@ module D4
             @order << start
           else
             if @order.size >= @cache_blocks
-              @reuse = @blocks.delete(@order.shift).not_nil!
+              block_start = @order.shift
+              @reuse = @blocks.delete(block_start) || raise Error.new("HTTP cache is inconsistent")
             end
             cached = fetch(start, Math.min(@block_size.to_i64, @size - start).to_i)
             @blocks[start] = cached
@@ -78,9 +79,11 @@ module D4
       @mutex.synchronize { @closed }
     end
 
-    private def fetch(start : Int64, length : Int32, *, discover : Bool = false) : Bytes
+    private def fetch(start : Int64, length : Int32, *, discover : Bool = false) : Bytes # ameba:disable Metrics/CyclomaticComplexity
       headers = HTTP::Headers{"Range" => "bytes=#{start}-#{start + length - 1}", "Accept-Encoding" => "identity"}
-      headers["If-Match"] = @etag.not_nil! if @etag
+      if etag = @etag
+        headers["If-Match"] = etag
+      end
       request = HTTP::Request.new("GET", @target, headers)
       @client.exec(request) do |response|
         raise RangeNotSupportedError.new("server ignored HTTP Range") if response.status_code == 200

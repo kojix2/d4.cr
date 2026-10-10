@@ -157,7 +157,7 @@ describe "D4 format compatibility and lifecycle" do
       File.exists?(path).should be_false
       File.write(path, "untouched")
       expect_raises(D4::Error, "destination already exists") do
-        D4.writer(path) { |writer| writer.set_chromosomes({"chr" => 1_u32}) }
+        D4.writer(path, &.set_chromosomes({"chr" => 1_u32}))
       end
       File.read(path).should eq("untouched")
     ensure
@@ -245,7 +245,7 @@ describe "D4 format compatibility and lifecycle" do
   it "borrows seekable IO without closing it by default" do
     bytes = File.read(File.join(__DIR__, "fixtures", "rust-input-10nt.d4")).to_slice
     io = IO::Memory.new(bytes)
-    D4.open(io) { |file| file.value("chr", 4).should eq(2) }
+    D4.open(io, &.value("chr", 4).should(eq(2)))
     io.closed?.should be_false
     io.rewind
     D4.open(io, sync_close: true) { |file| file.value("chr", 3).should eq(1) }
@@ -298,7 +298,7 @@ describe "D4 format compatibility and lifecycle" do
     entry = D4::Format::Entry.new(0_u8, 0_i64, 512_i64, "0")
     cursor = D4::SecondaryRecordIterator.new(source, [entry], true,
       D4::Region.new("chr", 0, 1), 1024_i64)
-    record = cursor.next_record.not_nil!
+    record = cursor.next_record || raise "expected a secondary record"
     {record.left, record.right, record.value}.should eq({0_i64, 1_i64, 42_i32})
     cursor.next_record.should be_nil
   end

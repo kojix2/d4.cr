@@ -306,7 +306,7 @@ describe "embedded D4 indexes" do
     begin
       D4.create(path, chromosomes: [D4::Chromosome.new("chr", 131_072_i64)],
         dictionary: D4::Dictionary.new([0_i32]),
-        options: D4::WriteOptions.new(indexes: [D4::IndexKind::Sum])) { |writer| }
+        options: D4::WriteOptions.new(indexes: [D4::IndexKind::Sum])) { |_| }
       source = D4::LocalSource.new(path)
       begin
         root = D4::Format::Directory.open_root(source, 4_194_304_i64)

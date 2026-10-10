@@ -58,7 +58,7 @@ module D4
       (cursor - position).to_i
     end
 
-    def write_values(chromosome : String, position : Int, values : Array(Int32) | Slice(Int32)) : Int32
+    def write_values(chromosome : String, position : Int, values : Array(Int32) | Slice(Int32)) : Int32 # ameba:disable Metrics/CyclomaticComplexity
       ensure_open
       metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
       chromosome_size = metadata.chromosome_size(chromosome)
@@ -397,7 +397,7 @@ module D4
         DirectoryEncoder::Item.new(1_u8, ".stab", stab_offset, stab_size),
       ]
       target = @path.to_s
-      raise Error.new("destination already exists: #{target}") if !@options.overwrite && ::File.exists?(target)
+      raise Error.new("destination already exists: #{target}") if !@options.overwrite? && ::File.exists?(target)
       temporary = ::File.tempfile(".d4-", ".tmp", dir: ::File.dirname(target))
       begin
         temporary.write(Format::MAGIC)
@@ -433,7 +433,7 @@ module D4
         temporary.flush
         temporary.close
         IndexBuilder.append(temporary.path, kinds: @options.indexes) unless @options.indexes.empty?
-        if @options.overwrite
+        if @options.overwrite?
           ::File.rename(temporary.path, target)
         else
           ::File.link(temporary.path, target)
@@ -456,10 +456,10 @@ module D4
       @secondary_spool = nil
     end
 
-    private def each_secondary_record(chromosome : Chromosome, &block : Bytes -> Nil) : Nil
+    private def each_secondary_record(chromosome : Chromosome, & : Bytes -> Nil) : Nil
       count = @secondary_counts[chromosome.name]
       return if count == 0
-      spool = @secondary_spool.not_nil!
+      spool = @secondary_spool || raise Error.new("secondary spool is unavailable")
       spool.flush
       spool.seek(@secondary_starts[chromosome.name], IO::Seek::Set)
       record = Bytes.new(10)
@@ -516,14 +516,14 @@ module D4
         write_linked_frame(io, pending, frame) if pending
         pending = frame
       end
-      io.write(pending.not_nil!)
+      io.write(pending || raise Error.new("missing compressed secondary frame"))
       512_i64
     end
 
     private def compressed_frame(raw : Bytes, count : Int32, first_pos : Int64, last_pos : Int64,
                                  first : Bool, level : Int32) : Bytes
       compressed = IO::Memory.new
-      Compress::Deflate::Writer.open(compressed, level: level) { |writer| writer.write(raw) }
+      Compress::Deflate::Writer.open(compressed, level: level, &.write(raw))
       compressed_bytes = compressed.to_slice
       raw_fallback = first && compressed_bytes.size > 483
       data = raw_fallback ? raw : compressed_bytes
@@ -592,7 +592,8 @@ module D4
                 json.field "Dictionary" do
                   json.object do
                     json.field "i2v_map" do
-                      json.array { metadata.dictionary.values.not_nil!.each { |value| json.number value } }
+                      values = metadata.dictionary.values || raise Error.new("value-map dictionary is unavailable")
+                      json.array { values.each { |value| json.number value } }
                     end
                   end
                 end
@@ -689,7 +690,7 @@ module D4
 
     def self.build(offset : Int64, entries : Array(Item)) : Array(UInt8)
       payload = Array(UInt8).new
-      entries.each { |entry| entry.append_to(payload, offset) }
+      entries.each(&.append_to(payload, offset))
       payload << 0_u8
       FrameEncoder.build(Format.bytes(payload))
     end

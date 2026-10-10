@@ -53,7 +53,7 @@ module D4
       rows
     end
 
-    def scan_rows(region : Region, buffer : Slice(Int32), &block : Int64, Slice(Int32), Int32 -> Nil) : Nil
+    def scan_rows(region : Region, buffer : Slice(Int32), & : Int64, Slice(Int32), Int32 -> Nil) : Nil
       @tracks.each(&.check_open)
       raise ArgumentError.new("row buffer size must be a positive multiple of column count") if buffer.empty? || buffer.size % column_count != 0
       raise ArgumentError.new("invalid region") if region.stop > @tracks.first.chromosome_size(region.chromosome)
@@ -68,7 +68,7 @@ module D4
       end
     end
 
-    def each_row(region : Region, &block : Row -> Nil) : Nil
+    def each_row(region : Region, & : Row -> Nil) : Nil
       buffer = Slice(Int32).new(Math.min(4096, 65_536 // column_count) * column_count)
       scan_rows(region, buffer) do |position, data, rows|
         rows.times do |row|
@@ -107,7 +107,7 @@ module D4
       rows
     end
 
-    def scan_rows(region : Region, buffer : Slice(Float64), &block : Int64, Slice(Float64), Int32 -> Nil) : Nil
+    def scan_rows(region : Region, buffer : Slice(Float64), & : Int64, Slice(Float64), Int32 -> Nil) : Nil
       raw = Slice(Int32).new(buffer.size)
       @raw.scan_rows(region, raw) do |position, data, rows|
         convert(data, buffer, rows)

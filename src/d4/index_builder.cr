@@ -79,7 +79,7 @@ module D4
       end
     end
 
-    private def self.write_sfi(file : D4::File, directory : Format::Directory, output : IO) : Nil
+    private def self.write_sfi(file : D4::File, directory : Format::Directory, output : IO) : Nil # ameba:disable Metrics/CyclomaticComplexity
       secondary = directory.entry(".stab", 1_u8)
       stab = Format::Directory.open(file.source, secondary.offset, file.options.max_metadata_bytes)
       metadata = stab.entry(".metadata", 0_u8)

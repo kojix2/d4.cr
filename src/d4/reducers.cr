@@ -16,25 +16,25 @@ module D4
       error = nil.as(Exception?)
       active.times do
         context.spawn do
-          begin
-            scratch = Slice(Int32).new(65_536)
-            while index = jobs.receive?
-              next if error_mutex.synchronize { !error.nil? }
-              begin
-                block.call(index, scratch)
-              rescue ex
-                error_mutex.synchronize { error ||= ex }
-              end
+          scratch = Slice(Int32).new(65_536)
+          while index = jobs.receive?
+            next if error_mutex.synchronize { !error.nil? }
+            begin
+              block.call(index, scratch)
+            rescue ex
+              error_mutex.synchronize { error ||= ex }
             end
-          ensure
-            group.done
           end
+        ensure
+          group.done
         end
       end
       count.times { |index| jobs.send(index) }
       jobs.close
       group.wait
-      raise error.not_nil! if error
+      if exception = error
+        raise exception
+      end
     end
 
     private def self.context : Fiber::ExecutionContext::Parallel
@@ -115,8 +115,8 @@ module D4
         length = stop - start
         state.length += length
         state.sum += length * value
-        state.min = value if state.min.nil? || value < state.min.not_nil!
-        state.max = value if state.max.nil? || value > state.max.not_nil!
+        state.min = value if state.min.try { |minimum| value < minimum } != false
+        state.max = value if state.max.try { |maximum| value > maximum } != false
         state
       end
 
@@ -129,8 +129,8 @@ module D4
         count.times do |index|
           value = values[index]
           sum += value
-          min = value if min.nil? || value < min.not_nil!
-          max = value if max.nil? || value > max.not_nil!
+          min = value if min.try { |minimum| value < minimum } != false
+          max = value if max.try { |maximum| value > maximum } != false
         end
         state.length += count
         state.sum = sum
@@ -143,10 +143,10 @@ module D4
         left.length += right.length
         left.sum += right.sum
         if min = right.min
-          left.min = min if left.min.nil? || min < left.min.not_nil!
+          left.min = min if left.min.try { |minimum| min < minimum } != false
         end
         if max = right.max
-          left.max = max if left.max.nil? || max > left.max.not_nil!
+          left.max = max if left.max.try { |maximum| max > maximum } != false
         end
         left
       end
@@ -172,7 +172,7 @@ module D4
 
     class Mean < Basic
       def finish(state : State) : Float64?
-        return nil if state.length == 0
+        return if state.length == 0
         state.sum.to_f64 / state.length
       end
     end
@@ -237,7 +237,7 @@ module D4
           region = items[index]
           slots[index] = RegionResult.new(index, region, aggregate_region(region, reducer, scratch))
         end
-        return slots.map(&.not_nil!)
+        return slots.map { |slot| slot || raise Error.new("parallel aggregation did not produce a result") }
       end
       result = Array(RegionResult(typeof(reducer.finish(reducer.seed)))).new
       scratch = Slice(Int32).new(65_536)
@@ -248,7 +248,7 @@ module D4
     end
 
     def each_aggregate(regions : Enumerable(Region), reducer : D, *, workers : Int32 = 1,
-                       batch_size : Int32 = 256, &block) forall D
+                       batch_size : Int32 = 256, &) forall D
       raise ArgumentError.new("batch_size must be positive") if batch_size <= 0
       raise ArgumentError.new("workers must be positive") if workers <= 0
       if workers > 1
@@ -289,7 +289,7 @@ module D4
     end
 
     def each_aggregate(regions : Enumerable(Region), reducer : D, *, workers : Int32 = 1,
-                       batch_size : Int32 = 256, &block) forall D
+                       batch_size : Int32 = 256, &) forall D
       default_track.each_aggregate(regions, reducer, workers: workers, batch_size: batch_size) { |result| yield result }
     end
 
@@ -307,14 +307,14 @@ module D4
         slots = Array(RegionResult(Array(typeof(reducer.finish(reducer.seed))))?).new(items.size, nil)
         ParallelWork.run(items.size, workers) do |index, scratch|
           region = items[index]
-          slots[index] = RegionResult.new(index, region, @tracks.map { |track| track.aggregate_region(region, reducer, scratch) })
+          slots[index] = RegionResult.new(index, region, @tracks.map(&.aggregate_region(region, reducer, scratch)))
         end
-        return slots.map(&.not_nil!)
+        return slots.map { |slot| slot || raise Error.new("parallel aggregation did not produce a result") }
       end
       result = Array(RegionResult(Array(typeof(reducer.finish(reducer.seed))))).new
       scratch = Slice(Int32).new(65_536)
       regions.each_with_index do |region, index|
-        values = @tracks.map { |track| track.aggregate_region(region, reducer, scratch) }
+        values = @tracks.map(&.aggregate_region(region, reducer, scratch))
         result << RegionResult.new(index, region, values)
       end
       result

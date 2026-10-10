@@ -98,7 +98,7 @@ module D4
     def value(chromosome : String, position : Int) : Int32
       raise ArgumentError.new("invalid point coordinate") if position < 0 || position.to_i64 >= chromosome_size(chromosome)
       check_open
-      if @secondary.nil? || @secondary.not_nil!.empty?(chromosome)
+      if (secondary = @secondary).nil? || secondary.empty?(chromosome)
         return primary_value(chromosome, position.to_i64)
       end
       dictionary = @metadata.dictionary
@@ -161,11 +161,11 @@ module D4
       total
     end
 
-    def scan_values(chromosome : String, buffer : Slice(Int32), start : Int = 0, stop : Int? = nil, &block : Int64, Slice(Int32), Int32 -> Nil) : Nil
+    def scan_values(chromosome : String, buffer : Slice(Int32), start : Int = 0, stop : Int? = nil, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
       scan_values(checked_region(chromosome, start.to_i64, stop.try(&.to_i64)), buffer) { |block_start, values, count| yield block_start, values, count }
     end
 
-    def scan_values(region : Region, buffer : Slice(Int32), &block : Int64, Slice(Int32), Int32 -> Nil) : Nil
+    def scan_values(region : Region, buffer : Slice(Int32), & : Int64, Slice(Int32), Int32 -> Nil) : Nil
       check_open
       raise ArgumentError.new("scan buffer must not be empty") if buffer.empty?
       checked = checked_region(region.chromosome, region.start, region.stop)
@@ -180,7 +180,7 @@ module D4
       end
     end
 
-    def each_value(chromosome : String, start : Int = 0, stop : Int? = nil, &block : Int32 -> Nil) : Nil
+    def each_value(chromosome : String, start : Int = 0, stop : Int? = nil, & : Int32 -> Nil) : Nil
       scratch = Slice(Int32).new(65_536)
       scan_values(chromosome, scratch, start, stop) do |_offset, values, count|
         count.times { |index| yield values[index] }
@@ -191,7 +191,7 @@ module D4
       ValueIterator.new(self, checked_region(chromosome, start.to_i64, stop.try(&.to_i64)))
     end
 
-    def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil, &block : RawInterval -> Nil) : Nil
+    def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil, & : RawInterval -> Nil) : Nil
       region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
       scratch = Slice(Int32).new(65_536)
       have_value = false
@@ -270,7 +270,7 @@ module D4
 
     def mean(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto) : Float64?
       region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
-      return nil if region.length == 0
+      return if region.length == 0
       sum(region, index: index).to_f64 / region.length
     end
 
@@ -288,8 +288,8 @@ module D4
           value = values[index]
           length += 1
           sum += value
-          min = value if min.nil? || value < min.not_nil!
-          max = value if max.nil? || value > max.not_nil!
+          min = value if min.try { |minimum| value < minimum } != false
+          max = value if max.try { |maximum| value > maximum } != false
         end
       end
       Summary.new(length, sum, min, max)
@@ -358,7 +358,7 @@ module D4
 
     private def load_secondary : SecondaryTable?
       entry = @directory.entry?(".stab")
-      return nil unless entry && entry.directory?
+      return unless entry && entry.directory?
       SecondaryTable.new(@source, Format::Directory.open(@source, entry.offset, @options.max_metadata_bytes), @options, @sfi_index)
     end
   end
@@ -381,7 +381,7 @@ module D4
       @track.decode_primary(@region.chromosome, @position, block, @packed)
       block_end = @position + count
       while @have_record
-        records = @records.not_nil!
+        records = @records || raise Error.new("secondary record iterator is unavailable")
         break if records.left >= block_end
         left = Math.max(@position, records.left)
         right = Math.min(block_end, records.right)
@@ -492,7 +492,7 @@ module D4
       address = if first_start && region.start > first_start
                   @index.try(&.find(region.chromosome, region.start))
                 end
-      address = nil if address && address.stop <= first_start.not_nil!
+      address = nil if address && first_start && address.stop <= first_start
       SecondaryRecordIterator.new(@source, entries, @compressed, region, @options.max_decoded_frame_bytes, address)
     end
 
@@ -539,7 +539,7 @@ module D4
       @stream = nil.as(Format::FrameStream?)
       @payload = Bytes.empty
       @cursor = 0
-      @first_frame = address.try(&.first_frame) != false
+      @first_frame = address.try(&.first_frame?) != false
       @skip_bytes = address.try(&.record_offset) || 0
       @stream = Format::FrameStream.new(@source, address.offset, address.size, Int64::MAX, @max_bytes) if address
       @entry_index = 1 if address
@@ -554,11 +554,11 @@ module D4
     end
 
     def next_record : RangeRecord?
-      return nil unless next_fields
+      return unless next_fields
       RangeRecord.new(@left, @right, @value)
     end
 
-    def next_fields : Bool
+    def next_fields : Bool # ameba:disable Metrics/CyclomaticComplexity
       loop do
         if @stream.nil?
           return false if @entry_index >= @entries.size
@@ -615,10 +615,10 @@ module D4
       filled = 0
       while filled < 10
         if @cursor >= @payload.size
-          frame = @stream.not_nil!.next_payload
+          frame = (@stream || raise Error.new("secondary frame stream is unavailable")).next_payload
           if frame.nil?
             raise FormatError.new("truncated secondary record") if filled > 0
-            return nil
+            return
           end
           @payload = frame
           @cursor = @skip_bytes
@@ -633,8 +633,8 @@ module D4
       @record
     end
 
-    private def load_compressed_frame : Bool
-      frame = @stream.not_nil!.next_payload
+    private def load_compressed_frame : Bool # ameba:disable Metrics/CyclomaticComplexity
+      frame = (@stream || raise Error.new("secondary frame stream is unavailable")).next_payload
       return false unless frame
       header = @first_frame ? 13 : 12
       raise FormatError.new("truncated compressed secondary frame") if frame.size < header
@@ -683,7 +683,7 @@ module D4
       dictionary = if simple = dictionary_value["SimpleRange"]?
                      Dictionary.new(simple["low"].as_i.to_i32, simple["high"].as_i.to_i32)
                    elsif mapping = dictionary_value["Dictionary"]?
-                     Dictionary.new(mapping["i2v_map"].as_a.map { |value| value.as_i.to_i32 })
+                     Dictionary.new(mapping["i2v_map"].as_a.map(&.as_i.to_i32))
                    else
                      raise FormatError.new("unsupported D4 dictionary")
                    end

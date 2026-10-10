@@ -44,8 +44,8 @@ module D4
         @buffer = Bytes.empty
       end
 
-      def next_payload : Bytes?
-        return nil if @done
+      def next_payload : Bytes? # ameba:disable Metrics/CyclomaticComplexity
+        return if @done
         if @size < FRAME_HEADER_SIZE || @size > Int32::MAX || @size - FRAME_HEADER_SIZE > @max_frame || @offset < 0 || @size > @source.size - @offset
           raise FormatError.new("frame exceeds source")
         end
@@ -95,7 +95,7 @@ module D4
         open(source, 8_i64, limit)
       end
 
-      def self.open(source : Source, offset : Int64, limit : Int64) : Directory
+      def self.open(source : Source, offset : Int64, limit : Int64) : Directory # ameba:disable Metrics/CyclomaticComplexity
         payload = FrameStream.read(source, offset, DIRECTORY_FRAME_SIZE, limit)
         entries = Array(Entry).new
         names = Set(String).new

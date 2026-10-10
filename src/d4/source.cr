@@ -63,7 +63,7 @@ module D4
         raise ClosedError.new("source is closed") if @closed
         return 0 if offset < 0 || offset >= @size
         count = Math.min(buffer.size.to_i64, @size - offset).to_i
-        return @io.read_at(offset, count) { |reader| reader.read(buffer[0, count]) }
+        return @io.read_at(offset, count, &.read(buffer[0, count]))
       end
       @mutex.synchronize do
         raise ClosedError.new("source is closed") if @closed

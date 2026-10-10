@@ -15,7 +15,7 @@ module D4
       end
     end
 
-    def self.open(path : String | Path, *, track : String? = nil, options : ReadOptions = ReadOptions.new, &block : File -> T) : T forall T
+    def self.open(path : String | Path, *, track : String? = nil, options : ReadOptions = ReadOptions.new, & : File -> T) : T forall T
       file = open(path, track: track, options: options)
       begin
         yield file
@@ -28,7 +28,7 @@ module D4
       new(source, sync_close, track, options)
     end
 
-    def self.open(source : Source, *, sync_close : Bool = false, track : String? = nil, options : ReadOptions = ReadOptions.new, &block : File -> T) : T forall T
+    def self.open(source : Source, *, sync_close : Bool = false, track : String? = nil, options : ReadOptions = ReadOptions.new, & : File -> T) : T forall T
       file = open(source, sync_close: sync_close, track: track, options: options)
       begin
         yield file
@@ -41,7 +41,7 @@ module D4
       @closed = false
       root = Format::Directory.open_root(@source, @options.max_metadata_bytes)
       @tracks = load_tracks(root)
-      @tracks.each_value { |track| track.bind_owner(self) }
+      @tracks.each_value(&.bind_owner(self))
       raise FormatError.new("D4 container contains no tracks") if @tracks.empty?
       @selected_track_name = requested_track
       if requested_track
@@ -64,7 +64,7 @@ module D4
       @tracks.keys
     end
 
-    def each_track(&block : Track -> Nil) : Nil
+    def each_track(& : Track -> Nil) : Nil
       check_open
       @tracks.each_value { |track| yield track }
     end
@@ -128,7 +128,7 @@ module D4
       default_track.read_values_into(chromosome, start, buffer)
     end
 
-    def each_value(chromosome : String, start : Int = 0, stop : Int? = nil, &block : Int32 -> Nil) : Nil
+    def each_value(chromosome : String, start : Int = 0, stop : Int? = nil, & : Int32 -> Nil) : Nil
       default_track.each_value(chromosome, start, stop) { |value| yield value }
     end
 
@@ -136,7 +136,7 @@ module D4
       default_track.each_value(chromosome, start, stop)
     end
 
-    def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil, &block : RawInterval -> Nil) : Nil
+    def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil, & : RawInterval -> Nil) : Nil
       default_track.each_interval(chromosome, start, stop) { |interval| yield interval }
     end
 
@@ -150,7 +150,7 @@ module D4
       result
     end
 
-    def query(chromosome : String, start : Int = 0, stop : Int? = nil, &block : RawInterval -> Nil) : Nil
+    def query(chromosome : String, start : Int = 0, stop : Int? = nil, & : RawInterval -> Nil) : Nil
       each_interval(chromosome, start, stop) { |interval| yield interval }
     end
 

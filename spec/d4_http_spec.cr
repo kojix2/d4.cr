@@ -65,9 +65,9 @@ describe D4::HTTPSource do
       version = "v1"
       server = HTTP::Server.new do |context|
         requests += 1
-        match = /\Abytes=(\d+)-(\d+)\z/.match(context.request.headers["Range"])
-        first = match.not_nil![1].to_i
-        last = match.not_nil![2].to_i
+        match = /\Abytes=(\d+)-(\d+)\z/.match(context.request.headers["Range"]) || raise "invalid Range header"
+        first = match[1].to_i
+        last = match[2].to_i
         context.response.status_code = 206
         context.response.headers["Content-Range"] = "bytes #{first}-#{last}/#{data.size}"
         context.response.headers["ETag"] = version

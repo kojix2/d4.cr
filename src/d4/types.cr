@@ -101,7 +101,7 @@ module D4
     end
 
     def bit_width : Int32
-      count = @type.simple_range? ? (@high.to_i64 - @low.to_i64) : @values.not_nil!.size.to_i64
+      count = @type.simple_range? ? (@high.to_i64 - @low.to_i64) : mapped_values.size.to_i64
       width = 0
       while count > 1
         count >>= 1
@@ -111,7 +111,7 @@ module D4
     end
 
     def first_value : Int32
-      @type.simple_range? ? @low : @values.not_nil!.first
+      @type.simple_range? ? @low : mapped_values.first
     end
 
     def values : Array(Int32)?
@@ -121,21 +121,21 @@ module D4
     def decode(code : UInt32) : Int32?
       if @type.simple_range?
         value = @low.to_i64 + code.to_i64
-        return nil if value >= @high
+        return if value >= @high
         value.to_i32
       else
-        @values.not_nil![code.to_i]?
+        mapped_values[code.to_i]?
       end
     end
 
     def encode(value : Int32) : UInt32?
       if @type.simple_range?
-        return nil if value < @low || value >= @high
+        return if value < @low || value >= @high
         (value - @low).to_u32
       else
         reverse = @reverse ||= begin
           mapping = Hash(Int32, UInt32).new
-          @values.not_nil!.each_with_index { |item, index| mapping[item] ||= index.to_u32 }
+          mapped_values.each_with_index { |item, index| mapping[item] ||= index.to_u32 }
           mapping
         end
         reverse[value]?
@@ -144,6 +144,10 @@ module D4
 
     private def power_of_two?(value : Int64) : Bool
       value > 0 && (value & (value - 1)) == 0
+    end
+
+    private def mapped_values : Array(Int32)
+      @values || raise Error.new("value-map dictionary is unavailable")
     end
   end
 
@@ -203,7 +207,7 @@ module D4
   end
 
   class WriteOptions
-    getter overwrite : Bool
+    getter? overwrite : Bool
     getter compression : Compression
     getter indexes : Array(IndexKind)
 
@@ -235,7 +239,7 @@ module D4
     def initialize(@length : Int64, @sum : Int64, @min : Int32?, @max : Int32?); end
 
     def mean : Float64?
-      return nil if @length == 0
+      return if @length == 0
       @sum.to_f64 / @length
     end
   end

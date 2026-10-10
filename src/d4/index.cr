@@ -14,7 +14,7 @@ module D4
     getter offset : Int64
     getter size : Int64
     getter record_offset : Int32
-    getter first_frame : Bool
+    getter? first_frame : Bool
     getter start : Int64
     getter stop : Int64
 
@@ -53,7 +53,7 @@ module D4
       end
     end
 
-    def find(chromosome : String, position : Int64) : FrameAddress?
+    def find(chromosome : String, position : Int64) : FrameAddress? # ameba:disable Metrics/CyclomaticComplexity
       chromosome_id = @chromosome_ids[chromosome]? || raise UnknownChromosomeError.new("unknown chromosome #{chromosome}")
       low = 0_i64
       high = @count
@@ -71,9 +71,9 @@ module D4
         end
       end
       candidate = low > 0 ? low - 1 : low
-      return nil if candidate >= @count
+      return if candidate >= @count
       read_entry(candidate, scratch)
-      return nil unless Format::Endian.u32_le(scratch, shift) == chromosome_id
+      return unless Format::Endian.u32_le(scratch, shift) == chromosome_id
       # A record straddling a frame boundary can extend into the next frame.
       if candidate > 0 && Format::Endian.u32_le(scratch, shift + 4) <= position
         previous = Bytes.new(ENTRY_SIZE.to_i)
@@ -97,7 +97,7 @@ module D4
       @source.read_exact_at(@offset + index * ENTRY_SIZE, output)
     end
 
-    private def valid_entry?(entry : Bytes, flag_first : Bool) : Bool
+    private def valid_entry?(entry : Bytes, flag_first : Bool) : Bool # ameba:disable Metrics/CyclomaticComplexity
       shift = flag_first ? 1 : 0
       chrom = Format::Endian.u32_le(entry, shift)
       return false if chrom >= @chromosome_sizes.size
@@ -151,9 +151,9 @@ module D4
       first = (start + @granularity - 1) // @granularity
       last = stop // @granularity
       return 0_i64 if last <= first
-      return nil if base + last > @available_count
+      return if base + last > @available_count
       # Rust sums Int32 values into Float64. This bound makes each bin exact.
-      return nil if @granularity > (1_i64 << 53) // (1_i64 << 31)
+      return if @granularity > (1_i64 << 53) // (1_i64 << 31)
       raise ClosedError.new("source is closed") if @source.closed?
       # Keep at most 1 MiB of validated local bins; remote sources retain their
       # own consistency checks and larger indexes continue to stream.

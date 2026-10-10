@@ -19,7 +19,7 @@ module D4
       raise ArgumentError.new("quantile must be between 0 and 1") unless q.finite? && 0.0 <= q <= 1.0
       raise IncompleteHistogramError.new("histogram excludes observed values") if @below > 0 || @above > 0
       total = @counts.sum(0_i64)
-      return nil if total == 0
+      return if total == 0
       rank = Math.max(1_i64, (q * total).ceil.to_i64)
       seen = 0_i64
       @counts.each_with_index do |count, index|
@@ -38,10 +38,10 @@ module D4
     def quantile(q : Float64) : Int32?
       raise ArgumentError.new("quantile must be between 0 and 1") unless q.finite? && 0.0 <= q <= 1.0
       total = @counts.values.sum(0_i64)
-      return nil if total == 0
+      return if total == 0
       rank = Math.max(1_i64, (q * total).ceil.to_i64)
       seen = 0_i64
-      @counts.keys.sort.each do |value|
+      @counts.keys.sort!.each do |value|
         seen += @counts[value]
         return value if seen >= rank
       end
@@ -57,7 +57,7 @@ module D4
     def initialize(@thresholds : Array(Int32), @counts : Array(Int64), @length : Int64); end
 
     def fraction(index : Int) : Float64?
-      return nil if @length == 0
+      return if @length == 0
       @counts[index].to_f64 / @length
     end
   end

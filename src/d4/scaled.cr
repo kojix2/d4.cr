@@ -34,13 +34,13 @@ module D4
       return 0 if buffer.empty? || start.to_i64 == @raw.chromosome_size(chromosome)
       count = 0
       length = Math.min(buffer.size.to_i64, @raw.chromosome_size(chromosome) - start.to_i64)
-      scan_values(Region.new(chromosome, start.to_i64, start.to_i64 + length), buffer) do |_offset, _values, length|
-        count += length
+      scan_values(Region.new(chromosome, start.to_i64, start.to_i64 + length), buffer) do |_offset, _values, value_count|
+        count += value_count
       end
       count
     end
 
-    def scan_values(region : Region, buffer : Slice(Float64), &block : Int64, Slice(Float64), Int32 -> Nil) : Nil
+    def scan_values(region : Region, buffer : Slice(Float64), & : Int64, Slice(Float64), Int32 -> Nil) : Nil
       raise ArgumentError.new("scan buffer must not be empty") if buffer.empty?
       raw = Slice(Int32).new(Math.min(buffer.size, 65_536))
       @raw.scan_values(region, raw) do |position, values, count|
@@ -49,7 +49,7 @@ module D4
       end
     end
 
-    def each_value(chromosome : String, start : Int = 0, stop : Int? = nil, &block : Float64 -> Nil) : Nil
+    def each_value(chromosome : String, start : Int = 0, stop : Int? = nil, & : Float64 -> Nil) : Nil
       @raw.each_value(chromosome, start, stop) { |value| yield value.to_f64 / denominator }
     end
 
@@ -57,7 +57,7 @@ module D4
       ScaledValueIterator.new(@raw.each_value(chromosome, start, stop), denominator)
     end
 
-    def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil, &block : ScaledInterval -> Nil) : Nil
+    def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil, & : ScaledInterval -> Nil) : Nil
       @raw.each_interval(chromosome, start, stop) do |interval|
         yield ScaledInterval.new(interval.left, interval.right, interval.value.to_f64 / denominator)
       end

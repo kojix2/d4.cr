@@ -58,7 +58,7 @@ module D4
   end
 
   class Track
-    def each_bin(region : Region, *, bin_size : Int, &block : BinSummary -> Nil) : Nil
+    def each_bin(region : Region, *, bin_size : Int, & : BinSummary -> Nil) : Nil
       iterator = each_bin(region, bin_size: bin_size)
       while item = iterator.next
         break if item.is_a?(Iterator::Stop)
@@ -102,7 +102,7 @@ module D4
   end
 
   class File
-    def each_bin(region : Region, *, bin_size : Int, &block : BinSummary -> Nil) : Nil
+    def each_bin(region : Region, *, bin_size : Int, & : BinSummary -> Nil) : Nil
       default_track.each_bin(region, bin_size: bin_size) { |bin| yield bin }
     end
 
