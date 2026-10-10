@@ -1,0 +1,23 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  crystal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: crystal-lang/install-crystal@v1
+        with:
+          crystal: '1.21'
+      - run: shards install
+      - run: crystal spec --single-module
+      - run: crystal tool format --check src spec
+      - run: shards run ameba -- src spec

@@ -1,0 +1,86 @@
+[
+  {
+    "scenario": "primary-2g",
+    "file_bytes": 2147453960,
+    "bases": 2863267840,
+    "program": "rust-cli",
+    "median_ms": 12506.757,
+    "median_rss_kb": 2102432,
+    "samples": [
+      {
+        "ms": 13133.055,
+        "rss_kb": 2102412,
+        "user_ms": 13050.731,
+        "system_ms": 75.734,
+        "checksum": 20042874880,
+        "allocated_bytes": null
+      },
+      {
+        "ms": 12702.558,
+        "rss_kb": 2102316,
+        "user_ms": 12640.992,
+        "system_ms": 60.525,
+        "checksum": 20042874880,
+        "allocated_bytes": null
+      },
+      {
+        "ms": 12506.757,
+        "rss_kb": 2102432,
+        "user_ms": 12440.485,
+        "system_ms": 65.453,
+        "checksum": 20042874880,
+        "allocated_bytes": null
+      },
+      {
+        "ms": 12334.849,
+        "rss_kb": 2102456,
+        "user_ms": 12287.152,
+        "system_ms": 46.909,
+        "checksum": 20042874880,
+        "allocated_bytes": null
+      }
+    ]
+  },
+  {
+    "scenario": "secondary-2g",
+    "file_bytes": 2000017496,
+    "bases": 200000000,
+    "program": "rust-cli",
+    "median_ms": 1493.699,
+    "median_rss_kb": 1958120,
+    "samples": [
+      {
+        "ms": 1329.422,
+        "rss_kb": 1958112,
+        "user_ms": 1270.126,
+        "system_ms": 58.612,
+        "checksum": 300000000,
+        "allocated_bytes": null
+      },
+      {
+        "ms": 1510.357,
+        "rss_kb": 1958268,
+        "user_ms": 1453.351,
+        "system_ms": 55.431,
+        "checksum": 300000000,
+        "allocated_bytes": null
+      },
+      {
+        "ms": 1461.661,
+        "rss_kb": 1958120,
+        "user_ms": 1382.916,
+        "system_ms": 77.621,
+        "checksum": 300000000,
+        "allocated_bytes": null
+      },
+      {
+        "ms": 1493.699,
+        "rss_kb": 1958116,
+        "user_ms": 1424.957,
+        "system_ms": 68.188,
+        "checksum": 300000000,
+        "allocated_bytes": null
+      }
+    ]
+  }
+]

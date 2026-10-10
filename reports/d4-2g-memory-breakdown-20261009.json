@@ -1,0 +1,35 @@
+[
+  {
+    "program": "Crystal",
+    "peak_smaps_kb": {
+      "Rss": 3112,
+      "Pss_Anon": 1444,
+      "Pss_File": 999,
+      "Private_Dirty": 1444
+    },
+    "samples": 72,
+    "output": "checksum=20042874880 allocated_bytes=366544 heap_bytes=614400"
+  },
+  {
+    "program": "Rust C API",
+    "peak_smaps_kb": {
+      "Rss": 2093288,
+      "Pss_Anon": 620,
+      "Pss_File": 2092219,
+      "Private_Dirty": 620
+    },
+    "samples": 142,
+    "output": "checksum=20042874880"
+  },
+  {
+    "program": "Rust CLI",
+    "peak_smaps_kb": {
+      "Rss": 2073644,
+      "Pss_Anon": 1096,
+      "Pss_File": 2071847,
+      "Private_Dirty": 1096
+    },
+    "samples": 53,
+    "output": "chr1\t0\t2863267840\t10021437440\nchr2\t0\t2863267840\t10021437440"
+  }
+]

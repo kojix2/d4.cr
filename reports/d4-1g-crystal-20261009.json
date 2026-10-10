@@ -1,0 +1,86 @@
+[
+  {
+    "scenario": "primary-1g",
+    "file_bytes": 1073728008,
+    "bases": 2863267840,
+    "program": "crystal",
+    "median_ms": 7583.949,
+    "median_rss_kb": 2876,
+    "samples": [
+      {
+        "ms": 7301.217,
+        "rss_kb": 2908,
+        "user_ms": 7240.716,
+        "system_ms": 73.074,
+        "checksum": 10021437440,
+        "allocated_bytes": 339904
+      },
+      {
+        "ms": 7332.149,
+        "rss_kb": 2908,
+        "user_ms": 7223.852,
+        "system_ms": 127.542,
+        "checksum": 10021437440,
+        "allocated_bytes": 339904
+      },
+      {
+        "ms": 7717.767,
+        "rss_kb": 2860,
+        "user_ms": 7606.386,
+        "system_ms": 136.53,
+        "checksum": 10021437440,
+        "allocated_bytes": 339904
+      },
+      {
+        "ms": 7583.949,
+        "rss_kb": 2876,
+        "user_ms": 7475.645,
+        "system_ms": 130.345,
+        "checksum": 10021437440,
+        "allocated_bytes": 339904
+      }
+    ]
+  },
+  {
+    "scenario": "secondary-1g",
+    "file_bytes": 1000009864,
+    "bases": 100000000,
+    "program": "crystal",
+    "median_ms": 1354.731,
+    "median_rss_kb": 6968,
+    "samples": [
+      {
+        "ms": 1248.555,
+        "rss_kb": 6900,
+        "user_ms": 1187.065,
+        "system_ms": 64.408,
+        "checksum": 150000000,
+        "allocated_bytes": 4529728
+      },
+      {
+        "ms": 1354.731,
+        "rss_kb": 6968,
+        "user_ms": 1289.622,
+        "system_ms": 57.497,
+        "checksum": 150000000,
+        "allocated_bytes": 4529728
+      },
+      {
+        "ms": 1375.079,
+        "rss_kb": 6944,
+        "user_ms": 1318.299,
+        "system_ms": 61.935,
+        "checksum": 150000000,
+        "allocated_bytes": 4529920
+      },
+      {
+        "ms": 1267.732,
+        "rss_kb": 7008,
+        "user_ms": 1194.14,
+        "system_ms": 77.407,
+        "checksum": 150000000,
+        "allocated_bytes": 4529728
+      }
+    ]
+  }
+]

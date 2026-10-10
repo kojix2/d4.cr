@@ -1,0 +1,18 @@
+diff --git a/d4-hts/build_htslib.sh b/d4-hts/build_htslib.sh
+index 8751216..895f6c6 100755
+--- a/d4-hts/build_htslib.sh
++++ b/d4-hts/build_htslib.sh
+@@ -43,6 +43,13 @@ else
+ fi
+ cd zlib-1.2.11
+ is_musl && CC=musl-gcc ./configure || ./configure
++
++# zlib 1.2.11 treats modern macOS as classic MacOS and defines fdopen to NULL
++# in zutil.h. That macro then corrupts the real fdopen declaration from the
++# macOS SDK stdio.h when zutil.c includes gzguts.h.
++case "${TARGET}" in
++	*-apple-darwin*) perl -i -ne 'print unless /^#\s*define\s+fdopen\(/' zutil.h ;;
++esac
+ make libz.a
+ cp libz.a ..
+ cd ..

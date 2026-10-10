@@ -1,0 +1,20 @@
+diff --git a/d4binding/src/api.rs b/d4binding/src/api.rs
+index 2e9d33f..5da9b66 100644
+--- a/d4binding/src/api.rs
++++ b/d4binding/src/api.rs
+@@ -248,14 +248,7 @@ pub extern "C" fn d4_file_load_metadata(
+                 *(*buf).chrom_name.offset(id as isize) = {
+                     let name_bytes = chrom.name.as_bytes();
+                     let buf = crate::c_api::malloc(name_bytes.len() as u64 + 1) as *mut c_char;
+-                    extern "C" {
+-                        fn memcpy(dst: *mut c_char, src: *const c_char, size: usize);
+-                    }
+-                    memcpy(
+-                        buf,
+-                        &name_bytes[0] as *const _ as *const _,
+-                        name_bytes.len(),
+-                    );
++                    std::ptr::copy_nonoverlapping(name_bytes.as_ptr() as *const c_char, buf, name_bytes.len());
+                     *buf.offset(name_bytes.len() as isize) = 0;
+                     buf
+                 };
