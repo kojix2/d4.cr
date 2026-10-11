@@ -373,7 +373,10 @@ module D4Plot
       if window = @settings_window
         window.show
       else
-        window = SettingsWindow.new(@settings, @window, -> { refresh }, -> { @settings_window = nil })
+        window = SettingsWindow.new(@settings, @window, ->(reload_data : Bool) {
+          @tools.native.display_mode = @settings.toolbar_display_mode
+          reload_data ? refresh : @area.queue_redraw_all
+        }, -> { @settings_window = nil })
         @settings_window = window
         window.show
       end

@@ -1,3 +1,4 @@
+require "uing"
 require "./data_sampler"
 
 module D4Plot
@@ -6,6 +7,7 @@ module D4Plot
 
     property point_count : Int32
     property annotation_feature_limit : Int32
+    property toolbar_display_mode : UIng::Toolbar::DisplayMode
     property plot_color : PlotColor
     property? use_sum_index : Bool
     property? show_axis_ticks : Bool
@@ -17,6 +19,7 @@ module D4Plot
     def initialize
       @point_count = DataSampler::DEFAULT_POINT_COUNT
       @annotation_feature_limit = 500
+      @toolbar_display_mode = UIng::Toolbar::DisplayMode::IconAndTextVertical
       @plot_color = {0.0, 0.4, 0.8, 1.0}
       @use_sum_index = true
       @show_axis_ticks = true

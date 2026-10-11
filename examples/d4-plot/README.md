@@ -11,7 +11,7 @@ bin/d4-plot
 bin/d4-plot sample.d4 chr1:1,000,000-2,000,000
 ```
 
-The native toolbar groups file actions, view history, navigation and display settings. Icons have text labels and tooltips; unavailable actions are disabled.
+The native toolbar groups file actions, view history, navigation and display settings. In **Display** (or File → Preferences), choose icons, labels, or both and click **Apply**; the toolbar changes without restarting. Tooltips remain available in icon-only mode; unavailable actions are disabled.
 
 Choose a track and chromosome, enter a region, then click **Go**. Region input accepts `chr1:100-200`, `chr1:100`, or `chr1`. Coordinates in the viewer are **1-based, inclusive**; chromosome names must match the file.
 
