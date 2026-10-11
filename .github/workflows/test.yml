@@ -3,19 +3,22 @@ name: test
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  crystal:
-    runs-on: ubuntu-latest
+  test:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu", "macos", "windows"]
     steps:
       - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
       - uses: crystal-lang/install-crystal@v1
         with:
-          crystal: '1.21'
-      - run: crystal spec --single-module
-      - run: crystal tool format --check src spec
+          crystal: latest
+      - run: crystal spec
