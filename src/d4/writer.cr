@@ -276,43 +276,55 @@ module D4
     private def append_primary_run(code : UInt32, length : Int64, width : Int32) : Nil
       return if width == 0
       remaining = length
-      if remaining >= 64
-        while remaining > 0 && @bit_count != 0
-          append_primary_code(code, width)
-          remaining -= 1
-        end
-        pattern = Bytes.new(width)
-        8.times do |value_index|
-          width.times do |shift|
-            bit = value_index * width + shift
-            pattern[bit // 8] |= 1_u8 << (bit % 8) if (code & (1_u32 << shift)) != 0
-          end
-        end
-        while remaining >= 8
-          @control.check!
-          blocks = Math.min(remaining // 8, (@primary_buffer.size - @primary_used) // width).to_i
-          if blocks == 0
-            flush_primary_buffer
-            next
-          end
-          count = blocks * width
-          section = @primary_buffer[@primary_used, count]
-          section[0, width].copy_from(pattern)
-          copied = width
-          while copied < count
-            step = Math.min(copied, count - copied)
-            section[copied, step].copy_from(section[0, step])
-            copied += step
-          end
-          @primary_used += count
-          flush_primary_buffer if @primary_used == @primary_buffer.size
-          remaining -= blocks.to_i64 * 8
-        end
-      end
+      remaining = append_primary_blocks(code, remaining, width) if remaining >= 64
       while remaining > 0
         append_primary_code(code, width)
         remaining -= 1
       end
+    end
+
+    private def append_primary_blocks(code : UInt32, remaining : Int64, width : Int32) : Int64
+      while remaining > 0 && @bit_count != 0
+        append_primary_code(code, width)
+        remaining -= 1
+      end
+      pattern = primary_pattern(code, width)
+      while remaining >= 8
+        @control.check!
+        blocks = Math.min(remaining // 8, (@primary_buffer.size - @primary_used) // width).to_i
+        if blocks == 0
+          flush_primary_buffer
+          next
+        end
+        copy_primary_pattern(pattern, blocks * width)
+        remaining -= blocks.to_i64 * 8
+      end
+      remaining
+    end
+
+    private def primary_pattern(code : UInt32, width : Int32) : Bytes
+      pattern = Bytes.new(width)
+      8.times do |value_index|
+        width.times do |shift|
+          bit = value_index * width + shift
+          pattern[bit // 8] |= 1_u8 << (bit % 8) if (code & (1_u32 << shift)) != 0
+        end
+      end
+      pattern
+    end
+
+    private def copy_primary_pattern(pattern : Bytes, count : Int32) : Nil
+      width = pattern.size
+      section = @primary_buffer[@primary_used, count]
+      section[0, width].copy_from(pattern)
+      copied = width
+      while copied < count
+        step = Math.min(copied, count - copied)
+        section[copied, step].copy_from(section[0, step])
+        copied += step
+      end
+      @primary_used += count
+      flush_primary_buffer if @primary_used == @primary_buffer.size
     end
 
     private def append_primary_code(code : UInt32, width : Int32) : Nil

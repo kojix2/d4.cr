@@ -27,7 +27,7 @@ module D4
       reference = @tracks.first.chromosomes
       @tracks.each do |track|
         chromosomes = track.chromosomes
-        unless chromosomes.size == reference.size && chromosomes.zip(reference).all? { |a, b| a.name == b.name && a.size == b.size }
+        unless chromosomes.size == reference.size && chromosomes.zip(reference).all? { |actual, expected| actual.name == expected.name && actual.size == expected.size }
           raise ArgumentError.new("matrix tracks must have identical chromosomes and lengths")
         end
       end

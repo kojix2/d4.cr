@@ -336,71 +336,79 @@ module D4
       bytes = packed[0, (last_byte - first_byte).to_i]
       @source.read_exact_at(@primary.offset + @chromosome_offsets[chromosome] + first_byte, bytes)
       mask = (1_u64 << width) - 1_u64
-      cursor = 1
       skip = (first_bit % 8).to_i
+      if dictionary.type.simple_range?
+        decode_simple_range(output, bytes, width, skip, mask, dictionary.low.to_i64)
+      else
+        decode_dictionary(output, bytes, width, skip, mask, dictionary)
+      end
+    end
+
+    private def decode_simple_range(output, bytes, width, skip, mask, low) : Nil
+      # The byte span covers every requested code, and each output index is within output.size.
+      # Avoid repeating those checks for every value in this hot path.
+      if width == 8
+        output.size.times { |index| output.unsafe_put(index, (low + bytes.unsafe_fetch(index)).to_i32) }
+      elsif width == 1 || width == 2 || width == 4
+        byte = 0
+        bit = skip
+        output.size.times do |index|
+          code = (bytes.unsafe_fetch(byte) >> bit) & mask
+          output.unsafe_put(index, (low + code).to_i32)
+          bit += width
+          if bit == 8
+            bit = 0
+            byte += 1
+          end
+        end
+      elsif width < 8
+        decode_straddling_range(output, bytes, width, skip, mask, low)
+      else
+        decode_accumulated_range(output, bytes, width, skip, mask, low)
+      end
+    end
+
+    private def decode_straddling_range(output, bytes, width, bit, mask, low) : Nil
+      byte = 0
+      output.size.times do |index|
+        word = bytes.unsafe_fetch(byte).to_u16 | (bytes.unsafe_fetch(byte + 1).to_u16 << 8)
+        output.unsafe_put(index, (low + ((word >> bit).to_u64 & mask)).to_i32)
+        bit += width
+        byte += bit >> 3
+        bit &= 7
+      end
+    end
+
+    private def decode_accumulated_range(output, bytes, width, skip, mask, low) : Nil
+      cursor = 1
       accumulator = bytes[0].to_u64 >> skip
       available = 8 - skip
-      if dictionary.type.simple_range?
-        # The byte span covers every requested code, and each output index is within output.size.
-        # Avoid repeating those checks for every value in this hot path.
-        low = dictionary.low.to_i64
-        if width == 8
-          output.size.times do |index|
-            output.unsafe_put(index, (low + bytes.unsafe_fetch(index)).to_i32)
-          end
-          return
-        elsif width == 1 || width == 2 || width == 4
-          byte = 0
-          bit = skip
-          output.size.times do |index|
-            code = (bytes.unsafe_fetch(byte) >> bit) & mask
-            output.unsafe_put(index, (low + code).to_i32)
-            bit += width
-            if bit == 8
-              bit = 0
-              byte += 1
-            end
-          end
-          return
-        elsif width < 8
-          # Non-divisor widths (most commonly seven bits for sequencing
-          # depth) straddle bytes. A padded look-ahead byte removes the
-          # per-value refill loop from this hot path.
-          byte = 0
-          bit = skip
-          output.size.times do |index|
-            word = bytes.unsafe_fetch(byte).to_u16 |
-                   (bytes.unsafe_fetch(byte + 1).to_u16 << 8)
-            code = (word >> bit).to_u64 & mask
-            output.unsafe_put(index, (low + code).to_i32)
-            bit += width
-            byte += bit >> 3
-            bit &= 7
-          end
-          return
+      output.size.times do |index|
+        while available < width
+          accumulator |= bytes.unsafe_fetch(cursor).to_u64 << available
+          cursor += 1
+          available += 8
         end
-        output.size.times do |index|
-          while available < width
-            accumulator |= bytes.unsafe_fetch(cursor).to_u64 << available
-            cursor += 1
-            available += 8
-          end
-          output.unsafe_put(index, (low + (accumulator & mask).to_i64).to_i32)
-          accumulator >>= width
-          available -= width
+        output.unsafe_put(index, (low + (accumulator & mask).to_i64).to_i32)
+        accumulator >>= width
+        available -= width
+      end
+    end
+
+    private def decode_dictionary(output, bytes, width, skip, mask, dictionary) : Nil
+      cursor = 1
+      accumulator = bytes[0].to_u64 >> skip
+      available = 8 - skip
+      first_value = dictionary.first_value
+      output.size.times do |index|
+        while available < width
+          accumulator |= bytes[cursor].to_u64 << available
+          cursor += 1
+          available += 8
         end
-      else
-        first_value = dictionary.first_value
-        output.size.times do |index|
-          while available < width
-            accumulator |= bytes[cursor].to_u64 << available
-            cursor += 1
-            available += 8
-          end
-          output[index] = dictionary.decode((accumulator & mask).to_u32) || first_value
-          accumulator >>= width
-          available -= width
-        end
+        output[index] = dictionary.decode((accumulator & mask).to_u32) || first_value
+        accumulator >>= width
+        available -= width
       end
     end
 

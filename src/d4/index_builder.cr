@@ -93,7 +93,7 @@ module D4
     end
 
     private def self.write_sfi(file : D4::File, directory : Format::Directory, output : IO,
-                               control : WriteControl) : Nil # ameba:disable Metrics/CyclomaticComplexity
+                               control : WriteControl) : Nil
       secondary = directory.entry(".stab", 1_u8)
       stab = Format::Directory.open(file.source, secondary.offset, file.options.max_metadata_bytes)
       metadata = stab.entry(".metadata", 0_u8)
@@ -105,60 +105,87 @@ module D4
       write_u64(output, 0_u64)
       count = 0_u64
       names = file.default_track.chromosomes.map(&.name)
-      info["partitions"].as_a.each_with_index do |partition, part_index|
-        name = partition[0].as_s
-        control.update(WriteProgress.new(WriteStage::BuildingIndexes, name,
-          part_index.to_i64, info["partitions"].as_a.size.to_i64))
-        chrom_id = names.index(name) || raise FormatError.new("secondary partition has unknown chromosome")
-        stream = stab.entry(part_index.to_s, 0_u8)
-        offset = stream.offset
-        frame_size = stream.size
-        first = true
-        carry = Bytes.empty
-        last_entry = nil.as(Int64?)
-        frame_buffer = Bytes.empty
-        loop do
-          control.check!
-          raise FormatError.new("invalid secondary frame size") if frame_size < 16 || frame_size > file.options.max_decoded_frame_bytes || frame_size > Int32::MAX
-          frame_buffer = Bytes.new(frame_size.to_i) if frame_buffer.size < frame_size
-          frame = frame_buffer[0, frame_size.to_i]
-          file.source.read_exact_at(offset, frame)
-          payload = frame[16, frame.size - 16]
-          if compressed
-            header = first ? 13 : 12
-            raise FormatError.new("truncated compressed frame") if payload.size < header
-            start_pos = Format::Endian.u32_le(payload, first ? 1 : 0)
-            stop_pos = Format::Endian.u32_le(payload, first ? 5 : 4)
-            skip = 0
-          else
-            start_pos, stop_pos, skip, carry, overhang = raw_span(payload, carry)
-            if overhang
-              raise UnsupportedFeatureError.new("index cannot address a frame containing only a partial record") unless last_entry
-              end_position = output.pos
-              output.seek(last_entry + 8, IO::Seek::Set)
-              write_u32(output, overhang)
-              output.seek(end_position, IO::Seek::Set)
-            end
-          end
-          if stop_pos > start_pos
-            last_entry = output.pos.to_i64
-            write_sfi_entry(output, chrom_id.to_u32, start_pos, stop_pos, offset - stab.offset, frame_size, skip, first)
-            count += 1
-          end
-          link = Format::Endian.i64_le(frame, 0)
-          break if link == 0
-          next_size = Format::Endian.u64_le(frame, 8)
-          raise FormatError.new("invalid linked secondary frame") if link <= 0 || next_size > Int32::MAX || next_size < 16 || offset + link > file.source.size - next_size.to_i64
-          offset += link
-          frame_size = next_size.to_i64
-          first = false
-        end
-        raise FormatError.new("truncated secondary record") unless carry.empty?
+      partitions = info["partitions"].as_a
+      partitions.each_with_index do |partition, part_index|
+        count += write_sfi_partition(file, stab, partition, part_index, partitions.size,
+          compressed, names, output, control)
       end
       end_position = output.pos
       output.seek(count_position, IO::Seek::Set)
       write_u64(output, count)
       output.seek(end_position, IO::Seek::Set)
+    end
+
+    private def self.write_sfi_partition(file, stab, partition, part_index, partition_count,
+                                         compressed, names, output, control) : UInt64
+      name = partition[0].as_s
+      control.update(WriteProgress.new(WriteStage::BuildingIndexes, name,
+        part_index.to_i64, partition_count.to_i64))
+      chrom_id = names.index(name) || raise FormatError.new("secondary partition has unknown chromosome")
+      stream = stab.entry(part_index.to_s, 0_u8)
+      offset = stream.offset
+      frame_size = stream.size
+      first = true
+      carry = Bytes.empty
+      last_entry = nil.as(Int64?)
+      frame_buffer = Bytes.empty
+      count = 0_u64
+      loop do
+        control.check!
+        validate_secondary_frame!(frame_size, file.options.max_decoded_frame_bytes)
+        frame_buffer = Bytes.new(frame_size.to_i) if frame_buffer.size < frame_size
+        frame = frame_buffer[0, frame_size.to_i]
+        file.source.read_exact_at(offset, frame)
+        start_pos, stop_pos, skip, carry = secondary_span(frame[16, frame.size - 16],
+          compressed, first, carry, output, last_entry)
+        if stop_pos > start_pos
+          last_entry = output.pos.to_i64
+          write_sfi_entry(output, chrom_id.to_u32, start_pos, stop_pos,
+            offset - stab.offset, frame_size, skip, first)
+          count += 1
+        end
+        link = Format::Endian.i64_le(frame, 0)
+        break if link == 0
+        next_size = Format::Endian.u64_le(frame, 8)
+        validate_secondary_link!(offset, link, next_size, file.source.size)
+        frame_size = next_size.to_i64
+        offset += link
+        first = false
+      end
+      raise FormatError.new("truncated secondary record") unless carry.empty?
+      count
+    end
+
+    private def self.secondary_span(payload, compressed, first, carry, output, last_entry)
+      if compressed
+        header = first ? 13 : 12
+        raise FormatError.new("truncated compressed frame") if payload.size < header
+        {Format::Endian.u32_le(payload, first ? 1 : 0),
+         Format::Endian.u32_le(payload, first ? 5 : 4), 0, carry}
+      else
+        start_pos, stop_pos, skip, next_carry, overhang = raw_span(payload, carry)
+        patch_overhang(output, last_entry, overhang) if overhang
+        {start_pos, stop_pos, skip, next_carry}
+      end
+    end
+
+    private def self.patch_overhang(output, last_entry, overhang) : Nil
+      raise UnsupportedFeatureError.new("index cannot address a frame containing only a partial record") unless last_entry
+      end_position = output.pos
+      output.seek(last_entry + 8, IO::Seek::Set)
+      write_u32(output, overhang)
+      output.seek(end_position, IO::Seek::Set)
+    end
+
+    private def self.validate_secondary_frame!(frame_size, maximum) : Nil
+      invalid = frame_size < 16 || frame_size > maximum || frame_size > Int32::MAX
+      raise FormatError.new("invalid secondary frame size") if invalid
+    end
+
+    private def self.validate_secondary_link!(offset, link, next_size, source_size) : Nil
+      invalid = link <= 0 || next_size > Int32::MAX || next_size < 16
+      raise FormatError.new("invalid linked secondary frame") if invalid
+      raise FormatError.new("invalid linked secondary frame") if offset + link > source_size - next_size.to_i64
     end
 
     private def self.raw_span(payload : Bytes, carry : Bytes) : Tuple(UInt32, UInt32, Int32, Bytes, UInt32?)

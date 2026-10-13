@@ -63,7 +63,7 @@ describe D4::WriteControl do
       primary = events.select(&.stage.writing_primary?)
       primary.size.should be >= 2
       primary.first.total.should be > 0
-      primary.map(&.total).uniq.size.should eq(1)
+      primary.map(&.total).uniq!.size.should eq(1)
       primary.last.current.should eq(primary.last.total)
     end
   end

@@ -96,14 +96,14 @@ describe D4 do
       File.delete(path) if File.exists?(path)
     end
 
-    cancelling = nil.as(D4::WriteControl?)
-    cancelling = D4::WriteControl.new do |event|
-      cancelling.try(&.cancel) if event.stage.building_indexes?
+    controls = [] of D4::WriteControl
+    controls << D4::WriteControl.new do |event|
+      controls.first.cancel if event.stage.building_indexes?
     end
     expect_raises(D4::CancelledError) do
       D4.create(cancelled_path, chromosomes: [D4::Chromosome.new("chr", 100_i64)],
         options: D4::WriteOptions.new(indexes: [D4::IndexKind::SecondaryFrames]),
-        control: cancelling.not_nil!) do |writer|
+        control: controls.first) do |writer|
         writer.write_interval("chr", 10, 20, 3_i32)
       end
     end

@@ -295,11 +295,11 @@ describe "embedded D4 indexes" do
       File.open(original, "rb") { |input| IO.copy(input, temporary) }
       temporary.close
       before = File.read(path)
-      control = nil.as(D4::WriteControl?)
-      control = D4::WriteControl.new do |event|
-        control.try(&.cancel) if event.stage.building_indexes?
+      controls = [] of D4::WriteControl
+      controls << D4::WriteControl.new do |event|
+        controls.first.cancel if event.stage.building_indexes?
       end
-      expect_raises(D4::CancelledError) { D4.build_indexes(path, control: control.not_nil!) }
+      expect_raises(D4::CancelledError) { D4.build_indexes(path, control: controls.first) }
       File.read(path).should eq(before)
     ensure
       temporary.close unless temporary.closed?
