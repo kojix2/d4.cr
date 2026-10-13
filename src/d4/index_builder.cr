@@ -14,19 +14,8 @@ module D4
       target = path.to_s
       temporary = ::File.tempfile(".d4-index-", ".tmp", dir: ::File.dirname(target))
       begin
-        total = ::File.size(target)
-        copied = 0_i64
-        buffer = Bytes.new(1_048_576)
-        control.update(WriteProgress.new(WriteStage::BuildingIndexes, nil, copied, total))
         ::File.open(target, "rb") do |input|
-          loop do
-            control.check!
-            count = input.read(buffer)
-            break if count == 0
-            temporary.write(buffer[0, count])
-            copied += count
-            control.update(WriteProgress.new(WriteStage::BuildingIndexes, nil, copied, total))
-          end
+          control.copy(input, temporary, WriteStage::BuildingIndexes, input.size)
         end
         temporary.close
         append(temporary.path, track: track, kinds: kinds, control: control)
@@ -40,9 +29,12 @@ module D4
       end
     end
 
+    # Appends in place. A failure can leave unreachable trailing bytes; use
+    # `build` when the original file must remain byte-for-byte unchanged.
     def self.append(path : String | Path, *, track : String? = nil,
                     kinds : Array(IndexKind) = [IndexKind::SecondaryFrames, IndexKind::Sum],
                     control : WriteControl = WriteControl.new) : Nil
+      raise ArgumentError.new("no index kinds requested") if kinds.empty?
       control.update(WriteProgress.new(WriteStage::BuildingIndexes))
       D4.open(path, track: track) do |file|
         control.check!
@@ -92,6 +84,7 @@ module D4
           output.seek(index_offset, IO::Seek::Set)
           output.write(Format.bytes(index_directory))
           root_items[-1] = DirectoryEncoder::Item.new(1_u8, ".index", index_offset, index_end - index_offset)
+          control.check!
           output.seek(directory.offset, IO::Seek::Set)
           output.write(Format.bytes(DirectoryEncoder.build(directory.offset, root_items)))
           output.flush

@@ -77,6 +77,7 @@ module D4
       cursor = position.to_i64
       if width == 0
         values.each do |value|
+          @control.check! if cursor % 65_536 == 0
           append_secondary(chromosome, cursor, cursor + 1, value) unless dictionary.encode(value)
           cursor += 1
         end
@@ -85,6 +86,7 @@ module D4
       else
         fallback_code = (1_u32 << width) - 1_u32
         values.each do |value|
+          @control.check! if cursor % 65_536 == 0
           code = dictionary.encode(value)
           append_primary_code(code || fallback_code, width)
           append_secondary(chromosome, cursor, cursor + 1, value) unless code
@@ -104,6 +106,7 @@ module D4
       fallback_code = (1_u32 << width) - 1_u32
       index = 0
       while index + 8 <= values.size
+        @control.check! if index % 65_536 == 0
         bits = 0_u64
         8.times do |part|
           value = values[index + part]
@@ -232,6 +235,7 @@ module D4
     end
 
     private def append_run(chromosome : String, left : Int64, right : Int64, value : Int32) : Nil
+      @control.check!
       metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
       chrom = metadata.chromosome(chromosome)
       raise ArgumentError.new("invalid write range") if left < 0 || right < left || right > chrom.size
@@ -335,6 +339,7 @@ module D4
 
     private def flush_primary_buffer : Nil
       return if @primary_used == 0
+      @control.check!
       spool = @primary_spool ||= ::File.tempfile(".d4-primary-", ".tmp", dir: ::File.dirname(@path.to_s))
       spool.write(@primary_buffer[0, @primary_used])
       @primary_used = 0
@@ -359,6 +364,7 @@ module D4
 
     private def flush_secondary_buffer : Nil
       return if @secondary_used == 0
+      @control.check!
       spool = @secondary_spool ||= ::File.tempfile(".d4-secondary-", ".tmp", dir: ::File.dirname(@path.to_s))
       spool.write(@secondary_buffer[0, @secondary_used])
       @secondary_used = 0
@@ -366,6 +372,7 @@ module D4
 
     private def ensure_open : Nil
       raise ClosedError.new("D4 writer is closed") if @closed
+      @control.check!
     end
 
     private def emit : Nil
@@ -414,10 +421,9 @@ module D4
         temporary.write(Format.bytes(DirectoryEncoder.build(root_offset, root_entries)))
         temporary.write(Format.bytes(FrameEncoder.build(header.to_slice)))
         if spool = @primary_spool
-          @control.update(WriteProgress.new(WriteStage::WritingPrimary, nil, 0_i64, spool.size))
           spool.flush
           spool.rewind
-          copy_with_control(spool, temporary, WriteStage::WritingPrimary, spool.size)
+          @control.copy(spool, temporary, WriteStage::WritingPrimary, spool.size)
         end
         temporary.write(Bytes.new(stab_size.to_i))
         temporary.write(Format.bytes(FrameEncoder.build(secondary_metadata.to_slice)))
@@ -444,10 +450,7 @@ module D4
         temporary.write(Format.bytes(DirectoryEncoder.build(root_offset, root_entries)))
         temporary.flush
         temporary.close
-        unless @options.indexes.empty?
-          @control.update(WriteProgress.new(WriteStage::BuildingIndexes))
-          IndexBuilder.append(temporary.path, kinds: @options.indexes, control: @control)
-        end
+        IndexBuilder.append(temporary.path, kinds: @options.indexes, control: @control) unless @options.indexes.empty?
         @control.update(WriteProgress.new(WriteStage::Publishing))
         if @options.overwrite?
           ::File.rename(temporary.path, target)
@@ -459,19 +462,6 @@ module D4
       ensure
         temporary.close unless temporary.closed?
         ::File.delete(temporary.path) if ::File.exists?(temporary.path)
-      end
-    end
-
-    private def copy_with_control(input : IO, output : IO, stage : WriteStage, total : Int64) : Nil
-      buffer = Bytes.new(1_048_576)
-      copied = 0_i64
-      loop do
-        @control.check!
-        count = input.read(buffer)
-        break if count == 0
-        output.write(buffer[0, count])
-        copied += count
-        @control.update(WriteProgress.new(stage, nil, copied, total))
       end
     end
 

@@ -48,5 +48,20 @@ module D4
       @on_progress.try(&.call(progress))
       check!
     end
+
+    # :nodoc:
+    def copy(input : IO, output : IO, stage : WriteStage, total : Int64) : Nil
+      copied = 0_i64
+      buffer = Bytes.new(1_048_576)
+      update(WriteProgress.new(stage, nil, copied, total))
+      loop do
+        check!
+        count = input.read(buffer)
+        break if count == 0
+        output.write(buffer[0, count])
+        copied += count
+        update(WriteProgress.new(stage, nil, copied, total))
+      end
+    end
   end
 end
