@@ -308,6 +308,54 @@ describe "D4 format compatibility and lifecycle" do
     cursor.next_record.should be_nil
   end
 
+  it "accepts zero tail padding in a full Rust raw secondary frame" do
+    frame = Bytes.new(512)
+    49.times do |index|
+      offset = 16 + index * 10
+      frame[offset] = (index + 1).to_u8
+      frame[offset + 6] = (index + 3).to_u8
+    end
+    source = D4::MemorySource.new(frame)
+    entry = D4::Format::Entry.new(0_u8, 0_i64, 512_i64, "0")
+    cursor = D4::SecondaryRecordIterator.new(source, [entry], false,
+      D4::Region.new("chr", 0, 49), 1024_i64)
+    49.times { cursor.next_record.should_not be_nil }
+    cursor.next_record.should be_nil
+
+    frame[511] = 1_u8
+    corrupt = D4::SecondaryRecordIterator.new(D4::MemorySource.new(frame), [entry], false,
+      D4::Region.new("chr", 0, 49), 1024_i64)
+    49.times { corrupt.next_record.should_not be_nil }
+    expect_raises(D4::FormatError, "truncated secondary record") { corrupt.next_record }
+  end
+
+  it "keeps a final raw record after one is split across linked frames" do
+    # Regression for an intentional difference from d4-format 0.3.11: its
+    # `data.len() > R::SIZE` check drops the second record when the linked
+    # frame has four bytes for the split record followed by exactly one
+    # complete ten-byte record. Crystal preserves that valid final record.
+    stream = Bytes.new(52)
+    stream[0] = 22_u8 # The next frame begins immediately after this 22-byte frame.
+    stream[8] = 30_u8 # The linked frame has a 16-byte header and 14-byte payload.
+    records = Bytes.new(20)
+    records[0] = 1_u8
+    records[6] = 128_u8
+    records[10] = 2_u8
+    records[16] = 129_u8
+    stream[16, 6].copy_from(records[0, 6])
+    stream[38, 14].copy_from(records[6, 14])
+
+    source = D4::MemorySource.new(stream)
+    entry = D4::Format::Entry.new(0_u8, 0_i64, 22_i64, "0")
+    cursor = D4::SecondaryRecordIterator.new(source, [entry], false,
+      D4::Region.new("chr", 0, 2), 1024_i64)
+    first = cursor.next_record || raise "expected the split record"
+    second = cursor.next_record || raise "expected the final record"
+    {first.left, first.right, first.value}.should eq({0_i64, 1_i64, 128_i32})
+    {second.left, second.right, second.value}.should eq({1_i64, 2_i64, 129_i32})
+    cursor.next_record.should be_nil
+  end
+
   it "quantizes explicitly and rejects non-finite or overflowing scaled input" do
     path = File.join(Dir.tempdir, "d4-crystal-quantized-#{Random.rand(1_000_000)}.d4")
     begin

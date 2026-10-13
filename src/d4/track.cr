@@ -667,12 +667,25 @@ module D4
         @cursor += 10
         return record
       end
+
+      # Deliberately differs from d4-format 0.3.11's Rust raw-block reader.
+      # After completing a record split across frames, that reader only queues
+      # the remainder when `data.len() > R::SIZE`; an exactly ten-byte remainder
+      # is therefore dropped. Those ten bytes are a complete D4 record, so keep
+      # assembling records until fewer than ten non-padding bytes remain.
       filled = 0
       while filled < 10
         if @cursor >= @payload.size
           frame = (@stream || raise Error.new("secondary frame stream is unavailable")).next_payload
           if frame.nil?
-            raise FormatError.new("truncated secondary record") if filled > 0
+            if filled > 0
+              # Rust preallocates the first frame to 512 bytes. When 49
+              # ten-byte records fill its payload, six zero padding bytes
+              # remain at EOF and do not form a terminator record.
+              filled.times do |index|
+                raise FormatError.new("truncated secondary record") unless @record[index] == 0_u8
+              end
+            end
             return
           end
           @payload = frame
