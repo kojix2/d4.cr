@@ -47,6 +47,11 @@ describe "D4 format compatibility and lifecycle" do
         end
         D4.open(path) do |file|
           file.values("chr").should eq(values)
+          file.values("chr", 5, 517).should eq(values[5, 512])
+          buffer = Slice(Int32).new(16, Int32::MIN)
+          file.read_values_into("chr", 515, buffer).should eq(7)
+          buffer[0, 7].to_a.should eq(values[515, 7])
+          buffer[7, 9].should eq(Slice(Int32).new(9, Int32::MIN))
           file.value("chr", 6).should eq(values[6])
           file.value("chr", 7).should eq(values[7])
           file.value("chr", 521).should eq(values[521])

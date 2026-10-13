@@ -122,7 +122,8 @@ module D4
       bit = position * width
       first_byte = bit // 8
       shift = (bit % 8).to_i
-      bytes = Bytes.new((shift + width + 7) // 8)
+      storage = uninitialized UInt8[8]
+      bytes = storage.to_slice[0, (shift + width + 7) // 8]
       @source.read_exact_at(@primary.offset + @chromosome_offsets[chromosome] + first_byte, bytes)
       encoded = 0_u64
       bytes.each_with_index { |byte, index| encoded |= byte.to_u64 << (index * 8) }
@@ -156,9 +157,8 @@ module D4
       checked_region(chromosome, start.to_i64, start.to_i64) # Validate even for an empty buffer.
       return 0 if start.to_i64 == chrom.size || buffer.empty?
       region = checked_region(chromosome, start.to_i64, start.to_i64 + Math.min(chrom.size - start.to_i64, buffer.size))
-      total = 0
-      scan_values(region, buffer) { |_block_start, _values, count| total += count }
-      total
+      count = region.length.to_i
+      ValueScanner.new(self, region, @secondary, count).fill(buffer[0, count])
     end
 
     def scan_values(chromosome : String, buffer : Slice(Int32), start : Int = 0, stop : Int? = nil, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
@@ -169,8 +169,9 @@ module D4
       check_open
       raise ArgumentError.new("scan buffer must not be empty") if buffer.empty?
       checked = checked_region(region.chromosome, region.start, region.stop)
+      return if checked.length == 0
       cursor = checked.start
-      scanner = ValueScanner.new(self, checked, @secondary, buffer.size)
+      scanner = ValueScanner.new(self, checked, @secondary, Math.min(buffer.size.to_i64, checked.length).to_i)
       while cursor < checked.stop
         count = Math.min(buffer.size.to_i64, checked.stop - cursor).to_i
         scanner.fill(buffer[0, count])
@@ -181,8 +182,10 @@ module D4
     end
 
     def each_value(chromosome : String, start : Int = 0, stop : Int? = nil, & : Int32 -> Nil) : Nil
-      scratch = Slice(Int32).new(65_536)
-      scan_values(chromosome, scratch, start, stop) do |_offset, values, count|
+      check_open
+      region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
+      return if region.length == 0
+      scan_values(region, scan_buffer(region)) do |_offset, values, count|
         count.times { |index| yield values[index] }
       end
     end
@@ -192,12 +195,13 @@ module D4
     end
 
     def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil, & : RawInterval -> Nil) : Nil
+      check_open
       region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
-      scratch = Slice(Int32).new(65_536)
-      have_value = false
+      return if region.length == 0
       interval_start = region.start
       previous = 0_i32
-      scan_values(region, scratch) do |offset, values, count|
+      have_value = false
+      scan_values(region, scan_buffer(region)) do |offset, values, count|
         count.times do |index|
           value = values[index]
           position = offset + index
@@ -237,9 +241,11 @@ module D4
     end
 
     private def sum_scan(region : Region) : Int64
+      check_open
+      return 0_i64 if region.length == 0
       return sum_constant_primary(region) if @metadata.dictionary.bit_width == 0
       total = 0_i64
-      scan_values(region, Slice(Int32).new(65_536)) do |_offset, values, count|
+      scan_values(region, scan_buffer(region)) do |_offset, values, count|
         count.times { |index| total += values[index] }
       end
       total
@@ -279,11 +285,14 @@ module D4
     end
 
     def summary(chromosome : String, start : Int = 0, stop : Int? = nil) : Summary
+      check_open
+      region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
+      return Summary.new(0_i64, 0_i64, nil, nil) if region.length == 0
       length = 0_i64
       sum = 0_i64
       min = nil.as(Int32?)
       max = nil.as(Int32?)
-      scan_values(chromosome, Slice(Int32).new(65_536), start, stop) do |_offset, values, count|
+      scan_values(region, scan_buffer(region)) do |_offset, values, count|
         count.times do |index|
           value = values[index]
           length += 1
@@ -306,6 +315,10 @@ module D4
         raise ArgumentError.new("invalid region #{chromosome}:#{start}-#{actual_stop}")
       end
       Region.new(chromosome, start, actual_stop)
+    end
+
+    private def scan_buffer(region : Region) : Slice(Int32)
+      Slice(Int32).new(Math.min(region.length, 65_536_i64).to_i)
     end
 
     # Used by the reusable scanner; callers should normally use scan_values.
@@ -331,6 +344,41 @@ module D4
         # The byte span covers every requested code, and each output index is within output.size.
         # Avoid repeating those checks for every value in this hot path.
         low = dictionary.low.to_i64
+        if width == 8
+          output.size.times do |index|
+            output.unsafe_put(index, (low + bytes.unsafe_fetch(index)).to_i32)
+          end
+          return
+        elsif width == 1 || width == 2 || width == 4
+          byte = 0
+          bit = skip
+          output.size.times do |index|
+            code = (bytes.unsafe_fetch(byte) >> bit) & mask
+            output.unsafe_put(index, (low + code).to_i32)
+            bit += width
+            if bit == 8
+              bit = 0
+              byte += 1
+            end
+          end
+          return
+        elsif width < 8
+          # Non-divisor widths (most commonly seven bits for sequencing
+          # depth) straddle bytes. A padded look-ahead byte removes the
+          # per-value refill loop from this hot path.
+          byte = 0
+          bit = skip
+          output.size.times do |index|
+            word = bytes.unsafe_fetch(byte).to_u16 |
+                   (bytes.unsafe_fetch(byte + 1).to_u16 << 8)
+            code = (word >> bit).to_u64 & mask
+            output.unsafe_put(index, (low + code).to_i32)
+            bit += width
+            byte += bit >> 3
+            bit &= 7
+          end
+          return
+        end
         output.size.times do |index|
           while available < width
             accumulator |= bytes.unsafe_fetch(cursor).to_u64 << available
@@ -370,7 +418,14 @@ module D4
       @position = @region.start
       @records = secondary.try(&.record_iterator(@region))
       @have_record = @records.try(&.next_fields) || false
-      @packed = Bytes.new((capacity.to_i64 * @track.metadata.dictionary.bit_width + 14) // 8)
+      width = @track.metadata.dictionary.bit_width
+      if width == 0
+        @packed = Bytes.empty
+      else
+        bytes = (capacity.to_i64 * width + 14) // 8
+        bytes += 1 if width < 8 # Look-ahead for the branchless sub-byte decoder.
+        @packed = Bytes.new(bytes)
+      end
     end
 
     def fill(output : Slice(Int32)) : Int32
@@ -398,7 +453,7 @@ module D4
     include Iterator(Int32)
 
     def initialize(@track : Track, @region : Region)
-      @scratch = Slice(Int32).new(65_536)
+      @scratch = Slice(Int32).new(Math.min(@region.length, 65_536_i64).to_i)
       @scanner = ValueScanner.new(@track, @region, @track.secondary_table, @scratch.size)
       @count = 0
       @index = 0
