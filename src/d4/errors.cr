@@ -7,6 +7,8 @@ module D4
 
   class ClosedError < Error; end
 
+  class CancelledError < Error; end
+
   class UnknownChromosomeError < Error; end
 
   class TrackSelectionError < Error; end

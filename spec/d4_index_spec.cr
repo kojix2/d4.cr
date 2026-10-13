@@ -287,6 +287,26 @@ describe "embedded D4 indexes" do
     end
   end
 
+  it "leaves the original file unchanged when index building is cancelled" do
+    original = File.join(__DIR__, "fixtures", "rust-input-10nt.d4")
+    temporary = File.tempfile("d4-index-cancel", ".d4")
+    path = temporary.path
+    begin
+      File.open(original, "rb") { |input| IO.copy(input, temporary) }
+      temporary.close
+      before = File.read(path)
+      control = nil.as(D4::WriteControl?)
+      control = D4::WriteControl.new do |event|
+        control.try(&.cancel) if event.stage.building_indexes?
+      end
+      expect_raises(D4::CancelledError) { D4.build_indexes(path, control: control.not_nil!) }
+      File.read(path).should eq(before)
+    ensure
+      temporary.close unless temporary.closed?
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
   it "indexes DEFLATE secondary frames" do
     temporary = File.tempfile("d4-index-deflate", ".d4")
     path = temporary.path

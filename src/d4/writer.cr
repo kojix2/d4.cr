@@ -1,10 +1,14 @@
 require "json"
 require "file/tempfile"
 require "compress/deflate"
+require "./write_control"
 
 module D4
   class Writer
-    def initialize(@path : String | Path, @options : WriteOptions = WriteOptions.new)
+    getter control : WriteControl
+
+    def initialize(@path : String | Path, @options : WriteOptions = WriteOptions.new,
+                   @control : WriteControl = WriteControl.new)
       @primary_spool = nil.as(::File?)
       @secondary_spool = nil.as(::File?)
       @secondary_starts = Hash(String, Int64).new
@@ -281,6 +285,7 @@ module D4
           end
         end
         while remaining >= 8
+          @control.check!
           blocks = Math.min(remaining // 8, (@primary_buffer.size - @primary_used) // width).to_i
           if blocks == 0
             flush_primary_buffer
@@ -364,9 +369,12 @@ module D4
     end
 
     private def emit : Nil
+      @control.update(WriteProgress.new(WriteStage::Finalizing))
       metadata = @metadata || raise Error.new("set_chromosomes must be called before closing")
       chromosomes = metadata.chromosomes
       while @encoded_chromosome_index < chromosomes.size
+        @control.update(WriteProgress.new(WriteStage::Finalizing,
+          chromosomes[@encoded_chromosome_index].name, @encoded_chromosome_index.to_i64, chromosomes.size.to_i64))
         current = chromosomes[@encoded_chromosome_index]
         append_default(metadata, current.size - @encoded_position, current.name, @encoded_position)
         finish_primary_chromosome
@@ -400,19 +408,23 @@ module D4
       raise Error.new("destination already exists: #{target}") if !@options.overwrite? && ::File.exists?(target)
       temporary = ::File.tempfile(".d4-", ".tmp", dir: ::File.dirname(target))
       begin
+        @control.check!
         temporary.write(Format::MAGIC)
         temporary.write(Bytes.new(4))
         temporary.write(Format.bytes(DirectoryEncoder.build(root_offset, root_entries)))
         temporary.write(Format.bytes(FrameEncoder.build(header.to_slice)))
         if spool = @primary_spool
+          @control.update(WriteProgress.new(WriteStage::WritingPrimary, nil, 0_i64, spool.size))
           spool.flush
           spool.rewind
-          IO.copy(spool, temporary)
+          copy_with_control(spool, temporary, WriteStage::WritingPrimary, spool.size)
         end
         temporary.write(Bytes.new(stab_size.to_i))
         temporary.write(Format.bytes(FrameEncoder.build(secondary_metadata.to_slice)))
         stab_entries = [DirectoryEncoder::Item.new(0_u8, ".metadata", stab_metadata_offset, stab_metadata_size)]
         metadata.chromosomes.each_with_index do |chromosome, index|
+          @control.update(WriteProgress.new(WriteStage::WritingSecondary, chromosome.name,
+            index.to_i64, metadata.chromosomes.size.to_i64))
           stream_offset = temporary.pos.to_i64
           frame_size = if level = @options.compression.level
                          write_compressed_secondary(temporary, chromosome, level)
@@ -432,7 +444,11 @@ module D4
         temporary.write(Format.bytes(DirectoryEncoder.build(root_offset, root_entries)))
         temporary.flush
         temporary.close
-        IndexBuilder.append(temporary.path, kinds: @options.indexes) unless @options.indexes.empty?
+        unless @options.indexes.empty?
+          @control.update(WriteProgress.new(WriteStage::BuildingIndexes))
+          IndexBuilder.append(temporary.path, kinds: @options.indexes, control: @control)
+        end
+        @control.update(WriteProgress.new(WriteStage::Publishing))
         if @options.overwrite?
           ::File.rename(temporary.path, target)
         else
@@ -443,6 +459,19 @@ module D4
       ensure
         temporary.close unless temporary.closed?
         ::File.delete(temporary.path) if ::File.exists?(temporary.path)
+      end
+    end
+
+    private def copy_with_control(input : IO, output : IO, stage : WriteStage, total : Int64) : Nil
+      buffer = Bytes.new(1_048_576)
+      copied = 0_i64
+      loop do
+        @control.check!
+        count = input.read(buffer)
+        break if count == 0
+        output.write(buffer[0, count])
+        copied += count
+        @control.update(WriteProgress.new(stage, nil, copied, total))
       end
     end
 
@@ -463,7 +492,8 @@ module D4
       spool.flush
       spool.seek(@secondary_starts[chromosome.name], IO::Seek::Set)
       record = Bytes.new(10)
-      count.times do
+      count.times do |index|
+        @control.check! if index % 6_553 == 0
         spool.read_fully(record)
         yield record
       end

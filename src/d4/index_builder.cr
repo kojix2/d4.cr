@@ -1,4 +1,5 @@
 require "json"
+require "./write_control"
 
 module D4
   # Builds embedded indexes by copying a local D4 to a temporary file in the
@@ -7,15 +8,31 @@ module D4
     GRANULARITY = 65_536_i64
 
     def self.build(path : String | Path, *, track : String? = nil,
-                   kinds : Array(IndexKind) = [IndexKind::SecondaryFrames, IndexKind::Sum]) : Nil
+                   kinds : Array(IndexKind) = [IndexKind::SecondaryFrames, IndexKind::Sum],
+                   control : WriteControl = WriteControl.new) : Nil
       raise ArgumentError.new("no index kinds requested") if kinds.empty?
       target = path.to_s
       temporary = ::File.tempfile(".d4-index-", ".tmp", dir: ::File.dirname(target))
       begin
-        ::File.open(target, "rb") { |input| IO.copy(input, temporary) }
+        total = ::File.size(target)
+        copied = 0_i64
+        buffer = Bytes.new(1_048_576)
+        control.update(WriteProgress.new(WriteStage::BuildingIndexes, nil, copied, total))
+        ::File.open(target, "rb") do |input|
+          loop do
+            control.check!
+            count = input.read(buffer)
+            break if count == 0
+            temporary.write(buffer[0, count])
+            copied += count
+            control.update(WriteProgress.new(WriteStage::BuildingIndexes, nil, copied, total))
+          end
+        end
         temporary.close
-        append(temporary.path, track: track, kinds: kinds)
+        append(temporary.path, track: track, kinds: kinds, control: control)
+        control.check!
         ::File.chmod(temporary.path, ::File.info(target).permissions)
+        control.update(WriteProgress.new(WriteStage::Publishing))
         ::File.rename(temporary.path, target)
       ensure
         temporary.close unless temporary.closed?
@@ -24,8 +41,11 @@ module D4
     end
 
     def self.append(path : String | Path, *, track : String? = nil,
-                    kinds : Array(IndexKind) = [IndexKind::SecondaryFrames, IndexKind::Sum]) : Nil
+                    kinds : Array(IndexKind) = [IndexKind::SecondaryFrames, IndexKind::Sum],
+                    control : WriteControl = WriteControl.new) : Nil
+      control.update(WriteProgress.new(WriteStage::BuildingIndexes))
       D4.open(path, track: track) do |file|
+        control.check!
         selected = file.default_track
         root = Format::Directory.open_root(file.source, file.options.max_metadata_bytes)
         directory = root
@@ -58,12 +78,12 @@ module D4
 
           if kinds.includes?(IndexKind::SecondaryFrames)
             offset = output.pos.to_i64
-            write_sfi(file, directory, output)
+            write_sfi(file, directory, output, control)
             index_items << DirectoryEncoder::Item.new(2_u8, "secondary_frame_index", offset, output.pos.to_i64 - offset)
           end
           if kinds.includes?(IndexKind::Sum)
             offset = output.pos.to_i64
-            write_sum(selected, output)
+            write_sum(selected, output, control)
             index_items << DirectoryEncoder::Item.new(2_u8, "sum_index", offset, output.pos.to_i64 - offset)
           end
           index_directory = DirectoryEncoder.build(index_offset, index_items)
@@ -79,7 +99,8 @@ module D4
       end
     end
 
-    private def self.write_sfi(file : D4::File, directory : Format::Directory, output : IO) : Nil # ameba:disable Metrics/CyclomaticComplexity
+    private def self.write_sfi(file : D4::File, directory : Format::Directory, output : IO,
+                               control : WriteControl) : Nil # ameba:disable Metrics/CyclomaticComplexity
       secondary = directory.entry(".stab", 1_u8)
       stab = Format::Directory.open(file.source, secondary.offset, file.options.max_metadata_bytes)
       metadata = stab.entry(".metadata", 0_u8)
@@ -93,6 +114,8 @@ module D4
       names = file.default_track.chromosomes.map(&.name)
       info["partitions"].as_a.each_with_index do |partition, part_index|
         name = partition[0].as_s
+        control.update(WriteProgress.new(WriteStage::BuildingIndexes, name,
+          part_index.to_i64, info["partitions"].as_a.size.to_i64))
         chrom_id = names.index(name) || raise FormatError.new("secondary partition has unknown chromosome")
         stream = stab.entry(part_index.to_s, 0_u8)
         offset = stream.offset
@@ -102,6 +125,7 @@ module D4
         last_entry = nil.as(Int64?)
         frame_buffer = Bytes.empty
         loop do
+          control.check!
           raise FormatError.new("invalid secondary frame size") if frame_size < 16 || frame_size > file.options.max_decoded_frame_bytes || frame_size > Int32::MAX
           frame_buffer = Bytes.new(frame_size.to_i) if frame_buffer.size < frame_size
           frame = frame_buffer[0, frame_size.to_i]
@@ -193,14 +217,17 @@ module D4
       io.write_byte(skip.to_u8)
     end
 
-    private def self.write_sum(track : Track, output : IO) : Nil
+    private def self.write_sum(track : Track, output : IO, control : WriteControl) : Nil
       write_u32(output, GRANULARITY.to_u32)
       write_u32(output, 0_u32)
       scratch = Slice(Int32).new(65_536)
-      track.chromosomes.each do |chromosome|
+      track.chromosomes.each_with_index do |chromosome, chromosome_index|
+        control.update(WriteProgress.new(WriteStage::BuildingIndexes, chromosome.name,
+          chromosome_index.to_i64, track.chromosomes.size.to_i64))
         position = 0_i64
         current_sum = 0_i64
         track.scan_values(Region.new(chromosome.name, 0, chromosome.size), scratch) do |_, values, count|
+          control.check!
           count.times do |index|
             current_sum += values[index]
             position += 1
@@ -228,7 +255,8 @@ module D4
   end
 
   def self.build_indexes(path : String | Path, *, track : String? = nil,
-                         kinds : Array(IndexKind) = [IndexKind::SecondaryFrames, IndexKind::Sum]) : Nil
-    IndexBuilder.build(path, track: track, kinds: kinds)
+                         kinds : Array(IndexKind) = [IndexKind::SecondaryFrames, IndexKind::Sum],
+                         control : WriteControl = WriteControl.new) : Nil
+    IndexBuilder.build(path, track: track, kinds: kinds, control: control)
   end
 end

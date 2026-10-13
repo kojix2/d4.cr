@@ -32,6 +32,22 @@ end
 
 The reader supports multiple tracks, embedded indexes, and raw or DEFLATE secondary data. The writer creates one track. HTTP range reading is available with `require "d4/http"`.
 
+Long writes and index construction support progress reporting and cooperative
+cancellation. Output is published only after finalization succeeds:
+
+```crystal
+control = D4::WriteControl.new { |progress| puts progress }
+
+D4.create("depth.d4", chromosomes: chromosomes, control: control) do |writer|
+  writer.write_values("chr1", 0, values)
+end
+
+# Another fiber or thread may call control.cancel.
+```
+
+The same control can be passed to `D4.writer`, `D4.build_indexes`, or directly
+to `D4::Writer` and `D4::IndexBuilder`.
+
 A GUI coverage viewer is available in the [d4-plot repository](https://github.com/kojix2/d4-plot).
 
 ## Development

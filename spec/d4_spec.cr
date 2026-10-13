@@ -76,6 +76,44 @@ describe D4 do
     end
   end
 
+  it "reports write stages and cancels before publishing" do
+    path = File.join(Dir.tempdir, "d4-crystal-control-#{Random.rand(1_000_000)}.d4")
+    cancelled_path = File.join(Dir.tempdir, "d4-crystal-cancel-#{Random.rand(1_000_000)}.d4")
+    events = [] of D4::WriteProgress
+    control = D4::WriteControl.new { |event| events << event }
+    begin
+      D4.create(path, chromosomes: [D4::Chromosome.new("chr", 100_i64)],
+        options: D4::WriteOptions.new(indexes: [D4::IndexKind::SecondaryFrames]),
+        control: control) do |writer|
+        writer.write_interval("chr", 10, 20, 3_i32)
+      end
+      events.map(&.stage).should contain(D4::WriteStage::Finalizing)
+      events.map(&.stage).should contain(D4::WriteStage::WritingPrimary)
+      events.map(&.stage).should contain(D4::WriteStage::WritingSecondary)
+      events.map(&.stage).should contain(D4::WriteStage::BuildingIndexes)
+      events.map(&.stage).should contain(D4::WriteStage::Publishing)
+    ensure
+      File.delete(path) if File.exists?(path)
+    end
+
+    cancelling = nil.as(D4::WriteControl?)
+    cancelling = D4::WriteControl.new do |event|
+      cancelling.try(&.cancel) if event.stage.building_indexes?
+    end
+    expect_raises(D4::CancelledError) do
+      D4.create(cancelled_path, chromosomes: [D4::Chromosome.new("chr", 100_i64)],
+        options: D4::WriteOptions.new(indexes: [D4::IndexKind::SecondaryFrames]),
+        control: cancelling.not_nil!) do |writer|
+        writer.write_interval("chr", 10, 20, 3_i32)
+      end
+    end
+    File.exists?(cancelled_path).should be_false
+  ensure
+    if cleanup_path = cancelled_path
+      File.delete(cleanup_path) if File.exists?(cleanup_path)
+    end
+  end
+
   it "reads large local ranges concurrently and handles the final short read" do
     temporary = File.tempfile("d4-parallel-read", ".d4")
     path = temporary.path

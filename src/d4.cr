@@ -1,5 +1,6 @@
 require "./d4/version"
 require "./d4/errors"
+require "./d4/write_control"
 require "./d4/types"
 require "./d4/source"
 require "./d4/format"
@@ -86,13 +87,15 @@ module D4
   end
 
   # Create a new D4 writer
-  def self.writer(path : String | Path, *, options : WriteOptions = WriteOptions.new)
-    Writer.new(path, options)
+  def self.writer(path : String | Path, *, options : WriteOptions = WriteOptions.new,
+                  control : WriteControl = WriteControl.new)
+    Writer.new(path, options, control)
   end
 
   # Create a new D4 writer with a block
-  def self.writer(path : String | Path, *, options : WriteOptions = WriteOptions.new, & : Writer -> T) forall T
-    writer = Writer.new(path, options)
+  def self.writer(path : String | Path, *, options : WriteOptions = WriteOptions.new,
+                  control : WriteControl = WriteControl.new, & : Writer -> T) forall T
+    writer = Writer.new(path, options, control)
     begin
       result = yield writer
       writer.finish
@@ -105,17 +108,19 @@ module D4
 
   def self.create(path : String | Path, *, chromosomes : Array(Chromosome),
                   dictionary : Dictionary = Dictionary.new(0_i32, 64_i32), denominator : Float64 = 1.0,
-                  default_value : Int32 = 0_i32, options : WriteOptions = WriteOptions.new) : Writer
-    writer = Writer.new(path, options)
+                  default_value : Int32 = 0_i32, options : WriteOptions = WriteOptions.new,
+                  control : WriteControl = WriteControl.new) : Writer
+    writer = Writer.new(path, options, control)
     writer.configure(chromosomes, dictionary, denominator, default_value)
     writer
   end
 
   def self.create(path : String | Path, *, chromosomes : Array(Chromosome),
                   dictionary : Dictionary = Dictionary.new(0_i32, 64_i32), denominator : Float64 = 1.0,
-                  default_value : Int32 = 0_i32, options : WriteOptions = WriteOptions.new, & : Writer -> T) : T forall T
+                  default_value : Int32 = 0_i32, options : WriteOptions = WriteOptions.new,
+                  control : WriteControl = WriteControl.new, & : Writer -> T) : T forall T
     writer = create(path, chromosomes: chromosomes, dictionary: dictionary,
-      denominator: denominator, default_value: default_value, options: options)
+      denominator: denominator, default_value: default_value, options: options, control: control)
     begin
       result = yield writer
       writer.finish
