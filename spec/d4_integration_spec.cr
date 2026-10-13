@@ -1,6 +1,28 @@
 require "./spec_helper"
 
 describe "D4 format compatibility and lifecycle" do
+  it "writes metadata that spans linked frames" do
+    path = File.join(Dir.tempdir, "d4-crystal-multiframe-metadata-#{Random.rand(1_000_000)}.d4")
+    chromosomes = (1..24).map { |index| D4::Chromosome.new("chr#{index}", 32_i64) }
+    begin
+      D4.create(path, chromosomes: chromosomes,
+        options: D4::WriteOptions.new(indexes: [D4::IndexKind::SecondaryFrames])) { |_| }
+      D4.open(path) do |file|
+        root = D4::Format::Directory.open_root(file.source, file.options.max_metadata_bytes)
+        root.entry(".metadata", 0_u8).size.should eq(D4::Format::DIRECTORY_FRAME_SIZE)
+        secondary = root.entry(".stab", 1_u8)
+        parts = D4::Format::Directory.open(file.source, secondary.offset, file.options.max_metadata_bytes)
+        parts.entry(".metadata", 0_u8).size.should eq(D4::Format::DIRECTORY_FRAME_SIZE)
+        file.chromosomes.map { |chromosome| {chromosome.name, chromosome.size} }.should eq(
+          chromosomes.map { |chromosome| {chromosome.name, chromosome.size} })
+        file.value("chr24", 31).should eq(0_i32)
+        file.default_track.has_index?(D4::IndexKind::SecondaryFrames).should be_true
+      end
+    ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
   it "sums zero-width primary regions with raw and compressed secondary records" do
     [D4::Compression.none, D4::Compression.deflate].each do |compression|
       path = File.join(Dir.tempdir, "d4-crystal-constant-sum-#{Random.rand(1_000_000)}.d4")

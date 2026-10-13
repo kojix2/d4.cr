@@ -407,19 +407,18 @@ module D4
 
       root_payload_length = directory_payload_length([{".metadata", 0_u8}, {".ptab", 2_u8}, {".stab", 1_u8}])
       root_size = FrameEncoder.size_for(root_payload_length)
-      header_size = FrameEncoder.size_for(header.bytesize)
+      header_storage_size = FrameEncoder.size_for(header.bytesize)
       stab_payload_length = directory_payload_length(([{".metadata", 0_u8}] + metadata.chromosomes.map_with_index { |_, index| {index.to_s, 0_u8} }))
       stab_size = FrameEncoder.size_for(stab_payload_length)
-      stab_metadata_size = FrameEncoder.size_for(secondary_metadata.bytesize)
 
       root_offset = 8_i64
       header_offset = root_offset + root_size
-      primary_offset = header_offset + header_size
+      primary_offset = header_offset + header_storage_size
       primary_size = metadata.chromosomes.sum(0_i64) { |chromosome| (chromosome.size * metadata.dictionary.bit_width + 7) // 8 }
       stab_offset = primary_offset + primary_size
       stab_metadata_offset = stab_offset + stab_size
       root_entries = [
-        DirectoryEncoder::Item.new(0_u8, ".metadata", header_offset, header_size),
+        DirectoryEncoder::Item.new(0_u8, ".metadata", header_offset, Format::DIRECTORY_FRAME_SIZE.to_i64),
         DirectoryEncoder::Item.new(2_u8, ".ptab", primary_offset, primary_size),
         DirectoryEncoder::Item.new(1_u8, ".stab", stab_offset, stab_size),
       ]
@@ -439,7 +438,7 @@ module D4
         end
         temporary.write(Bytes.new(stab_size.to_i))
         temporary.write(Format.bytes(FrameEncoder.build(secondary_metadata.to_slice)))
-        stab_entries = [DirectoryEncoder::Item.new(0_u8, ".metadata", stab_metadata_offset, stab_metadata_size)]
+        stab_entries = [DirectoryEncoder::Item.new(0_u8, ".metadata", stab_metadata_offset, Format::DIRECTORY_FRAME_SIZE.to_i64)]
         metadata.chromosomes.each_with_index do |chromosome, index|
           @control.update(WriteProgress.new(WriteStage::WritingSecondary, chromosome.name,
             index.to_i64, metadata.chromosomes.size.to_i64))
