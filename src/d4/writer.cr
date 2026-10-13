@@ -9,6 +9,7 @@ module D4
 
     def initialize(@path : String | Path, @options : WriteOptions = WriteOptions.new,
                    @control : WriteControl = WriteControl.new)
+      ensure_destination_available
       @primary_spool = nil.as(::File?)
       @secondary_spool = nil.as(::File?)
       @secondary_starts = Hash(String, Int64).new
@@ -422,8 +423,8 @@ module D4
         DirectoryEncoder::Item.new(2_u8, ".ptab", primary_offset, primary_size),
         DirectoryEncoder::Item.new(1_u8, ".stab", stab_offset, stab_size),
       ]
+      ensure_destination_available
       target = @path.to_s
-      raise Error.new("destination already exists: #{target}") if !@options.overwrite? && ::File.exists?(target)
       temporary = ::File.tempfile(".d4-", ".tmp", dir: ::File.dirname(target))
       begin
         @control.check!
@@ -484,6 +485,11 @@ module D4
       end
       @primary_spool = nil
       @secondary_spool = nil
+    end
+
+    private def ensure_destination_available : Nil
+      target = @path.to_s
+      raise Error.new("destination already exists: #{target}") if !@options.overwrite? && ::File.exists?(target)
     end
 
     private def each_secondary_record(chromosome : Chromosome, & : Bytes -> Nil) : Nil

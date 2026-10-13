@@ -172,7 +172,7 @@ describe "D4 format compatibility and lifecycle" do
     end
   end
 
-  it "does not publish a failed writer block or replace an existing destination" do
+  it "does not publish a failed writer block" do
     path = File.join(Dir.tempdir, "d4-crystal-abort-#{Random.rand(1_000_000)}.d4")
     begin
       expect_raises(ArgumentError, "stop") do
@@ -182,12 +182,32 @@ describe "D4 format compatibility and lifecycle" do
         end
       end
       File.exists?(path).should be_false
+    ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  it "rejects an existing destination when the writer is created" do
+    path = File.join(Dir.tempdir, "d4-crystal-existing-#{Random.rand(1_000_000)}.d4")
+    begin
       File.write(path, "untouched")
-      expect_raises(D4::Error, "destination already exists") do
-        D4.writer(path, &.set_chromosomes({"chr" => 1_u32}))
-      end
+      expect_raises(D4::Error, "destination already exists") { D4::Writer.new(path) }
       File.read(path).should eq("untouched")
     ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  it "does not replace a destination created while writing" do
+    path = File.join(Dir.tempdir, "d4-crystal-raced-destination-#{Random.rand(1_000_000)}.d4")
+    writer = D4::Writer.new(path)
+    begin
+      writer.set_chromosomes({"chr" => 1_u32})
+      File.write(path, "untouched")
+      expect_raises(D4::Error, "destination already exists") { writer.close }
+      File.read(path).should eq("untouched")
+    ensure
+      writer.abort
       File.delete(path) if File.exists?(path)
     end
   end
