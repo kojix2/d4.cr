@@ -67,6 +67,12 @@ module D4
       end
     end
 
+    # The number of bases represented by one sum-index block, or nil when
+    # this track has no embedded sum index.
+    def sum_index_granularity : Int64?
+      @sum_index.try(&.granularity)
+    end
+
     def check_open : Nil
       raise ClosedError.new("D4 file is closed") if @owner.try(&.closed?) || @source.closed?
     end
@@ -161,21 +167,28 @@ module D4
       ValueScanner.new(self, region, @secondary, count).fill(buffer[0, count])
     end
 
-    def scan_values(chromosome : String, buffer : Slice(Int32), start : Int = 0, stop : Int? = nil, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
-      scan_values(checked_region(chromosome, start.to_i64, stop.try(&.to_i64)), buffer) { |block_start, values, count| yield block_start, values, count }
+    # Calls `cancelled` at block boundaries and raises `CancelledError` when
+    # it returns true.  Cancellation is cooperative; an in-flight source read
+    # is allowed to finish before the next checkpoint.
+    def scan_values(chromosome : String, buffer : Slice(Int32), start : Int = 0, stop : Int? = nil, *, cancelled : Proc(Bool)? = nil, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
+      scan_values(checked_region(chromosome, start.to_i64, stop.try(&.to_i64)), buffer, cancelled: cancelled) { |block_start, values, count| yield block_start, values, count }
     end
 
-    def scan_values(region : Region, buffer : Slice(Int32), & : Int64, Slice(Int32), Int32 -> Nil) : Nil
+    def scan_values(region : Region, buffer : Slice(Int32), *, cancelled : Proc(Bool)? = nil, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
       check_open
+      check_cancelled(cancelled)
       raise ArgumentError.new("scan buffer must not be empty") if buffer.empty?
       checked = checked_region(region.chromosome, region.start, region.stop)
       return if checked.length == 0
       cursor = checked.start
       scanner = ValueScanner.new(self, checked, @secondary, Math.min(buffer.size.to_i64, checked.length).to_i)
       while cursor < checked.stop
+        check_cancelled(cancelled)
         count = Math.min(buffer.size.to_i64, checked.stop - cursor).to_i
         scanner.fill(buffer[0, count])
+        check_cancelled(cancelled)
         yield cursor, buffer[0, count], count
+        check_cancelled(cancelled)
         check_open
         cursor += count
       end
@@ -220,58 +233,68 @@ module D4
       IntervalIterator.new(self, checked_region(chromosome, start.to_i64, stop.try(&.to_i64)))
     end
 
-    def sum(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto) : Int64
+    # Calls `cancelled` between scan blocks and sum-index I/O chunks, raising
+    # `CancelledError` when the callback returns true.
+    def sum(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto, cancelled : Proc(Bool)? = nil) : Int64
+      check_cancelled(cancelled)
       region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
-      return sum_scan(region) if index.scan?
+      return sum_scan(region, cancelled) if index.scan?
       if stored = @sum_index
         granularity = stored.granularity
         first = (region.start + granularity - 1) // granularity * granularity
         last = region.stop // granularity * granularity
-        return sum_scan(region) if first >= last
-        if middle = stored.full_blocks(region.chromosome, region.start, region.stop)
-          left = region.start < first ? sum_scan(Region.new(chromosome, region.start, first)) : 0_i64
-          right = last < region.stop ? sum_scan(Region.new(chromosome, last, region.stop)) : 0_i64
+        return sum_scan(region, cancelled) if first >= last
+        if middle = stored.full_blocks(region.chromosome, region.start, region.stop, cancelled: cancelled)
+          left = region.start < first ? sum_scan(Region.new(chromosome, region.start, first), cancelled) : 0_i64
+          right = last < region.stop ? sum_scan(Region.new(chromosome, last, region.stop), cancelled) : 0_i64
+          check_cancelled(cancelled)
           return left + middle + right
         end
         raise IndexPrecisionError.new("sum-index precision is insufficient") if index.require?
       elsif index.require?
         raise MissingIndexError.new("sum index is missing")
       end
-      sum_scan(region)
+      sum_scan(region, cancelled)
     end
 
-    private def sum_scan(region : Region) : Int64
+    private def sum_scan(region : Region, cancelled : Proc(Bool)? = nil) : Int64
       check_open
+      check_cancelled(cancelled)
       return 0_i64 if region.length == 0
-      return sum_constant_primary(region) if @metadata.dictionary.bit_width == 0
+      return sum_constant_primary(region, cancelled) if @metadata.dictionary.bit_width == 0
       total = 0_i64
-      scan_values(region, scan_buffer(region)) do |_offset, values, count|
+      scan_values(region, scan_buffer(region), cancelled: cancelled) do |_offset, values, count|
         count.times { |index| total += values[index] }
       end
+      check_cancelled(cancelled)
       total
     end
 
     # With a zero-width primary table, only secondary records differ from the
     # dictionary value. Sum those intervals without materializing every base.
-    private def sum_constant_primary(region : Region) : Int64
+    private def sum_constant_primary(region : Region, cancelled : Proc(Bool)? = nil) : Int64
       check_open
+      check_cancelled(cancelled)
       checked = checked_region(region.chromosome, region.start, region.stop)
       return 0_i64 if checked.length == 0
       base = @metadata.dictionary.first_value
       total = checked.length.to_i128 * base
       if secondary = @secondary
         records = secondary.record_iterator(checked)
-        while records.next_fields
+        loop do
+          check_cancelled(cancelled)
+          break unless records.next_fields
           overlap = Math.min(checked.stop, records.right) - Math.max(checked.start, records.left)
           total += overlap.to_i128 * (records.value.to_i128 - base) if overlap > 0
         end
       end
+      check_cancelled(cancelled)
       check_open
       total.to_i64
     end
 
-    def sum(region : Region, *, index : IndexPolicy = IndexPolicy::Auto) : Int64
-      sum(region.chromosome, region.start, region.stop, index: index)
+    def sum(region : Region, *, index : IndexPolicy = IndexPolicy::Auto, cancelled : Proc(Bool)? = nil) : Int64
+      sum(region.chromosome, region.start, region.stop, index: index, cancelled: cancelled)
     end
 
     def mean(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto) : Float64?
@@ -319,6 +342,10 @@ module D4
 
     private def scan_buffer(region : Region) : Slice(Int32)
       Slice(Int32).new(Math.min(region.length, 65_536_i64).to_i)
+    end
+
+    private def check_cancelled(cancelled : Proc(Bool)?) : Nil
+      raise CancelledError.new("D4 read was cancelled") if cancelled.try(&.call)
     end
 
     # Used by the reusable scanner; callers should normally use scan_values.

@@ -158,7 +158,12 @@ module D4
     end
 
     # Returns nil when the precision of every stored block cannot be proved.
-    def full_blocks(chromosome : String, start : Int64, stop : Int64) : Int64?
+    #
+    # `cancelled` is evaluated between index I/O chunks.  It cannot interrupt
+    # an in-flight source read, but lets callers abandon a long-running query
+    # before the next chunk is processed.
+    def full_blocks(chromosome : String, start : Int64, stop : Int64, *, cancelled : Proc(Bool)? = nil) : Int64?
+      check_cancelled(cancelled)
       base = @chromosome_offsets[chromosome]? || raise UnknownChromosomeError.new("unknown chromosome #{chromosome}")
       first = (start + @granularity - 1) // @granularity
       last = stop // @granularity
@@ -170,7 +175,14 @@ module D4
       # Keep at most 1 MiB of validated local bins; remote sources retain their
       # own consistency checks and larger indexes continue to stream.
       if @source.is_a?(LocalSource) && @available_count <= MAX_CACHED_BYTES // 8
-        return @cache_mutex.synchronize { sum_cached(base + first, base + last) }
+        # Never invoke a caller callback while holding the cache mutex: a
+        # cancellation action can itself coordinate with other readers. The
+        # cache is bounded to 1 MiB, so one check on either side is enough to
+        # keep this non-I/O path responsive without introducing reentrancy.
+        check_cancelled(cancelled)
+        result = @cache_mutex.synchronize { sum_cached(base + first, base + last) }
+        check_cancelled(cancelled)
+        return result
       end
       result = 0_i64
       # Read consecutive bins together. A chromosome-wide sum can span many
@@ -178,14 +190,17 @@ module D4
       scratch = Bytes.new(Math.min(last - first, 8_192_i64).to_i * 8)
       index = first
       while index < last
+        check_cancelled(cancelled)
         count = Math.min(last - index, 8_192_i64).to_i
         bytes = scratch[0, count * 8]
         @source.read_exact_at(@offset + (base + index) * 8, bytes)
+        check_cancelled(cancelled)
         count.times do |bin|
           result += decode_sum(bytes, bin * 8)
         end
         index += count
       end
+      check_cancelled(cancelled)
       result
     end
 
@@ -217,6 +232,10 @@ module D4
         index += count
       end
       result
+    end
+
+    private def check_cancelled(cancelled : Proc(Bool)?) : Nil
+      raise CancelledError.new("D4 read was cancelled") if cancelled.try(&.call)
     end
 
     private def decode_sum(bytes : Bytes, offset : Int32) : Int64

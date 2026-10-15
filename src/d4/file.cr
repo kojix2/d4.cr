@@ -112,6 +112,10 @@ module D4
       default_track.has_chromosome?(name)
     end
 
+    def sum_index_granularity : Int64?
+      default_track.sum_index_granularity
+    end
+
     def value(chromosome : String, position : Int) : Int32
       default_track.value(chromosome, position)
     end
@@ -158,12 +162,12 @@ module D4
       each_interval(chromosome, start, stop)
     end
 
-    def sum(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto) : Int64
-      default_track.sum(chromosome, start, stop, index: index)
+    def sum(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto, cancelled : Proc(Bool)? = nil) : Int64
+      default_track.sum(chromosome, start, stop, index: index, cancelled: cancelled)
     end
 
-    def sum(region : Region, *, index : IndexPolicy = IndexPolicy::Auto) : Int64
-      default_track.sum(region, index: index)
+    def sum(region : Region, *, index : IndexPolicy = IndexPolicy::Auto, cancelled : Proc(Bool)? = nil) : Int64
+      default_track.sum(region, index: index, cancelled: cancelled)
     end
 
     def mean(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto) : Float64?
