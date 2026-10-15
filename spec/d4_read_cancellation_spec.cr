@@ -30,9 +30,8 @@ describe "cooperative read cancellation" do
     unindexed = File.join(__DIR__, "fixtures", "rust-input-10nt.d4")
 
     D4.open(indexed) do |file|
-      granularity = file.default_track.sum_index_granularity
-      granularity.should_not be_nil
-      granularity.not_nil!.should be > 0_i64
+      granularity = file.default_track.sum_index_granularity || raise "sum-index granularity is unavailable"
+      granularity.should be > 0_i64
       file.sum_index_granularity.should eq(granularity)
     end
 
