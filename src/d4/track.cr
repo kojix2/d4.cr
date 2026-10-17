@@ -38,7 +38,9 @@ module D4
       @sfi_index = nil
       if entry = index_root.try(&.entry?("secondary_frame_index"))
         secondary_entry = @directory.entry(".stab", 1_u8)
-        @sfi_index = SecondaryFrameIndex.new(@source, entry, secondary_entry.offset, @metadata.chromosomes)
+        secondary_directory = Format::Directory.open(@source, secondary_entry.offset, @options.max_metadata_bytes)
+        @sfi_index = SecondaryFrameIndex.new(@source, entry, secondary_entry.offset, @metadata.chromosomes,
+          secondary_directory.entries)
       end
       @primary = @directory.entry(".ptab", 2_u8)
       @chromosome_offsets = Hash(String, Int64).new

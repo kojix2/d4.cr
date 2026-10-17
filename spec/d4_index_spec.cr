@@ -53,6 +53,40 @@ private def secondary_record(left : Int32, length : Int32, value : Int32) : Byte
   record
 end
 
+private def rewrite_sfi_with_legacy_leading_flag(path : String) : Nil
+  source = D4::LocalSource.new(path)
+  entry_offset = 0_i64
+  bytes = Bytes.empty
+  begin
+    root = D4::Format::Directory.open_root(source, 4_194_304_i64)
+    index_root = D4::Format::Directory.open(source, root.entry(".index", 1_u8).offset, 4_194_304_i64)
+    entry = index_root.entry("secondary_frame_index", 2_u8)
+    entry_offset = entry.offset
+    bytes = Bytes.new(entry.size.to_i)
+    source.read_exact_at(entry.offset, bytes)
+    count = D4::Format::Endian.u64_le(bytes, 0).to_i
+    count.times do |number|
+      offset = 8 + number * 30
+      standard = bytes[offset, 30].dup
+      legacy = Bytes.new(30)
+      legacy[0] = standard[29]
+      legacy[1, 4].copy_from(standard[0, 4])
+      legacy[5, 4].copy_from(standard[4, 4])
+      legacy[9, 4].copy_from(standard[8, 4])
+      legacy[13, 8].copy_from(standard[12, 8])
+      legacy[21, 8].copy_from(standard[20, 8])
+      legacy[29] = standard[28]
+      bytes[offset, 30].copy_from(legacy)
+    end
+  ensure
+    source.close
+  end
+  File.open(path, "r+b") do |output|
+    output.seek(entry_offset, IO::Seek::Set)
+    output.write(bytes)
+  end
+end
+
 describe "embedded D4 indexes" do
   it "reports overflowing linked frame offsets as malformed D4 data" do
     frame = Bytes.new(D4::Format::FRAME_HEADER_SIZE)
@@ -273,6 +307,100 @@ describe "embedded D4 indexes" do
         counting.bytes_read.should be < 100_000_i64
       end
     ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  it "writes standard SFI entries and reads legacy leading-flag entries safely" do
+    temporary = File.tempfile("d4-index-layout", ".d4")
+    path = temporary.path
+    temporary.close
+    File.delete(path)
+    begin
+      D4.create(path,
+        chromosomes: [D4::Chromosome.new("first", 1_000_i64), D4::Chromosome.new("second", 30_000_i64)],
+        dictionary: D4::Dictionary.new([0_i32]),
+        options: D4::WriteOptions.new(indexes: [D4::IndexKind::SecondaryFrames])) do |writer|
+        writer.write_value("first", 0, 7_i32)
+        writer.write_values("second", 0, Array(Int32).new(30_000, 9_i32))
+      end
+
+      source = D4::LocalSource.new(path)
+      begin
+        root = D4::Format::Directory.open_root(source, 4_194_304_i64)
+        index_root = D4::Format::Directory.open(source, root.entry(".index", 1_u8).offset, 4_194_304_i64)
+        entry = index_root.entry("secondary_frame_index", 2_u8)
+        first = Bytes.new(8 + 30)
+        source.read_exact_at(entry.offset, first)
+        # d4-format's packed FrameIndexEntry starts with chrom_id and ends
+        # with first_frame. Older Crystal output used the reverse placement.
+        first[8].should eq(0_u8)
+        first[8 + 29].should eq(1_u8)
+      ensure
+        source.close
+      end
+
+      # The large second stream makes the old leading-flag layout's first
+      # entry superficially valid as the standard layout. It used to make
+      # indexed access seek into record bytes and fail with a bad frame link.
+      rewrite_sfi_with_legacy_leading_flag(path)
+      D4.open(path) do |file|
+        file.value("second", 1).should eq(9_i32)
+        file.value("second", 10_000).should eq(9_i32)
+        file.value("second", 25_000).should eq(9_i32)
+      end
+    ensure
+      temporary.close unless temporary.closed?
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  it "rejects a structurally plausible SFI layout that does not name frames" do
+    # In the old leading-flag layout, standard decoding turns a first-frame
+    # entry for chromosome N into chromosome 1 + 256*N. With 258 chromosomes
+    # both decodings are monotonic and in range. Padding also makes the
+    # incorrectly shifted address/size pass structural bounds checks, so the
+    # physical .stab-frame comparison is the only safe discriminator.
+    chromosomes = Array(D4::Chromosome).new(258) { |index| D4::Chromosome.new("chr#{index}", 1_000_i64) }
+    temporary = File.tempfile("d4-index-physical-layout", ".d4")
+    path = temporary.path
+    temporary.close
+    File.delete(path)
+    begin
+      D4.create(path,
+        chromosomes: chromosomes,
+        dictionary: D4::Dictionary.new([0_i32]),
+        options: D4::WriteOptions.new(indexes: [D4::IndexKind::SecondaryFrames])) do |writer|
+        writer.write_value("chr0", 0, 7_i32)
+        writer.write_value("chr1", 0, 9_i32)
+      end
+      File.open(path, "ab", &.write(Bytes.new(4_194_304)))
+
+      rewrite_sfi_with_legacy_leading_flag(path)
+      # The raw SFI constructor has no secondary directory to use for the
+      # physical check. It must fail closed instead of choosing standard
+      # layout just because that candidate happens to be structurally valid.
+      source = D4::LocalSource.new(path)
+      begin
+        root = D4::Format::Directory.open_root(source, 4_194_304_i64)
+        secondary = root.entry(".stab", 1_u8)
+        index_root = D4::Format::Directory.open(source, root.entry(".index", 1_u8).offset, 4_194_304_i64)
+        entry = index_root.entry("secondary_frame_index", 2_u8)
+        expect_raises(D4::CorruptIndexError, /ambiguous SFI entry layout/) do
+          D4::SecondaryFrameIndex.new(source, entry, secondary.offset, chromosomes)
+        end
+      ensure
+        source.close
+      end
+      # The false standard candidate points into the zero padding. It must
+      # be rejected as `false`, rather than raising while the valid leading
+      # candidate is being considered.
+      D4.open(path) do |file|
+        file.value("chr0", 0).should eq(7_i32)
+        file.value("chr1", 0).should eq(9_i32)
+      end
+    ensure
+      temporary.close unless temporary.closed?
       File.delete(path) if File.exists?(path)
     end
   end

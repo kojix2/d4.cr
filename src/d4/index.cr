@@ -32,7 +32,7 @@ module D4
     @chromosome_sizes : Array(Int64)
 
     def initialize(@source : Source, entry : Format::Entry, @secondary_base : Int64,
-                   chromosomes : Array(Chromosome))
+                   chromosomes : Array(Chromosome), @secondary_entries : Array(Format::Entry)? = nil)
       raise CorruptIndexError.new("invalid SFI blob") unless entry.blob? && entry.size >= 8
       @offset = entry.offset + 8
       @chromosome_ids = Hash(String, Int32).new
@@ -44,15 +44,7 @@ module D4
       raise CorruptIndexError.new("SFI size mismatch") unless count <= Int64::MAX // ENTRY_SIZE && entry.size == 8 + count.to_i64 * ENTRY_SIZE
       @count = count.to_i64
       @cached_entries = nil.as(Bytes?)
-      @flag_first = false
-      if @count > 0
-        first = Bytes.new(ENTRY_SIZE.to_i)
-        read_entry(0_i64, first)
-        standard = valid_entry?(first, false)
-        leading = valid_entry?(first, true)
-        raise CorruptIndexError.new("invalid SFI entry layout") unless standard || leading
-        @flag_first = leading && !standard
-      end
+      @flag_first = @count > 0 ? detect_flag_first : false
       if @source.is_a?(LocalSource) && @count * ENTRY_SIZE <= MAX_CACHED_BYTES
         cached = Bytes.new((@count * ENTRY_SIZE).to_i)
         @source.read_exact_at(@offset, cached)
@@ -107,6 +99,128 @@ module D4
       else
         @source.read_exact_at(@offset + index * ENTRY_SIZE, output)
       end
+    end
+
+    private def detect_flag_first : Bool
+      first = Bytes.new(ENTRY_SIZE.to_i)
+      read_entry(0_i64, first)
+      standard = valid_entry?(first, false)
+      leading = valid_entry?(first, true)
+      standard, leading = resolve_ambiguous_layout if standard && leading
+      raise CorruptIndexError.new("invalid SFI entry layout") unless standard || leading
+      leading && !standard
+    end
+
+    private def resolve_ambiguous_layout : Tuple(Bool, Bool)
+      # Older Crystal releases wrote `first_frame` before the packed fields,
+      # while d4-format writes it last. A small, two-chromosome index can make
+      # both interpretations of its first entry look valid. Audit every key
+      # and its frame address before choosing a compatibility layout rather
+      # than silently seeking into secondary-record data.
+      standard = valid_layout?(false)
+      leading = valid_layout?(true)
+      return {standard, leading} unless standard && leading
+
+      # A caller that only supplies the SFI blob cannot establish which
+      # physical frame layout it names. Fail closed rather than retain the
+      # historical standard-layout preference for ambiguous data.
+      secondary_entries = @secondary_entries || raise CorruptIndexError.new("ambiguous SFI entry layout")
+      standard = layout_matches_frames?(false, secondary_entries)
+      leading = layout_matches_frames?(true, secondary_entries)
+      raise CorruptIndexError.new("ambiguous SFI entry layout") if standard == leading
+      {standard, leading}
+    end
+
+    private def valid_layout?(flag_first : Bool) : Bool
+      previous_chromosome = -1_i64
+      previous_start = -1_i64
+      scratch = Bytes.new(ENTRY_SIZE.to_i)
+      index = 0_i64
+      while index < @count
+        read_entry(index, scratch)
+        return false unless valid_entry?(scratch, flag_first)
+        shift = flag_first ? 1 : 0
+        chromosome = Format::Endian.u32_le(scratch, shift).to_i64
+        start = Format::Endian.u32_le(scratch, shift + 4).to_i64
+        return false if chromosome < previous_chromosome ||
+                        (chromosome == previous_chromosome && start < previous_start)
+        previous_chromosome = chromosome
+        previous_start = start
+        index += 1
+      end
+      true
+    end
+
+    private def layout_matches_frames?(flag_first : Bool, entries : Array(Format::Entry)) : Bool
+      expected = Hash(Int64, Tuple(Int64, Bool)).new
+      scratch = Bytes.new(ENTRY_SIZE.to_i)
+      index = 0_i64
+      while index < @count
+        read_entry(index, scratch)
+        location = indexed_frame_location?(scratch, flag_first)
+        return false unless location
+        offset, size, first = location
+        if previous = expected[offset]?
+          return false unless previous == {size, first}
+        else
+          expected[offset] = {size, first}
+        end
+        index += 1
+      end
+
+      actual = reachable_frame_locations(entries, expected)
+      expected.all? do |expected_offset, expected_location|
+        actual[expected_offset]? == expected_location
+      end
+    end
+
+    # This is a compatibility probe, not a query-time address decoder. An
+    # address that is nonsensical for one candidate layout merely disproves
+    # that layout; it must not prevent a valid legacy/standard alternative
+    # from being selected.
+    private def indexed_frame_location?(entry : Bytes, flag_first : Bool) : Tuple(Int64, Int64, Bool)?
+      shift = flag_first ? 1 : 0
+      relative = Format::Endian.u64_le(entry, shift + 12)
+      size = Format::Endian.u64_le(entry, shift + 20)
+      return if relative > Int64::MAX || size < Format::FRAME_HEADER_SIZE || size > Int32::MAX ||
+                @secondary_base > @source.size - relative.to_i64 || size > @source.size - @secondary_base - relative.to_i64
+      {@secondary_base + relative.to_i64, size.to_i64, entry[flag_first ? 0 : 29] == 1_u8}
+    end
+
+    private def reachable_frame_locations(entries : Array(Format::Entry), wanted : Hash(Int64, Tuple(Int64, Bool))) : Hash(Int64, Tuple(Int64, Bool)) # ameba:disable Metrics/CyclomaticComplexity
+      locations = Hash(Int64, Tuple(Int64, Bool)).new
+      header = Bytes.new(Format::FRAME_HEADER_SIZE)
+      entries.each do |entry|
+        next unless entry.stream? && entry.name != ".metadata"
+        offset = entry.offset
+        size = entry.size
+        first = true
+        visited = Set(Int64).new
+        loop do
+          raise FormatError.new("invalid secondary frame size") unless valid_secondary_frame?(offset, size)
+          raise FormatError.new("cyclic secondary frame stream") unless visited.add?(offset)
+          locations[offset] = {size, first} if wanted.has_key?(offset)
+          return locations if locations.size == wanted.size
+          @source.read_exact_at(offset, header)
+          link = Format::Endian.i64_le(header, 0)
+          break if link == 0
+          linked_size = Format::Endian.u64_le(header, 8)
+          raise FormatError.new("invalid linked secondary frame") if linked_size < Format::FRAME_HEADER_SIZE || linked_size > Int32::MAX
+          if link > 0
+            raise FormatError.new("invalid linked secondary frame") if link >= @source.size - offset
+          else
+            raise FormatError.new("invalid linked secondary frame") if link < -offset
+          end
+          offset += link
+          size = linked_size.to_i64
+          first = false
+        end
+      end
+      locations
+    end
+
+    private def valid_secondary_frame?(offset : Int64, size : Int64) : Bool
+      offset >= 0 && size >= Format::FRAME_HEADER_SIZE && size <= Int32::MAX && size <= @source.size - offset
     end
 
     private def valid_entry?(entry : Bytes, flag_first : Bool) : Bool # ameba:disable Metrics/CyclomaticComplexity

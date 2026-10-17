@@ -233,13 +233,13 @@ module D4
 
     private def self.write_sfi_entry(io : IO, chrom_id : UInt32, start_pos : UInt32, stop_pos : UInt32,
                                      offset : Int64, size : Int64, skip : Int32, first : Bool) : Nil
-      io.write_byte(first ? 1_u8 : 0_u8)
       write_u32(io, chrom_id)
       write_u32(io, start_pos)
       write_u32(io, stop_pos)
       write_u64(io, offset.to_u64)
       write_u64(io, size.to_u64)
       io.write_byte(skip.to_u8)
+      io.write_byte(first ? 1_u8 : 0_u8)
     end
 
     private def self.write_sum(track : Track, output : IO, control : WriteControl) : Nil
