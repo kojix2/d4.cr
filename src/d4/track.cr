@@ -544,29 +544,21 @@ module D4
   end
 
   class SecondaryTable
+    @compressed : Bool
+
     def initialize(@source : Source, @directory : Format::Directory, @options : ReadOptions,
                    @index : SecondaryFrameIndex?)
       @empty_mutex = Mutex.new
       @empty_chromosomes = Hash(String, Bool).new
       metadata = @directory.entry(".metadata", 0_u8)
       data = Format::FrameStream.read(@source, metadata.offset, metadata.size, @options.max_metadata_bytes)
-      json = JSON.parse(trim_nuls(data))
-      raise UnsupportedFeatureError.new("unsupported secondary record format") unless json["record_format"].as_s == "range"
-      compression = json["compression"]?
-      @compressed = if compression.nil? || compression.as_s? == "NoCompression"
-                      false
-                    elsif compression["Deflate"]?
-                      true
-                    else
-                      raise UnsupportedFeatureError.new("unsupported D4 secondary compression")
-                    end
+      secondary_metadata = SecondaryMetadataParser.parse(data)
+      @compressed = secondary_metadata.compressed
       @partitions = Hash(String, Array(Tuple(Int64, Int64, Format::Entry))).new do |hash, key|
         hash[key] = Array(Tuple(Int64, Int64, Format::Entry)).new
       end
-      json["partitions"].as_a.each_with_index do |partition, index|
-        parts = partition.as_a
-        raise FormatError.new("invalid secondary partition") unless parts.size >= 3 && parts[1].as_i64 >= 0 && parts[2].as_i64 >= parts[1].as_i64
-        @partitions[parts[0].as_s] << {parts[1].as_i64, parts[2].as_i64, @directory.entry(index.to_s, 0_u8)}
+      secondary_metadata.partitions.each_with_index do |partition, index|
+        @partitions[partition.chromosome] << {partition.start, partition.stop, @directory.entry(index.to_s, 0_u8)}
       end
     end
 
@@ -598,25 +590,22 @@ module D4
     end
 
     private def empty_stream?(entry : Format::Entry) : Bool
-      return true if !@compressed && entry.size == Format::FRAME_HEADER_SIZE
+      # A frame with no records can still link to a later frame that has
+      # records.  Treat only an unlinked terminator frame as empty; otherwise
+      # `Track#value` could skip valid secondary overrides.
+      return false if entry.size < Format::FRAME_HEADER_SIZE
       header_size = @compressed ? 29 : 20
-      return false if entry.size < header_size
-      header = Bytes.new(header_size)
+      read_size = Math.min(entry.size, header_size).to_i
+      header = Bytes.new(read_size)
       @source.read_exact_at(entry.offset, header)
       return false unless Format::Endian.u64_le(header, 0) == 0_u64
+      return true if !@compressed && entry.size == Format::FRAME_HEADER_SIZE
+      return false if entry.size < header_size
       if @compressed
         Format::Endian.u32_le(header, 25) == 0_u32
       else
         Format::Endian.u32_le(header, 16) == 0_u32
       end
-    end
-
-    private def trim_nuls(bytes : Bytes) : String
-      end_at = bytes.size
-      while end_at > 0 && bytes[end_at - 1] == 0_u8
-        end_at -= 1
-      end
-      String.new(bytes[0, end_at])
     end
   end
 
@@ -774,6 +763,55 @@ module D4
     end
   end
 
+  record SecondaryPartition, chromosome : String, start : Int64, stop : Int64
+
+  record SecondaryMetadata, compressed : Bool, partitions : Array(SecondaryPartition)
+
+  # Parses the schema shared by reading and index construction. Keep the
+  # optional compression field compatible with d4-format's serde default,
+  # while treating missing required fields or wrongly typed values as corrupt
+  # D4 data rather than leaking JSON implementation exceptions.
+  module SecondaryMetadataParser
+    def self.parse(data : Bytes) : SecondaryMetadata
+      json = JSON.parse(trim_nuls(data))
+      raise UnsupportedFeatureError.new("unsupported secondary record format") unless json["record_format"].as_s == "range"
+      partitions = json["partitions"].as_a.map do |partition|
+        parts = partition.as_a
+        raise FormatError.new("invalid secondary partition") unless parts.size >= 3
+        chromosome = parts[0].as_s
+        start = parts[1].as_i64
+        stop = parts[2].as_i64
+        raise FormatError.new("invalid secondary partition") if chromosome.empty? || start < 0 || start > stop || stop > UInt32::MAX.to_i64
+        SecondaryPartition.new(chromosome, start, stop)
+      end
+      SecondaryMetadata.new(compressed?(json["compression"]?), partitions)
+    rescue error : JSON::ParseException
+      raise FormatError.new("invalid secondary metadata JSON: #{error.message}")
+    rescue error : KeyError | TypeCastError | OverflowError | ArgumentError
+      raise FormatError.new("invalid secondary metadata: #{error.message}")
+    end
+
+    private def self.compressed?(compression : JSON::Any?) : Bool
+      return false unless compression
+      return false if compression.as_s? == "NoCompression"
+      if compression.as_s?
+        raise UnsupportedFeatureError.new("unsupported D4 secondary compression")
+      end
+      level = compression["Deflate"]? || raise UnsupportedFeatureError.new("unsupported D4 secondary compression")
+      value = level.as_i64
+      raise FormatError.new("invalid D4 secondary compression level") unless 0 <= value <= UInt32::MAX.to_i64
+      true
+    end
+
+    private def self.trim_nuls(bytes : Bytes) : String
+      end_at = bytes.size
+      while end_at > 0 && bytes[end_at - 1] == 0_u8
+        end_at -= 1
+      end
+      String.new(bytes[0, end_at])
+    end
+  end
+
   module HeaderParser
     def self.parse(data : Bytes) : Metadata
       end_at = data.size
@@ -782,13 +820,15 @@ module D4
       end
       json = JSON.parse(String.new(data[0, end_at]))
       chromosomes = json["chrom_list"].as_a.map do |chromosome|
-        Chromosome.new(chromosome["name"].as_s, chromosome["size"].as_i64)
+        size = chromosome["size"].as_i64
+        raise FormatError.new("D4 chromosome size exceeds UInt32") unless 0 <= size <= UInt32::MAX.to_i64
+        Chromosome.new(chromosome["name"].as_s, size)
       end
       dictionary_value = json["dictionary"]
       dictionary = if simple = dictionary_value["SimpleRange"]?
-                     Dictionary.new(simple["low"].as_i.to_i32, simple["high"].as_i.to_i32)
+                     Dictionary.new(int32(simple["low"]), int32(simple["high"]))
                    elsif mapping = dictionary_value["Dictionary"]?
-                     Dictionary.new(mapping["i2v_map"].as_a.map(&.as_i.to_i32))
+                     Dictionary.new(mapping["i2v_map"].as_a.map { |value| int32(value) })
                    else
                      raise FormatError.new("unsupported D4 dictionary")
                    end
@@ -801,6 +841,14 @@ module D4
       Metadata.new(chromosomes, dictionary, denominator)
     rescue error : JSON::ParseException
       raise FormatError.new("invalid D4 metadata JSON: #{error.message}")
+    rescue error : KeyError | TypeCastError | OverflowError | ArgumentError
+      raise FormatError.new("invalid D4 metadata: #{error.message}")
+    end
+
+    private def self.int32(value : JSON::Any) : Int32
+      integer = value.as_i64
+      raise FormatError.new("D4 dictionary value exceeds Int32") unless Int32::MIN <= integer <= Int32::MAX
+      integer.to_i32
     end
   end
 end

@@ -98,14 +98,13 @@ module D4
       stab = Format::Directory.open(file.source, secondary.offset, file.options.max_metadata_bytes)
       metadata = stab.entry(".metadata", 0_u8)
       raw = Format::FrameStream.read(file.source, metadata.offset, metadata.size, file.options.max_metadata_bytes)
-      info = JSON.parse(String.new(raw).rstrip('\0'))
-      compression = info["compression"]?
-      compressed = !(compression.nil? || compression.as_s? == "NoCompression")
+      info = SecondaryMetadataParser.parse(raw)
+      compressed = info.compressed
       count_position = output.pos
       write_u64(output, 0_u64)
       count = 0_u64
       names = file.default_track.chromosomes.map(&.name)
-      partitions = info["partitions"].as_a
+      partitions = info.partitions
       partitions.each_with_index do |partition, part_index|
         count += write_sfi_partition(file, stab, partition, part_index, partitions.size,
           compressed, names, output, control)
@@ -118,7 +117,7 @@ module D4
 
     private def self.write_sfi_partition(file, stab, partition, part_index, partition_count,
                                          compressed, names, output, control) : UInt64
-      name = partition[0].as_s
+      name = partition.chromosome
       control.update(WriteProgress.new(WriteStage::BuildingIndexes, name,
         part_index.to_i64, partition_count.to_i64))
       chrom_id = names.index(name) || raise FormatError.new("secondary partition has unknown chromosome")

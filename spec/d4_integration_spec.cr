@@ -385,6 +385,29 @@ describe "D4 format compatibility and lifecycle" do
     expect_raises(D4::FormatError, "truncated secondary record") { corrupt.next_record }
   end
 
+  it "does not discard a linked raw secondary stream whose first frame is empty" do
+    metadata = %({"record_format":"range","compression":"NoCompression","partitions":[["chr",0,10]]})
+    metadata_frame = D4::Format.bytes(D4::FrameEncoder.build_exact(metadata.to_slice))
+    # The first 16-byte frame has no payload but links to a frame containing
+    # one range record. Empty-stream detection must not stop at that first
+    # frame, because Track#value uses it to decide whether to consult .stab.
+    stream = Bytes.new(42)
+    stream[0] = 16_u8
+    stream[8] = 26_u8
+    stream[32] = 1_u8
+    stream[38] = 42_u8
+    source = D4::MemorySource.new(metadata_frame + stream)
+    directory = D4::Format::Directory.new(0_i64, [
+      D4::Format::Entry.new(0_u8, 0_i64, metadata_frame.size.to_i64, ".metadata"),
+      D4::Format::Entry.new(0_u8, metadata_frame.size.to_i64, 16_i64, "0"),
+    ])
+    table = D4::SecondaryTable.new(source, directory, D4::ReadOptions.new, nil)
+
+    table.empty?("chr").should be_false
+    record = table.record_iterator(D4::Region.new("chr", 0, 10)).next_record || raise "expected a secondary record"
+    {record.left, record.right, record.value}.should eq({0_i64, 1_i64, 42_i32})
+  end
+
   it "keeps a final raw record after one is split across linked frames" do
     # Regression for an intentional difference from d4-format 0.3.11: its
     # `data.len() > R::SIZE` check drops the second record when the linked
