@@ -54,6 +54,17 @@ private def secondary_record(left : Int32, length : Int32, value : Int32) : Byte
 end
 
 describe "embedded D4 indexes" do
+  it "reports overflowing linked frame offsets as malformed D4 data" do
+    frame = Bytes.new(D4::Format::FRAME_HEADER_SIZE)
+    put_le(frame, 0, Int64::MAX.to_u64, 8)
+    put_le(frame, 8, D4::Format::FRAME_HEADER_SIZE.to_u64, 8)
+    source = D4::MemorySource.new(frame)
+    stream = D4::Format::FrameStream.new(source, 0_i64, D4::Format::FRAME_HEADER_SIZE,
+      D4::Format::FRAME_HEADER_SIZE.to_i64)
+
+    expect_raises(D4::FormatError, /linked frame offset/) { stream.next_payload }
+  end
+
   it "keeps a small local secondary frame index in memory" do
     blob = Bytes.new(8 + 30)
     put_le(blob, 0, 1_u64, 8)
@@ -301,6 +312,38 @@ describe "embedded D4 indexes" do
       end
       expect_raises(D4::CancelledError) { D4.build_indexes(path, control: controls.first) }
       File.read(path).should eq(before)
+    ensure
+      temporary.close unless temporary.closed?
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
+  it "rejects an overflowing secondary link while building indexes" do
+    temporary = File.tempfile("d4-index-overflowing-link", ".d4")
+    path = temporary.path
+    temporary.close
+    File.delete(path)
+    begin
+      D4.create(path, chromosomes: [D4::Chromosome.new("chr", 6_554_i64)],
+        dictionary: D4::Dictionary.new([0_i32])) do |writer|
+        writer.write_values("chr", 0, Array.new(6_554, 1_i32))
+      end
+      source = D4::LocalSource.new(path)
+      begin
+        root = D4::Format::Directory.open_root(source, 4_194_304_i64)
+        secondary = D4::Format::Directory.open(source, root.entry(".stab", 1_u8).offset, 4_194_304_i64)
+        stream = secondary.entry("0", 0_u8)
+        File.open(path, "r+b") do |output|
+          link = Bytes.new(8)
+          put_le(link, 0, Int64::MAX.to_u64, 8)
+          output.seek(stream.offset, IO::Seek::Set)
+          output.write(link)
+        end
+      ensure
+        source.close
+      end
+
+      expect_raises(D4::FormatError, /invalid linked secondary frame/) { D4.build_indexes(path) }
     ensure
       temporary.close unless temporary.closed?
       File.delete(path) if File.exists?(path)

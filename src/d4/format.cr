@@ -62,6 +62,14 @@ module D4
           @done = true
         else
           raise FormatError.new("invalid linked frame size") if linked_size < FRAME_HEADER_SIZE || linked_size > Int32::MAX
+          # Check the addition before performing it. A corrupted positive
+          # link near Int64::MAX used to raise OverflowError here instead of
+          # being reported as an invalid D4 frame.
+          if link > 0
+            raise FormatError.new("linked frame offset is invalid") if link >= @source.size - @offset
+          elsif link < 0
+            raise FormatError.new("linked frame offset is invalid") if link < -@offset
+          end
           next_offset = @offset + link
           raise FormatError.new("linked frame offset is invalid") if next_offset < 0 || next_offset >= @source.size
           @offset = next_offset

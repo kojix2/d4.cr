@@ -185,7 +185,12 @@ module D4
     private def self.validate_secondary_link!(offset, link, next_size, source_size) : Nil
       invalid = link <= 0 || next_size > Int32::MAX || next_size < 16
       raise FormatError.new("invalid linked secondary frame") if invalid
-      raise FormatError.new("invalid linked secondary frame") if offset + link > source_size - next_size.to_i64
+      # Avoid overflowing `offset + link` for malformed files. Checking the
+      # remaining addressable bytes also makes the failure a FormatError,
+      # rather than an implementation-level OverflowError.
+      remaining = source_size - offset
+      invalid = offset < 0 || remaining < next_size.to_i64 || link > remaining - next_size.to_i64
+      raise FormatError.new("invalid linked secondary frame") if invalid
     end
 
     private def self.raw_span(payload : Bytes, carry : Bytes) : Tuple(UInt32, UInt32, Int32, Bytes, UInt32?)
