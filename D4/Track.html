@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs 1.21.0">
+<meta name="crystal_docs.project_version" content="main">
+<meta name="crystal_docs.project_name" content="d4">
+
+
+
+<link href="../css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../js/doc.js"></script>
+
+  <meta name="repository-name" content="d4">
+  <title>D4::Track - d4 main</title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "../";
+  </script>
+</head>
+<body>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill="currentColor" fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+<input type="checkbox" id="sidebar-btn">
+<label for="sidebar-btn" id="sidebar-btn-label">
+  <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+  <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+</label>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="../index.html">
+          d4
+        </a>
+      </h1>
+
+      <span class="project-version">
+        main
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class="parent open current" data-id="d4/D4" data-name="d4">
+      <a href="../D4.html">D4</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/AggregateIterator" data-name="d4::aggregateiterator(d, r)">
+      <a href="../D4/AggregateIterator.html">AggregateIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/AllocationLimitError" data-name="d4::allocationlimiterror">
+      <a href="../D4/AllocationLimitError.html">AllocationLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/BinIterator" data-name="d4::biniterator">
+      <a href="../D4/BinIterator.html">BinIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/BinSummary" data-name="d4::binsummary">
+      <a href="../D4/BinSummary.html">BinSummary</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/CancelledError" data-name="d4::cancellederror">
+      <a href="../D4/CancelledError.html">CancelledError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Chromosome" data-name="d4::chromosome">
+      <a href="../D4/Chromosome.html">Chromosome</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ClosedError" data-name="d4::closederror">
+      <a href="../D4/ClosedError.html">ClosedError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Compression" data-name="d4::compression">
+      <a href="../D4/Compression.html">Compression</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/CorruptIndexError" data-name="d4::corruptindexerror">
+      <a href="../D4/CorruptIndexError.html">CorruptIndexError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Coverage" data-name="d4::coverage">
+      <a href="../D4/Coverage.html">Coverage</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Dictionary" data-name="d4::dictionary">
+      <a href="../D4/Dictionary.html">Dictionary</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/DictType" data-name="d4::dicttype">
+      <a href="../D4/DictType.html">DictType</a>
+      
+    </li>
+  
+  <li class="parent " data-id="d4/D4/DirectoryEncoder" data-name="d4::directoryencoder">
+      <a href="../D4/DirectoryEncoder.html">DirectoryEncoder</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/DirectoryEncoder/Item" data-name="d4::directoryencoder::item">
+      <a href="../D4/DirectoryEncoder/Item.html">Item</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Error" data-name="d4::error">
+      <a href="../D4/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ExactHistogram" data-name="d4::exacthistogram">
+      <a href="../D4/ExactHistogram.html">ExactHistogram</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/File" data-name="d4::file">
+      <a href="../D4/File.html">File</a>
+      
+    </li>
+  
+  <li class="parent " data-id="d4/D4/Format" data-name="d4::format">
+      <a href="../D4/Format.html">Format</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/Format/Directory" data-name="d4::format::directory">
+      <a href="../D4/Format/Directory.html">Directory</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Format/Endian" data-name="d4::format::endian">
+      <a href="../D4/Format/Endian.html">Endian</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Format/Entry" data-name="d4::format::entry">
+      <a href="../D4/Format/Entry.html">Entry</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Format/FrameStream" data-name="d4::format::framestream">
+      <a href="../D4/Format/FrameStream.html">FrameStream</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/FormatError" data-name="d4::formaterror">
+      <a href="../D4/FormatError.html">FormatError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/FrameAddress" data-name="d4::frameaddress">
+      <a href="../D4/FrameAddress.html">FrameAddress</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/FrameEncoder" data-name="d4::frameencoder">
+      <a href="../D4/FrameEncoder.html">FrameEncoder</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/HeaderParser" data-name="d4::headerparser">
+      <a href="../D4/HeaderParser.html">HeaderParser</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Histogram" data-name="d4::histogram">
+      <a href="../D4/Histogram.html">Histogram</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/HistogramTails" data-name="d4::histogramtails">
+      <a href="../D4/HistogramTails.html">HistogramTails</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/HTTPError" data-name="d4::httperror">
+      <a href="../D4/HTTPError.html">HTTPError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/HTTPSource" data-name="d4::httpsource">
+      <a href="../D4/HTTPSource.html">HTTPSource</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IncompleteHistogramError" data-name="d4::incompletehistogramerror">
+      <a href="../D4/IncompleteHistogramError.html">IncompleteHistogramError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IndexBuilder" data-name="d4::indexbuilder">
+      <a href="../D4/IndexBuilder.html">IndexBuilder</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IndexKind" data-name="d4::indexkind">
+      <a href="../D4/IndexKind.html">IndexKind</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IndexPolicy" data-name="d4::indexpolicy">
+      <a href="../D4/IndexPolicy.html">IndexPolicy</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IndexPrecisionError" data-name="d4::indexprecisionerror">
+      <a href="../D4/IndexPrecisionError.html">IndexPrecisionError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Interval" data-name="d4::interval(t)">
+      <a href="../D4/Interval.html">Interval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IntervalIterator" data-name="d4::intervaliterator">
+      <a href="../D4/IntervalIterator.html">IntervalIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IOSource" data-name="d4::iosource">
+      <a href="../D4/IOSource.html">IOSource</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/LocalSource" data-name="d4::localsource">
+      <a href="../D4/LocalSource.html">LocalSource</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Matrix" data-name="d4::matrix">
+      <a href="../D4/Matrix.html">Matrix</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/MemorySource" data-name="d4::memorysource">
+      <a href="../D4/MemorySource.html">MemorySource</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Metadata" data-name="d4::metadata">
+      <a href="../D4/Metadata.html">Metadata</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/MissingIndexError" data-name="d4::missingindexerror">
+      <a href="../D4/MissingIndexError.html">MissingIndexError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ParallelWork" data-name="d4::parallelwork">
+      <a href="../D4/ParallelWork.html">ParallelWork</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/RangeNotSupportedError" data-name="d4::rangenotsupportederror">
+      <a href="../D4/RangeNotSupportedError.html">RangeNotSupportedError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/RangeRecord" data-name="d4::rangerecord">
+      <a href="../D4/RangeRecord.html">RangeRecord</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/RawInterval" data-name="d4::rawinterval">
+      <a href="../D4/RawInterval.html">RawInterval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ReadOptions" data-name="d4::readoptions">
+      <a href="../D4/ReadOptions.html">ReadOptions</a>
+      
+    </li>
+  
+  <li class="parent " data-id="d4/D4/Reducers" data-name="d4::reducers">
+      <a href="../D4/Reducers.html">Reducers</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/Reducers/Basic" data-name="d4::reducers::basic">
+      <a href="../D4/Reducers/Basic.html">Basic</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/Mean" data-name="d4::reducers::mean">
+      <a href="../D4/Reducers/Mean.html">Mean</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/MinMax" data-name="d4::reducers::minmax">
+      <a href="../D4/Reducers/MinMax.html">MinMax</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/State" data-name="d4::reducers::state">
+      <a href="../D4/Reducers/State.html">State</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/Sum" data-name="d4::reducers::sum">
+      <a href="../D4/Reducers/Sum.html">Sum</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/Summary" data-name="d4::reducers::summary">
+      <a href="../D4/Reducers/Summary.html">Summary</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Region" data-name="d4::region">
+      <a href="../D4/Region.html">Region</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/RegionResult" data-name="d4::regionresult(t)">
+      <a href="../D4/RegionResult.html">RegionResult</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Rounding" data-name="d4::rounding">
+      <a href="../D4/Rounding.html">Rounding</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Row" data-name="d4::row">
+      <a href="../D4/Row.html">Row</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledInterval" data-name="d4::scaledinterval">
+      <a href="../D4/ScaledInterval.html">ScaledInterval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledIntervalIterator" data-name="d4::scaledintervaliterator">
+      <a href="../D4/ScaledIntervalIterator.html">ScaledIntervalIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledMatrix" data-name="d4::scaledmatrix">
+      <a href="../D4/ScaledMatrix.html">ScaledMatrix</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledRow" data-name="d4::scaledrow">
+      <a href="../D4/ScaledRow.html">ScaledRow</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledTrack" data-name="d4::scaledtrack">
+      <a href="../D4/ScaledTrack.html">ScaledTrack</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledValueIterator" data-name="d4::scaledvalueiterator">
+      <a href="../D4/ScaledValueIterator.html">ScaledValueIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryFrameIndex" data-name="d4::secondaryframeindex">
+      <a href="../D4/SecondaryFrameIndex.html">SecondaryFrameIndex</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryMetadata" data-name="d4::secondarymetadata">
+      <a href="../D4/SecondaryMetadata.html">SecondaryMetadata</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryMetadataParser" data-name="d4::secondarymetadataparser">
+      <a href="../D4/SecondaryMetadataParser.html">SecondaryMetadataParser</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryPartition" data-name="d4::secondarypartition">
+      <a href="../D4/SecondaryPartition.html">SecondaryPartition</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryRecordIterator" data-name="d4::secondaryrecorditerator">
+      <a href="../D4/SecondaryRecordIterator.html">SecondaryRecordIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryTable" data-name="d4::secondarytable">
+      <a href="../D4/SecondaryTable.html">SecondaryTable</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Source" data-name="d4::source">
+      <a href="../D4/Source.html">Source</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SourceChangedError" data-name="d4::sourcechangederror">
+      <a href="../D4/SourceChangedError.html">SourceChangedError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SumIndex" data-name="d4::sumindex">
+      <a href="../D4/SumIndex.html">SumIndex</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Summary" data-name="d4::summary">
+      <a href="../D4/Summary.html">Summary</a>
+      
+    </li>
+  
+  <li class=" current" data-id="d4/D4/Track" data-name="d4::track">
+      <a href="../D4/Track.html">Track</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/TrackSelectionError" data-name="d4::trackselectionerror">
+      <a href="../D4/TrackSelectionError.html">TrackSelectionError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/UnexpectedEOFError" data-name="d4::unexpectedeoferror">
+      <a href="../D4/UnexpectedEOFError.html">UnexpectedEOFError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/UnknownChromosomeError" data-name="d4::unknownchromosomeerror">
+      <a href="../D4/UnknownChromosomeError.html">UnknownChromosomeError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/UnsupportedFeatureError" data-name="d4::unsupportedfeatureerror">
+      <a href="../D4/UnsupportedFeatureError.html">UnsupportedFeatureError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ValueIterator" data-name="d4::valueiterator">
+      <a href="../D4/ValueIterator.html">ValueIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ValueScanner" data-name="d4::valuescanner">
+      <a href="../D4/ValueScanner.html">ValueScanner</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/WriteControl" data-name="d4::writecontrol">
+      <a href="../D4/WriteControl.html">WriteControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/WriteOptions" data-name="d4::writeoptions">
+      <a href="../D4/WriteOptions.html">WriteOptions</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/WriteProgress" data-name="d4::writeprogress">
+      <a href="../D4/WriteProgress.html">WriteProgress</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Writer" data-name="d4::writer">
+      <a href="../D4/Writer.html">Writer</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/WriteStage" data-name="d4::writestage">
+      <a href="../D4/WriteStage.html">WriteStage</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1 class="type-name">
+
+  <span class="kind">
+    class
+  </span> D4::<wbr>Track
+
+</h1>
+
+
+  <ul class="superclass-hierarchy"><li class="superclass"><a href="../D4/Track.html">D4::Track</a></li><li class="superclass">Reference</li><li class="superclass">Object</li></ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>
+    <a id="defined-in" class="anchor" href="#defined-in">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Defined in:
+  </h2>
+  
+    
+      <a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/bins.cr#L60" target="_blank">
+        d4/bins.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/reducers.cr#L195" target="_blank">
+        d4/reducers.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/scaled.cr#L118" target="_blank">
+        d4/scaled.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/stats.cr#L65" target="_blank">
+        d4/stats.cr
+      </a>
+    
+    <br/>
+  
+    
+      <a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L17" target="_blank">
+        d4/track.cr
+      </a>
+    
+    <br/>
+  
+
+
+
+
+
+  
+  <h2>
+    <a id="constructors" class="anchor" href="#constructors">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Constructors
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#new%28source%3ASource%2Cdirectory%3AFormat%3A%3ADirectory%2Cname%3AString%2Coptions%3AReadOptions%29-class-method" class="signature"><strong>.new</strong>(source : Source, directory : Format::Directory, name : String, options : ReadOptions)</a>
+        
+      </li>
+    
+  </ul>
+
+
+  
+
+  
+
+  
+  <h2>
+    <a id="instance-method-summary" class="anchor" href="#instance-method-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Summary
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#aggregate%28regions%3AEnumerable%28Region%29%2Creducer%3AD%2C%2A%2Cworkers%3AInt32%3D1%29forallD-instance-method" class="signature"><strong>#aggregate</strong>(regions : Enumerable(Region), reducer : D, *, workers : Int32 = <span class="n">1</span>) forall D</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#aggregate_region%28region%3ARegion%2Creducer%3AD%2Cscratch%3ASlice%28Int32%29%29forallD-instance-method" class="signature"><strong>#aggregate_region</strong>(region : Region, reducer : D, scratch : Slice(Int32)) forall D</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#aggregate_region%28region%3ARegion%2Creducer%3AD%29forallD-instance-method" class="signature"><strong>#aggregate_region</strong>(region : Region, reducer : D) forall D</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#bind_owner%28owner%3AFile%29%3ANil-instance-method" class="signature"><strong>#bind_owner</strong>(owner : File) : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#check_open%3ANil-instance-method" class="signature"><strong>#check_open</strong> : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chromosome%28name%3AString%29%3AChromosome-instance-method" class="signature"><strong>#chromosome</strong>(name : String) : Chromosome</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chromosome%3F%28name%3AString%29%3AChromosome%7CNil-instance-method" class="signature"><strong>#chromosome?</strong>(name : String) : Chromosome | Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chromosome_size%28name%3AString%29%3AInt64-instance-method" class="signature"><strong>#chromosome_size</strong>(name : String) : Int64</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chromosome_size%3F%28name%3AString%29%3AInt64%7CNil-instance-method" class="signature"><strong>#chromosome_size?</strong>(name : String) : Int64 | Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#chromosomes%3AArray%28Chromosome%29-instance-method" class="signature"><strong>#chromosomes</strong> : Array(Chromosome)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#coverage%28region%3ARegion%2C%2A%2Cthresholds%3AArray%28Int32%29%29%3ACoverage-instance-method" class="signature"><strong>#coverage</strong>(region : Region, *, thresholds : Array(Int32)) : Coverage</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#coverage_into%28region%3ARegion%2Cthresholds%3ASlice%28Int32%29%2Ccounts%3ASlice%28Int64%29%29%3AInt64-instance-method" class="signature"><strong>#coverage_into</strong>(region : Region, thresholds : Slice(Int32), counts : Slice(Int64)) : Int64</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#decode_primary%28chromosome%3AString%2Cstart%3AInt64%2Coutput%3ASlice%28Int32%29%2Cpacked%3ABytes%29%3ANil-instance-method" class="signature"><strong>#decode_primary</strong>(chromosome : String, start : Int64, output : Slice(Int32), packed : Bytes) : Nil</a>
+        
+          <div class="summary"><p>Used by the reusable scanner; callers should normally use scan_values.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_aggregate%28regions%3AEnumerable%28Region%29%2Creducer%3AD%2C%2A%2Cworkers%3AInt32%3D1%2Cbatch_size%3AInt32%3D256%2C%26%29forallD-instance-method" class="signature"><strong>#each_aggregate</strong>(regions : Enumerable(Region), reducer : D, *, workers : Int32 = <span class="n">1</span>, batch_size : Int32 = <span class="n">256</span>, &) forall D</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_aggregate%28regions%3AIndexable%28Region%29%2Creducer%3AD%2C%2A%2Cworkers%3AInt32%3D1%2Cbatch_size%3AInt32%3D256%29forallD-instance-method" class="signature"><strong>#each_aggregate</strong>(regions : Indexable(Region), reducer : D, *, workers : Int32 = <span class="n">1</span>, batch_size : Int32 = <span class="n">256</span>) forall D</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_bin%28region%3ARegion%2C%2A%2Cbin_size%3AInt%2C%26%3ABinSummary-%3ENil%29%3ANil-instance-method" class="signature"><strong>#each_bin</strong>(region : Region, *, bin_size : Int, & : BinSummary -> Nil) : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_bin%28region%3ARegion%2C%2A%2Cbin_size%3AInt%29%3ABinIterator-instance-method" class="signature"><strong>#each_bin</strong>(region : Region, *, bin_size : Int) : BinIterator</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_interval%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%26%3ARawInterval-%3ENil%29%3ANil-instance-method" class="signature"><strong>#each_interval</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, & : RawInterval -> Nil) : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_interval%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29-instance-method" class="signature"><strong>#each_interval</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_value%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%26%3AInt32-%3ENil%29%3ANil-instance-method" class="signature"><strong>#each_value</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, & : Int32 -> Nil) : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#each_value%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29-instance-method" class="signature"><strong>#each_value</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#exact_histogram%28region%3ARegion%2C%2A%2Cmax_values%3AInt32%3D4096%29%3AExactHistogram-instance-method" class="signature"><strong>#exact_histogram</strong>(region : Region, *, max_values : Int32 = <span class="n">4096</span>) : ExactHistogram</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_chromosome%3F%28name%3AString%29%3ABool-instance-method" class="signature"><strong>#has_chromosome?</strong>(name : String) : Bool</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#has_index%3F%28kind%3AIndexKind%29%3ABool-instance-method" class="signature"><strong>#has_index?</strong>(kind : IndexKind) : Bool</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#histogram%28region%3ARegion%2C%2A%2Cvalue_range%3ARange%28Int32%2CInt32%29%29%3AHistogram-instance-method" class="signature"><strong>#histogram</strong>(region : Region, *, value_range : Range(Int32, Int32)) : Histogram</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#histogram_into%28region%3ARegion%2Ccounts%3ASlice%28Int64%29%2C%2A%2Cvalue_range%3ARange%28Int32%2CInt32%29%29%3AHistogramTails-instance-method" class="signature"><strong>#histogram_into</strong>(region : Region, counts : Slice(Int64), *, value_range : Range(Int32, Int32)) : HistogramTails</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#materialization_limit%3AInt64-instance-method" class="signature"><strong>#materialization_limit</strong> : Int64</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mean%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%2A%2Cindex%3AIndexPolicy%3DIndexPolicy%3A%3AAuto%29%3AFloat64%7CNil-instance-method" class="signature"><strong>#mean</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, *, index : IndexPolicy = <span class="t">IndexPolicy</span><span class="t">::</span><span class="t">Auto</span>) : Float64 | Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#mean%28region%3ARegion%2C%2A%2Cindex%3AIndexPolicy%3DIndexPolicy%3A%3AAuto%29%3AFloat64%7CNil-instance-method" class="signature"><strong>#mean</strong>(region : Region, *, index : IndexPolicy = <span class="t">IndexPolicy</span><span class="t">::</span><span class="t">Auto</span>) : Float64 | Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#metadata%3AMetadata-instance-method" class="signature"><strong>#metadata</strong> : Metadata</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minmax%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29%3ATuple%28Int32%2CInt32%29%7CNil-instance-method" class="signature"><strong>#minmax</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>) : Tuple(Int32, Int32) | Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#minmax%28region%3ARegion%29%3ATuple%28Int32%2CInt32%29%7CNil-instance-method" class="signature"><strong>#minmax</strong>(region : Region) : Tuple(Int32, Int32) | Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#name%3AString-instance-method" class="signature"><strong>#name</strong> : String</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#read_values_into%28chromosome%3AString%2Cstart%3AInt%2Cbuffer%3ASlice%28Int32%29%29%3AInt32-instance-method" class="signature"><strong>#read_values_into</strong>(chromosome : String, start : Int, buffer : Slice(Int32)) : Int32</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sample%28region%3ARegion%2C%2A%2Cbins%3AInt32%3D256%29%3AArray%28BinSummary%29-instance-method" class="signature"><strong>#sample</strong>(region : Region, *, bins : Int32 = <span class="n">256</span>) : Array(BinSummary)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scaled%3AScaledTrack-instance-method" class="signature"><strong>#scaled</strong> : ScaledTrack</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scan_values%28chromosome%3AString%2Cbuffer%3ASlice%28Int32%29%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%2A%2Ccancelled%3AProc%28Bool%29%7CNil%3Dnil%2C%26%3AInt64%2CSlice%28Int32%29%2CInt32-%3ENil%29%3ANil-instance-method" class="signature"><strong>#scan_values</strong>(chromosome : String, buffer : Slice(Int32), start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, *, cancelled : Proc(Bool) | Nil = <span class="n">nil</span>, & : Int64, Slice(Int32), Int32 -> Nil) : Nil</a>
+        
+          <div class="summary"><p>Calls <code>cancelled</code> at block boundaries and raises <code><a href="../D4/CancelledError.html">CancelledError</a></code> when it returns true.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#scan_values%28region%3ARegion%2Cbuffer%3ASlice%28Int32%29%2C%2A%2Ccancelled%3AProc%28Bool%29%7CNil%3Dnil%2C%26%3AInt64%2CSlice%28Int32%29%2CInt32-%3ENil%29%3ANil-instance-method" class="signature"><strong>#scan_values</strong>(region : Region, buffer : Slice(Int32), *, cancelled : Proc(Bool) | Nil = <span class="n">nil</span>, & : Int64, Slice(Int32), Int32 -> Nil) : Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#secondary_table%3ASecondaryTable%7CNil-instance-method" class="signature"><strong>#secondary_table</strong> : SecondaryTable | Nil</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sum%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%2A%2Cindex%3AIndexPolicy%3DIndexPolicy%3A%3AAuto%2Ccancelled%3AProc%28Bool%29%7CNil%3Dnil%29%3AInt64-instance-method" class="signature"><strong>#sum</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, *, index : IndexPolicy = <span class="t">IndexPolicy</span><span class="t">::</span><span class="t">Auto</span>, cancelled : Proc(Bool) | Nil = <span class="n">nil</span>) : Int64</a>
+        
+          <div class="summary"><p>Calls <code>cancelled</code> between scan blocks and sum-index I/O chunks, raising <code><a href="../D4/CancelledError.html">CancelledError</a></code> when the callback returns true.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sum%28region%3ARegion%2C%2A%2Cindex%3AIndexPolicy%3DIndexPolicy%3A%3AAuto%2Ccancelled%3AProc%28Bool%29%7CNil%3Dnil%29%3AInt64-instance-method" class="signature"><strong>#sum</strong>(region : Region, *, index : IndexPolicy = <span class="t">IndexPolicy</span><span class="t">::</span><span class="t">Auto</span>, cancelled : Proc(Bool) | Nil = <span class="n">nil</span>) : Int64</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sum_index_granularity%3AInt64%7CNil-instance-method" class="signature"><strong>#sum_index_granularity</strong> : Int64 | Nil</a>
+        
+          <div class="summary"><p>The number of bases represented by one sum-index block, or nil when this track has no embedded sum index.</p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#summary%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29%3ASummary-instance-method" class="signature"><strong>#summary</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>) : Summary</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#summary%28region%3ARegion%29%3ASummary-instance-method" class="signature"><strong>#summary</strong>(region : Region) : Summary</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#value%28chromosome%3AString%2Cposition%3AInt%29%3AInt32-instance-method" class="signature"><strong>#value</strong>(chromosome : String, position : Int) : Int32</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#values%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29%3AArray%28Int32%29-instance-method" class="signature"><strong>#values</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>) : Array(Int32)</a>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#values%28region%3ARegion%29%3AArray%28Int32%29-instance-method" class="signature"><strong>#values</strong>(region : Region) : Array(Int32)</a>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <div class="methods-inherited">
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+  </div>
+
+  
+  <h2>
+    <a id="constructor-detail" class="anchor" href="#constructor-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Constructor Detail
+  </h2>
+  
+    <div class="entry-detail" id="new(source:Source,directory:Format::Directory,name:String,options:ReadOptions)-class-method">
+      <div class="signature">
+        
+        def self.<strong>new</strong>(source : <a href="../D4/Source.html">Source</a>, directory : <a href="../D4/Format/Directory.html">Format::Directory</a>, name : String, options : <a href="../D4/ReadOptions.html">ReadOptions</a>)
+
+        <a class="method-permalink" href="#new%28source%3ASource%2Cdirectory%3AFormat%3A%3ADirectory%2Cname%3AString%2Coptions%3AReadOptions%29-class-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L26" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+  
+
+  
+
+  
+  <h2>
+    <a id="instance-method-detail" class="anchor" href="#instance-method-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Detail
+  </h2>
+  
+    <div class="entry-detail" id="aggregate(regions:Enumerable(Region),reducer:D,*,workers:Int32=1)forallD-instance-method">
+      <div class="signature">
+        
+        def <strong>aggregate</strong>(regions : Enumerable(<a href="../D4/Region.html">Region</a>), reducer : D, *, workers : Int32 = <span class="n">1</span>) forall D
+
+        <a class="method-permalink" href="#aggregate%28regions%3AEnumerable%28Region%29%2Creducer%3AD%2C%2A%2Cworkers%3AInt32%3D1%29forallD-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/reducers.cr#L231" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="aggregate_region(region:Region,reducer:D,scratch:Slice(Int32))forallD-instance-method">
+      <div class="signature">
+        
+        def <strong>aggregate_region</strong>(region : <a href="../D4/Region.html">Region</a>, reducer : D, scratch : Slice(Int32)) forall D
+
+        <a class="method-permalink" href="#aggregate_region%28region%3ARegion%2Creducer%3AD%2Cscratch%3ASlice%28Int32%29%29forallD-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/reducers.cr#L200" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="aggregate_region(region:Region,reducer:D)forallD-instance-method">
+      <div class="signature">
+        
+        def <strong>aggregate_region</strong>(region : <a href="../D4/Region.html">Region</a>, reducer : D) forall D
+
+        <a class="method-permalink" href="#aggregate_region%28region%3ARegion%2Creducer%3AD%29forallD-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/reducers.cr#L196" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="bind_owner(owner:File):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>bind_owner</strong>(owner : <a href="../D4/File.html">File</a>) : Nil
+
+        <a class="method-permalink" href="#bind_owner%28owner%3AFile%29%3ANil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L57" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="check_open:Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>check_open</strong> : Nil
+
+        <a class="method-permalink" href="#check_open%3ANil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L78" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="chromosome(name:String):Chromosome-instance-method">
+      <div class="signature">
+        
+        def <strong>chromosome</strong>(name : String) : <a href="../D4/Chromosome.html">Chromosome</a>
+
+        <a class="method-permalink" href="#chromosome%28name%3AString%29%3AChromosome-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L82" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="chromosome?(name:String):Chromosome|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>chromosome?</strong>(name : String) : <a href="../D4/Chromosome.html">Chromosome</a> | Nil
+
+        <a class="method-permalink" href="#chromosome%3F%28name%3AString%29%3AChromosome%7CNil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L86" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="chromosome_size(name:String):Int64-instance-method">
+      <div class="signature">
+        
+        def <strong>chromosome_size</strong>(name : String) : Int64
+
+        <a class="method-permalink" href="#chromosome_size%28name%3AString%29%3AInt64-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L94" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="chromosome_size?(name:String):Int64|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>chromosome_size?</strong>(name : String) : Int64 | Nil
+
+        <a class="method-permalink" href="#chromosome_size%3F%28name%3AString%29%3AInt64%7CNil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L98" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="chromosomes:Array(Chromosome)-instance-method">
+      <div class="signature">
+        
+        def <strong>chromosomes</strong> : Array(<a href="../D4/Chromosome.html">Chromosome</a>)
+
+        <a class="method-permalink" href="#chromosomes%3AArray%28Chromosome%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L90" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="coverage(region:Region,*,thresholds:Array(Int32)):Coverage-instance-method">
+      <div class="signature">
+        
+        def <strong>coverage</strong>(region : <a href="../D4/Region.html">Region</a>, *, thresholds : Array(Int32)) : <a href="../D4/Coverage.html">Coverage</a>
+
+        <a class="method-permalink" href="#coverage%28region%3ARegion%2C%2A%2Cthresholds%3AArray%28Int32%29%29%3ACoverage-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/stats.cr#L140" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="coverage_into(region:Region,thresholds:Slice(Int32),counts:Slice(Int64)):Int64-instance-method">
+      <div class="signature">
+        
+        def <strong>coverage_into</strong>(region : <a href="../D4/Region.html">Region</a>, thresholds : Slice(Int32), counts : Slice(Int64)) : Int64
+
+        <a class="method-permalink" href="#coverage_into%28region%3ARegion%2Cthresholds%3ASlice%28Int32%29%2Ccounts%3ASlice%28Int64%29%29%3AInt64-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/stats.cr#L126" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="decode_primary(chromosome:String,start:Int64,output:Slice(Int32),packed:Bytes):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>decode_primary</strong>(chromosome : String, start : Int64, output : Slice(Int32), packed : Bytes) : Nil
+
+        <a class="method-permalink" href="#decode_primary%28chromosome%3AString%2Cstart%3AInt64%2Coutput%3ASlice%28Int32%29%2Cpacked%3ABytes%29%3ANil-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Used by the reusable scanner; callers should normally use scan_values.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L370" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_aggregate(regions:Enumerable(Region),reducer:D,*,workers:Int32=1,batch_size:Int32=256,&amp;)forallD-instance-method">
+      <div class="signature">
+        
+        def <strong>each_aggregate</strong>(regions : Enumerable(<a href="../D4/Region.html">Region</a>), reducer : D, *, workers : Int32 = <span class="n">1</span>, batch_size : Int32 = <span class="n">256</span>, &) forall D
+
+        <a class="method-permalink" href="#each_aggregate%28regions%3AEnumerable%28Region%29%2Creducer%3AD%2C%2A%2Cworkers%3AInt32%3D1%2Cbatch_size%3AInt32%3D256%2C%26%29forallD-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/reducers.cr#L250" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_aggregate(regions:Indexable(Region),reducer:D,*,workers:Int32=1,batch_size:Int32=256)forallD-instance-method">
+      <div class="signature">
+        
+        def <strong>each_aggregate</strong>(regions : Indexable(<a href="../D4/Region.html">Region</a>), reducer : D, *, workers : Int32 = <span class="n">1</span>, batch_size : Int32 = <span class="n">256</span>) forall D
+
+        <a class="method-permalink" href="#each_aggregate%28regions%3AIndexable%28Region%29%2Creducer%3AD%2C%2A%2Cworkers%3AInt32%3D1%2Cbatch_size%3AInt32%3D256%29forallD-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/reducers.cr#L278" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_bin(region:Region,*,bin_size:Int,&amp;:BinSummary-&gt;Nil):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>each_bin</strong>(region : <a href="../D4/Region.html">Region</a>, *, bin_size : Int, & : <a href="../D4/BinSummary.html">BinSummary</a> -> Nil) : Nil
+
+        <a class="method-permalink" href="#each_bin%28region%3ARegion%2C%2A%2Cbin_size%3AInt%2C%26%3ABinSummary-%3ENil%29%3ANil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/bins.cr#L61" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_bin(region:Region,*,bin_size:Int):BinIterator-instance-method">
+      <div class="signature">
+        
+        def <strong>each_bin</strong>(region : <a href="../D4/Region.html">Region</a>, *, bin_size : Int) : <a href="../D4/BinIterator.html">BinIterator</a>
+
+        <a class="method-permalink" href="#each_bin%28region%3ARegion%2C%2A%2Cbin_size%3AInt%29%3ABinIterator-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/bins.cr#L69" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_interval(chromosome:String,start:Int=0,stop:Int|Nil=nil,&amp;:RawInterval-&gt;Nil):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>each_interval</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, & : <a href="../D4/RawInterval.html">RawInterval</a> -> Nil) : Nil
+
+        <a class="method-permalink" href="#each_interval%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%26%3ARawInterval-%3ENil%29%3ANil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L214" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_interval(chromosome:String,start:Int=0,stop:Int|Nil=nil)-instance-method">
+      <div class="signature">
+        
+        def <strong>each_interval</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>)
+
+        <a class="method-permalink" href="#each_interval%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L236" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_value(chromosome:String,start:Int=0,stop:Int|Nil=nil,&amp;:Int32-&gt;Nil):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>each_value</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, & : Int32 -> Nil) : Nil
+
+        <a class="method-permalink" href="#each_value%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%26%3AInt32-%3ENil%29%3ANil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L201" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="each_value(chromosome:String,start:Int=0,stop:Int|Nil=nil)-instance-method">
+      <div class="signature">
+        
+        def <strong>each_value</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>)
+
+        <a class="method-permalink" href="#each_value%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L210" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="exact_histogram(region:Region,*,max_values:Int32=4096):ExactHistogram-instance-method">
+      <div class="signature">
+        
+        def <strong>exact_histogram</strong>(region : <a href="../D4/Region.html">Region</a>, *, max_values : Int32 = <span class="n">4096</span>) : <a href="../D4/ExactHistogram.html">ExactHistogram</a>
+
+        <a class="method-permalink" href="#exact_histogram%28region%3ARegion%2C%2A%2Cmax_values%3AInt32%3D4096%29%3AExactHistogram-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/stats.cr#L113" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="has_chromosome?(name:String):Bool-instance-method">
+      <div class="signature">
+        
+        def <strong>has_chromosome?</strong>(name : String) : Bool
+
+        <a class="method-permalink" href="#has_chromosome%3F%28name%3AString%29%3ABool-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L102" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="has_index?(kind:IndexKind):Bool-instance-method">
+      <div class="signature">
+        
+        def <strong>has_index?</strong>(kind : <a href="../D4/IndexKind.html">IndexKind</a>) : Bool
+
+        <a class="method-permalink" href="#has_index%3F%28kind%3AIndexKind%29%3ABool-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L65" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="histogram(region:Region,*,value_range:Range(Int32,Int32)):Histogram-instance-method">
+      <div class="signature">
+        
+        def <strong>histogram</strong>(region : <a href="../D4/Region.html">Region</a>, *, value_range : Range(Int32, Int32)) : <a href="../D4/Histogram.html">Histogram</a>
+
+        <a class="method-permalink" href="#histogram%28region%3ARegion%2C%2A%2Cvalue_range%3ARange%28Int32%2CInt32%29%29%3AHistogram-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/stats.cr#L102" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="histogram_into(region:Region,counts:Slice(Int64),*,value_range:Range(Int32,Int32)):HistogramTails-instance-method">
+      <div class="signature">
+        
+        def <strong>histogram_into</strong>(region : <a href="../D4/Region.html">Region</a>, counts : Slice(Int64), *, value_range : Range(Int32, Int32)) : <a href="../D4/HistogramTails.html">HistogramTails</a>
+
+        <a class="method-permalink" href="#histogram_into%28region%3ARegion%2Ccounts%3ASlice%28Int64%29%2C%2A%2Cvalue_range%3ARange%28Int32%2CInt32%29%29%3AHistogramTails-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/stats.cr#L77" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="materialization_limit:Int64-instance-method">
+      <div class="signature">
+        
+        def <strong>materialization_limit</strong> : Int64
+
+        <a class="method-permalink" href="#materialization_limit%3AInt64-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/scaled.cr#L125" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="mean(chromosome:String,start:Int=0,stop:Int|Nil=nil,*,index:IndexPolicy=IndexPolicy::Auto):Float64|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>mean</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, *, index : <a href="../D4/IndexPolicy.html">IndexPolicy</a> = <span class="t">IndexPolicy</span><span class="t">::</span><span class="t">Auto</span>) : Float64 | Nil
+
+        <a class="method-permalink" href="#mean%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%2A%2Cindex%3AIndexPolicy%3DIndexPolicy%3A%3AAuto%29%3AFloat64%7CNil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L304" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="mean(region:Region,*,index:IndexPolicy=IndexPolicy::Auto):Float64|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>mean</strong>(region : <a href="../D4/Region.html">Region</a>, *, index : <a href="../D4/IndexPolicy.html">IndexPolicy</a> = <span class="t">IndexPolicy</span><span class="t">::</span><span class="t">Auto</span>) : Float64 | Nil
+
+        <a class="method-permalink" href="#mean%28region%3ARegion%2C%2A%2Cindex%3AIndexPolicy%3DIndexPolicy%3A%3AAuto%29%3AFloat64%7CNil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L310" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="metadata:Metadata-instance-method">
+      <div class="signature">
+        
+        def <strong>metadata</strong> : <a href="../D4/Metadata.html">Metadata</a>
+
+        <a class="method-permalink" href="#metadata%3AMetadata-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L24" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="minmax(chromosome:String,start:Int=0,stop:Int|Nil=nil):Tuple(Int32,Int32)|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>minmax</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>) : Tuple(Int32, Int32) | Nil
+
+        <a class="method-permalink" href="#minmax%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29%3ATuple%28Int32%2CInt32%29%7CNil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/stats.cr#L66" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="minmax(region:Region):Tuple(Int32,Int32)|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>minmax</strong>(region : <a href="../D4/Region.html">Region</a>) : Tuple(Int32, Int32) | Nil
+
+        <a class="method-permalink" href="#minmax%28region%3ARegion%29%3ATuple%28Int32%2CInt32%29%7CNil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/stats.cr#L73" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="name:String-instance-method">
+      <div class="signature">
+        
+        def <strong>name</strong> : String
+
+        <a class="method-permalink" href="#name%3AString-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L23" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="read_values_into(chromosome:String,start:Int,buffer:Slice(Int32)):Int32-instance-method">
+      <div class="signature">
+        
+        def <strong>read_values_into</strong>(chromosome : String, start : Int, buffer : Slice(Int32)) : Int32
+
+        <a class="method-permalink" href="#read_values_into%28chromosome%3AString%2Cstart%3AInt%2Cbuffer%3ASlice%28Int32%29%29%3AInt32-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L163" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sample(region:Region,*,bins:Int32=256):Array(BinSummary)-instance-method">
+      <div class="signature">
+        
+        def <strong>sample</strong>(region : <a href="../D4/Region.html">Region</a>, *, bins : Int32 = <span class="n">256</span>) : Array(<a href="../D4/BinSummary.html">BinSummary</a>)
+
+        <a class="method-permalink" href="#sample%28region%3ARegion%2C%2A%2Cbins%3AInt32%3D256%29%3AArray%28BinSummary%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/bins.cr#L75" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="scaled:ScaledTrack-instance-method">
+      <div class="signature">
+        
+        def <strong>scaled</strong> : <a href="../D4/ScaledTrack.html">ScaledTrack</a>
+
+        <a class="method-permalink" href="#scaled%3AScaledTrack-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/scaled.cr#L121" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="scan_values(chromosome:String,buffer:Slice(Int32),start:Int=0,stop:Int|Nil=nil,*,cancelled:Proc(Bool)|Nil=nil,&amp;:Int64,Slice(Int32),Int32-&gt;Nil):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>scan_values</strong>(chromosome : String, buffer : Slice(Int32), start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, *, cancelled : Proc(Bool) | Nil = <span class="n">nil</span>, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
+
+        <a class="method-permalink" href="#scan_values%28chromosome%3AString%2Cbuffer%3ASlice%28Int32%29%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%2A%2Ccancelled%3AProc%28Bool%29%7CNil%3Dnil%2C%26%3AInt64%2CSlice%28Int32%29%2CInt32-%3ENil%29%3ANil-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Calls <code>cancelled</code> at block boundaries and raises <code><a href="../D4/CancelledError.html">CancelledError</a></code> when
+it returns true.  Cancellation is cooperative; an in-flight source read
+is allowed to finish before the next checkpoint.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L177" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="scan_values(region:Region,buffer:Slice(Int32),*,cancelled:Proc(Bool)|Nil=nil,&amp;:Int64,Slice(Int32),Int32-&gt;Nil):Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>scan_values</strong>(region : <a href="../D4/Region.html">Region</a>, buffer : Slice(Int32), *, cancelled : Proc(Bool) | Nil = <span class="n">nil</span>, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
+
+        <a class="method-permalink" href="#scan_values%28region%3ARegion%2Cbuffer%3ASlice%28Int32%29%2C%2A%2Ccancelled%3AProc%28Bool%29%7CNil%3Dnil%2C%26%3AInt64%2CSlice%28Int32%29%2CInt32-%3ENil%29%3ANil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L181" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="secondary_table:SecondaryTable|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>secondary_table</strong> : <a href="../D4/SecondaryTable.html">SecondaryTable</a> | Nil
+
+        <a class="method-permalink" href="#secondary_table%3ASecondaryTable%7CNil-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L61" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sum(chromosome:String,start:Int=0,stop:Int|Nil=nil,*,index:IndexPolicy=IndexPolicy::Auto,cancelled:Proc(Bool)|Nil=nil):Int64-instance-method">
+      <div class="signature">
+        
+        def <strong>sum</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>, *, index : <a href="../D4/IndexPolicy.html">IndexPolicy</a> = <span class="t">IndexPolicy</span><span class="t">::</span><span class="t">Auto</span>, cancelled : Proc(Bool) | Nil = <span class="n">nil</span>) : Int64
+
+        <a class="method-permalink" href="#sum%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%2C%2A%2Cindex%3AIndexPolicy%3DIndexPolicy%3A%3AAuto%2Ccancelled%3AProc%28Bool%29%7CNil%3Dnil%29%3AInt64-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Calls <code>cancelled</code> between scan blocks and sum-index I/O chunks, raising
+<code><a href="../D4/CancelledError.html">CancelledError</a></code> when the callback returns true.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L242" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sum(region:Region,*,index:IndexPolicy=IndexPolicy::Auto,cancelled:Proc(Bool)|Nil=nil):Int64-instance-method">
+      <div class="signature">
+        
+        def <strong>sum</strong>(region : <a href="../D4/Region.html">Region</a>, *, index : <a href="../D4/IndexPolicy.html">IndexPolicy</a> = <span class="t">IndexPolicy</span><span class="t">::</span><span class="t">Auto</span>, cancelled : Proc(Bool) | Nil = <span class="n">nil</span>) : Int64
+
+        <a class="method-permalink" href="#sum%28region%3ARegion%2C%2A%2Cindex%3AIndexPolicy%3DIndexPolicy%3A%3AAuto%2Ccancelled%3AProc%28Bool%29%7CNil%3Dnil%29%3AInt64-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L300" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sum_index_granularity:Int64|Nil-instance-method">
+      <div class="signature">
+        
+        def <strong>sum_index_granularity</strong> : Int64 | Nil
+
+        <a class="method-permalink" href="#sum_index_granularity%3AInt64%7CNil-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>The number of bases represented by one sum-index block, or nil when
+this track has no embedded sum index.</p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L74" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="summary(chromosome:String,start:Int=0,stop:Int|Nil=nil):Summary-instance-method">
+      <div class="signature">
+        
+        def <strong>summary</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>) : <a href="../D4/Summary.html">Summary</a>
+
+        <a class="method-permalink" href="#summary%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29%3ASummary-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L314" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="summary(region:Region):Summary-instance-method">
+      <div class="signature">
+        
+        def <strong>summary</strong>(region : <a href="../D4/Region.html">Region</a>) : <a href="../D4/Summary.html">Summary</a>
+
+        <a class="method-permalink" href="#summary%28region%3ARegion%29%3ASummary-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L334" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="value(chromosome:String,position:Int):Int32-instance-method">
+      <div class="signature">
+        
+        def <strong>value</strong>(chromosome : String, position : Int) : Int32
+
+        <a class="method-permalink" href="#value%28chromosome%3AString%2Cposition%3AInt%29%3AInt32-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L106" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="values(chromosome:String,start:Int=0,stop:Int|Nil=nil):Array(Int32)-instance-method">
+      <div class="signature">
+        
+        def <strong>values</strong>(chromosome : String, start : Int = <span class="n">0</span>, stop : Int | Nil = <span class="n">nil</span>) : Array(Int32)
+
+        <a class="method-permalink" href="#values%28chromosome%3AString%2Cstart%3AInt%3D0%2Cstop%3AInt%7CNil%3Dnil%29%3AArray%28Int32%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L143" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="values(region:Region):Array(Int32)-instance-method">
+      <div class="signature">
+        
+        def <strong>values</strong>(region : <a href="../D4/Region.html">Region</a>) : Array(Int32)
+
+        <a class="method-permalink" href="#values%28region%3ARegion%29%3AArray%28Int32%29-instance-method">#</a>
+      </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/track.cr#L159" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+
+</div>
+
+</body>
+</html>

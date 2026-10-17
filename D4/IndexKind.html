@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Crystal Docs 1.21.0">
+<meta name="crystal_docs.project_version" content="main">
+<meta name="crystal_docs.project_name" content="d4">
+
+
+
+<link href="../css/style.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="../js/doc.js"></script>
+
+  <meta name="repository-name" content="d4">
+  <title>D4::IndexKind - d4 main</title>
+  <script type="text/javascript">
+    CrystalDocs.base_path = "../";
+  </script>
+</head>
+<body>
+
+<svg class="hidden">
+  <symbol id="octicon-link" viewBox="0 0 16 16">
+    <path fill="currentColor" fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path>
+  </symbol>
+</svg>
+<input type="checkbox" id="sidebar-btn">
+<label for="sidebar-btn" id="sidebar-btn-label">
+  <svg class="open" xmlns="http://www.w3.org/2000/svg" height="2em" width="2em" viewBox="0 0 512 512"><title>Open Sidebar</title><path fill="currentColor" d="M80 96v64h352V96H80zm0 112v64h352v-64H80zm0 112v64h352v-64H80z"></path></svg>
+  <svg class="close" xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 512 512"><title>Close Sidebar</title><path fill="currentColor" d="m118.6 73.4-45.2 45.2L210.7 256 73.4 393.4l45.2 45.2L256 301.3l137.4 137.3 45.2-45.2L301.3 256l137.3-137.4-45.2-45.2L256 210.7Z"></path></svg>
+</label>
+<div class="sidebar">
+  <div class="sidebar-header">
+    <div class="search-box">
+      <input type="search" class="search-input" placeholder="Search..." spellcheck="false" aria-label="Search">
+    </div>
+
+    <div class="project-summary">
+      <h1 class="project-name">
+        <a href="../index.html">
+          d4
+        </a>
+      </h1>
+
+      <span class="project-version">
+        main
+      </span>
+    </div>
+  </div>
+
+  <div class="search-results hidden">
+    <ul class="search-list"></ul>
+  </div>
+
+  <div class="types-list">
+    <ul>
+  
+  <li class="parent open current" data-id="d4/D4" data-name="d4">
+      <a href="../D4.html">D4</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/AggregateIterator" data-name="d4::aggregateiterator(d, r)">
+      <a href="../D4/AggregateIterator.html">AggregateIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/AllocationLimitError" data-name="d4::allocationlimiterror">
+      <a href="../D4/AllocationLimitError.html">AllocationLimitError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/BinIterator" data-name="d4::biniterator">
+      <a href="../D4/BinIterator.html">BinIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/BinSummary" data-name="d4::binsummary">
+      <a href="../D4/BinSummary.html">BinSummary</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/CancelledError" data-name="d4::cancellederror">
+      <a href="../D4/CancelledError.html">CancelledError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Chromosome" data-name="d4::chromosome">
+      <a href="../D4/Chromosome.html">Chromosome</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ClosedError" data-name="d4::closederror">
+      <a href="../D4/ClosedError.html">ClosedError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Compression" data-name="d4::compression">
+      <a href="../D4/Compression.html">Compression</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/CorruptIndexError" data-name="d4::corruptindexerror">
+      <a href="../D4/CorruptIndexError.html">CorruptIndexError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Coverage" data-name="d4::coverage">
+      <a href="../D4/Coverage.html">Coverage</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Dictionary" data-name="d4::dictionary">
+      <a href="../D4/Dictionary.html">Dictionary</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/DictType" data-name="d4::dicttype">
+      <a href="../D4/DictType.html">DictType</a>
+      
+    </li>
+  
+  <li class="parent " data-id="d4/D4/DirectoryEncoder" data-name="d4::directoryencoder">
+      <a href="../D4/DirectoryEncoder.html">DirectoryEncoder</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/DirectoryEncoder/Item" data-name="d4::directoryencoder::item">
+      <a href="../D4/DirectoryEncoder/Item.html">Item</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Error" data-name="d4::error">
+      <a href="../D4/Error.html">Error</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ExactHistogram" data-name="d4::exacthistogram">
+      <a href="../D4/ExactHistogram.html">ExactHistogram</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/File" data-name="d4::file">
+      <a href="../D4/File.html">File</a>
+      
+    </li>
+  
+  <li class="parent " data-id="d4/D4/Format" data-name="d4::format">
+      <a href="../D4/Format.html">Format</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/Format/Directory" data-name="d4::format::directory">
+      <a href="../D4/Format/Directory.html">Directory</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Format/Endian" data-name="d4::format::endian">
+      <a href="../D4/Format/Endian.html">Endian</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Format/Entry" data-name="d4::format::entry">
+      <a href="../D4/Format/Entry.html">Entry</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Format/FrameStream" data-name="d4::format::framestream">
+      <a href="../D4/Format/FrameStream.html">FrameStream</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/FormatError" data-name="d4::formaterror">
+      <a href="../D4/FormatError.html">FormatError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/FrameAddress" data-name="d4::frameaddress">
+      <a href="../D4/FrameAddress.html">FrameAddress</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/FrameEncoder" data-name="d4::frameencoder">
+      <a href="../D4/FrameEncoder.html">FrameEncoder</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/HeaderParser" data-name="d4::headerparser">
+      <a href="../D4/HeaderParser.html">HeaderParser</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Histogram" data-name="d4::histogram">
+      <a href="../D4/Histogram.html">Histogram</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/HistogramTails" data-name="d4::histogramtails">
+      <a href="../D4/HistogramTails.html">HistogramTails</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/HTTPError" data-name="d4::httperror">
+      <a href="../D4/HTTPError.html">HTTPError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/HTTPSource" data-name="d4::httpsource">
+      <a href="../D4/HTTPSource.html">HTTPSource</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IncompleteHistogramError" data-name="d4::incompletehistogramerror">
+      <a href="../D4/IncompleteHistogramError.html">IncompleteHistogramError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IndexBuilder" data-name="d4::indexbuilder">
+      <a href="../D4/IndexBuilder.html">IndexBuilder</a>
+      
+    </li>
+  
+  <li class=" current" data-id="d4/D4/IndexKind" data-name="d4::indexkind">
+      <a href="../D4/IndexKind.html">IndexKind</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IndexPolicy" data-name="d4::indexpolicy">
+      <a href="../D4/IndexPolicy.html">IndexPolicy</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IndexPrecisionError" data-name="d4::indexprecisionerror">
+      <a href="../D4/IndexPrecisionError.html">IndexPrecisionError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Interval" data-name="d4::interval(t)">
+      <a href="../D4/Interval.html">Interval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IntervalIterator" data-name="d4::intervaliterator">
+      <a href="../D4/IntervalIterator.html">IntervalIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/IOSource" data-name="d4::iosource">
+      <a href="../D4/IOSource.html">IOSource</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/LocalSource" data-name="d4::localsource">
+      <a href="../D4/LocalSource.html">LocalSource</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Matrix" data-name="d4::matrix">
+      <a href="../D4/Matrix.html">Matrix</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/MemorySource" data-name="d4::memorysource">
+      <a href="../D4/MemorySource.html">MemorySource</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Metadata" data-name="d4::metadata">
+      <a href="../D4/Metadata.html">Metadata</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/MissingIndexError" data-name="d4::missingindexerror">
+      <a href="../D4/MissingIndexError.html">MissingIndexError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ParallelWork" data-name="d4::parallelwork">
+      <a href="../D4/ParallelWork.html">ParallelWork</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/RangeNotSupportedError" data-name="d4::rangenotsupportederror">
+      <a href="../D4/RangeNotSupportedError.html">RangeNotSupportedError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/RangeRecord" data-name="d4::rangerecord">
+      <a href="../D4/RangeRecord.html">RangeRecord</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/RawInterval" data-name="d4::rawinterval">
+      <a href="../D4/RawInterval.html">RawInterval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ReadOptions" data-name="d4::readoptions">
+      <a href="../D4/ReadOptions.html">ReadOptions</a>
+      
+    </li>
+  
+  <li class="parent " data-id="d4/D4/Reducers" data-name="d4::reducers">
+      <a href="../D4/Reducers.html">Reducers</a>
+      
+        <ul>
+  
+  <li class=" " data-id="d4/D4/Reducers/Basic" data-name="d4::reducers::basic">
+      <a href="../D4/Reducers/Basic.html">Basic</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/Mean" data-name="d4::reducers::mean">
+      <a href="../D4/Reducers/Mean.html">Mean</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/MinMax" data-name="d4::reducers::minmax">
+      <a href="../D4/Reducers/MinMax.html">MinMax</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/State" data-name="d4::reducers::state">
+      <a href="../D4/Reducers/State.html">State</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/Sum" data-name="d4::reducers::sum">
+      <a href="../D4/Reducers/Sum.html">Sum</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Reducers/Summary" data-name="d4::reducers::summary">
+      <a href="../D4/Reducers/Summary.html">Summary</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Region" data-name="d4::region">
+      <a href="../D4/Region.html">Region</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/RegionResult" data-name="d4::regionresult(t)">
+      <a href="../D4/RegionResult.html">RegionResult</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Rounding" data-name="d4::rounding">
+      <a href="../D4/Rounding.html">Rounding</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Row" data-name="d4::row">
+      <a href="../D4/Row.html">Row</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledInterval" data-name="d4::scaledinterval">
+      <a href="../D4/ScaledInterval.html">ScaledInterval</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledIntervalIterator" data-name="d4::scaledintervaliterator">
+      <a href="../D4/ScaledIntervalIterator.html">ScaledIntervalIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledMatrix" data-name="d4::scaledmatrix">
+      <a href="../D4/ScaledMatrix.html">ScaledMatrix</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledRow" data-name="d4::scaledrow">
+      <a href="../D4/ScaledRow.html">ScaledRow</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledTrack" data-name="d4::scaledtrack">
+      <a href="../D4/ScaledTrack.html">ScaledTrack</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ScaledValueIterator" data-name="d4::scaledvalueiterator">
+      <a href="../D4/ScaledValueIterator.html">ScaledValueIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryFrameIndex" data-name="d4::secondaryframeindex">
+      <a href="../D4/SecondaryFrameIndex.html">SecondaryFrameIndex</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryMetadata" data-name="d4::secondarymetadata">
+      <a href="../D4/SecondaryMetadata.html">SecondaryMetadata</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryMetadataParser" data-name="d4::secondarymetadataparser">
+      <a href="../D4/SecondaryMetadataParser.html">SecondaryMetadataParser</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryPartition" data-name="d4::secondarypartition">
+      <a href="../D4/SecondaryPartition.html">SecondaryPartition</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryRecordIterator" data-name="d4::secondaryrecorditerator">
+      <a href="../D4/SecondaryRecordIterator.html">SecondaryRecordIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SecondaryTable" data-name="d4::secondarytable">
+      <a href="../D4/SecondaryTable.html">SecondaryTable</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Source" data-name="d4::source">
+      <a href="../D4/Source.html">Source</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SourceChangedError" data-name="d4::sourcechangederror">
+      <a href="../D4/SourceChangedError.html">SourceChangedError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/SumIndex" data-name="d4::sumindex">
+      <a href="../D4/SumIndex.html">SumIndex</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Summary" data-name="d4::summary">
+      <a href="../D4/Summary.html">Summary</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Track" data-name="d4::track">
+      <a href="../D4/Track.html">Track</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/TrackSelectionError" data-name="d4::trackselectionerror">
+      <a href="../D4/TrackSelectionError.html">TrackSelectionError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/UnexpectedEOFError" data-name="d4::unexpectedeoferror">
+      <a href="../D4/UnexpectedEOFError.html">UnexpectedEOFError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/UnknownChromosomeError" data-name="d4::unknownchromosomeerror">
+      <a href="../D4/UnknownChromosomeError.html">UnknownChromosomeError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/UnsupportedFeatureError" data-name="d4::unsupportedfeatureerror">
+      <a href="../D4/UnsupportedFeatureError.html">UnsupportedFeatureError</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ValueIterator" data-name="d4::valueiterator">
+      <a href="../D4/ValueIterator.html">ValueIterator</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/ValueScanner" data-name="d4::valuescanner">
+      <a href="../D4/ValueScanner.html">ValueScanner</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/WriteControl" data-name="d4::writecontrol">
+      <a href="../D4/WriteControl.html">WriteControl</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/WriteOptions" data-name="d4::writeoptions">
+      <a href="../D4/WriteOptions.html">WriteOptions</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/WriteProgress" data-name="d4::writeprogress">
+      <a href="../D4/WriteProgress.html">WriteProgress</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/Writer" data-name="d4::writer">
+      <a href="../D4/Writer.html">Writer</a>
+      
+    </li>
+  
+  <li class=" " data-id="d4/D4/WriteStage" data-name="d4::writestage">
+      <a href="../D4/WriteStage.html">WriteStage</a>
+      
+    </li>
+  
+</ul>
+
+      
+    </li>
+  
+</ul>
+
+  </div>
+</div>
+
+
+<div class="main-content">
+<h1 class="type-name">
+
+  <span class="kind">
+    enum
+  </span> D4::<wbr>IndexKind
+
+</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2>
+    <a id="defined-in" class="anchor" href="#defined-in">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Defined in:
+  </h2>
+  
+    
+      <a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/index.cr#L2" target="_blank">
+        d4/index.cr
+      </a>
+    
+    <br/>
+  
+
+
+
+  
+    <h2>
+      <a id="enum-members" class="anchor" href="#enum-members">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+      Enum Members
+    </h2>
+  
+  <dl>
+    
+      <dt class="entry-const" id="SecondaryFrames">
+        <strong>SecondaryFrames</strong> = <code><span class="n">0</span></code>
+      </dt>
+      
+    
+      <dt class="entry-const" id="Sum">
+        <strong>Sum</strong> = <code><span class="n">1</span></code>
+      </dt>
+      
+    
+  </dl>
+
+
+
+  
+
+  
+
+  
+
+  
+  <h2>
+    <a id="instance-method-summary" class="anchor" href="#instance-method-summary">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Summary
+  </h2>
+  <ul class="list-summary">
+    
+      <li class="entry-summary">
+        <a href="#secondary_frames%3F-instance-method" class="signature"><strong>#secondary_frames?</strong></a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this enum value equals <code><a href="../D4/IndexKind.html#SecondaryFrames">SecondaryFrames</a></code></p></div>
+        
+      </li>
+    
+      <li class="entry-summary">
+        <a href="#sum%3F-instance-method" class="signature"><strong>#sum?</strong></a>
+        
+          <div class="summary"><p>Returns <code>true</code> if this enum value equals <code><a href="../D4/IndexKind.html#Sum">Sum</a></code></p></div>
+        
+      </li>
+    
+  </ul>
+
+
+
+  <div class="methods-inherited">
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+      
+
+
+      
+
+
+      
+
+
+      
+
+
+    
+  </div>
+
+  
+
+  
+
+  
+
+  
+  <h2>
+    <a id="instance-method-detail" class="anchor" href="#instance-method-detail">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>
+    Instance Method Detail
+  </h2>
+  
+    <div class="entry-detail" id="secondary_frames?-instance-method">
+      <div class="signature">
+        
+        def <strong>secondary_frames?</strong>
+
+        <a class="method-permalink" href="#secondary_frames%3F-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Returns <code>true</code> if this enum value equals <code><a href="../D4/IndexKind.html#SecondaryFrames">SecondaryFrames</a></code></p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/index.cr#L3" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+    <div class="entry-detail" id="sum?-instance-method">
+      <div class="signature">
+        
+        def <strong>sum?</strong>
+
+        <a class="method-permalink" href="#sum%3F-instance-method">#</a>
+      </div>
+      
+        <div class="doc">
+          
+          <p>Returns <code>true</code> if this enum value equals <code><a href="../D4/IndexKind.html#Sum">Sum</a></code></p>
+        </div>
+      
+      <br/>
+      <div>
+        
+          [<a href="https://github.com/bio-cr/d4.cr/blob/a6c0d3e6742ca6ba5dac3c853942bb109958d171/src/d4/index.cr#L4" target="_blank">View source</a>]
+        
+      </div>
+    </div>
+  
+
+
+
+</div>
+
+</body>
+</html>
