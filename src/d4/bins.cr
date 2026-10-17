@@ -69,7 +69,7 @@ module D4
     def each_bin(region : Region, *, bin_size : Int) : BinIterator
       check_open
       raise ArgumentError.new("invalid region") if region.stop > chromosome_size(region.chromosome)
-      BinIterator.new(self, region, bin_size.to_i64)
+      BinIterator.new(self, region, checked_coordinate(bin_size, "bin_size must be positive"))
     end
 
     def sample(region : Region, *, bins : Int32 = 256) : Array(BinSummary)

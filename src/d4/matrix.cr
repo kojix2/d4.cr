@@ -45,9 +45,10 @@ module D4
       @tracks.each(&.check_open)
       raise ArgumentError.new("row buffer size must be a multiple of column count") unless buffer.size % column_count == 0
       chrom_size = @tracks.first.chromosome_size(chromosome)
-      raise ArgumentError.new("invalid row start") if start < 0 || start.to_i64 > chrom_size
-      rows = Math.min(buffer.size // column_count, chrom_size - start.to_i64).to_i
-      region = Region.new(chromosome, start.to_i64, start.to_i64 + rows)
+      coordinate = checked_coordinate(start)
+      raise ArgumentError.new("invalid row start") if coordinate < 0 || coordinate > chrom_size
+      rows = Math.min(buffer.size // column_count, chrom_size - coordinate).to_i
+      region = Region.new(chromosome, coordinate, coordinate + rows)
       scanners = @tracks.map { |track| ValueScanner.new(track, region, track.secondary_table, Math.max(1, rows)) }
       fill_rows(scanners, buffer, Slice(Int32).new(rows), rows)
       rows
@@ -87,6 +88,11 @@ module D4
         scanner.fill(scratch[0, rows])
         rows.times { |row| buffer[row * column_count + column] = scratch[row] }
       end
+    end
+
+    private def checked_coordinate(value : Int) : Int64
+      raise ArgumentError.new("invalid row start") if value < Int64::MIN || value > Int64::MAX
+      value.to_i64
     end
   end
 

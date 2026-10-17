@@ -33,12 +33,26 @@ module D4
     end
 
     def initialize(@chromosome : String, range : Range(B, E)) forall B, E
-      @start = range.begin.to_i64
-      last = range.end.to_i64
+      @start = checked_range_coordinate(range.begin)
+      last = checked_range_coordinate(range.end)
       raise ArgumentError.new("inclusive region end is too large") if !range.excludes_end? && last == Int64::MAX
       @stop = last + (range.excludes_end? ? 0 : 1)
       raise ArgumentError.new("region start must not exceed stop") if @start > @stop
       raise ArgumentError.new("region coordinates must be non-negative") if @start < 0
+    end
+
+    private def checked_range_coordinate(value : Int) : Int64
+      raise ArgumentError.new("region coordinate exceeds Int64") if value < Int64::MIN || value > Int64::MAX
+      value.to_i64
+    end
+
+    # Keep the generic Range overload compatible with other numeric values
+    # that already implement `to_i64`, while normalizing their conversion
+    # overflow to the same public argument error.
+    private def checked_range_coordinate(value) : Int64
+      value.to_i64
+    rescue OverflowError
+      raise ArgumentError.new("region coordinate exceeds Int64")
     end
 
     def length : Int64

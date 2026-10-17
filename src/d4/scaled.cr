@@ -15,7 +15,9 @@ module D4
 
     def values(chromosome : String, start : Int = 0, stop : Int? = nil) : Array(Float64)
       @raw.check_open
-      region = Region.new(chromosome, start.to_i64, (stop || @raw.chromosome_size(chromosome)).to_i64)
+      coordinate = checked_coordinate(start)
+      finish = stop ? checked_coordinate(stop) : @raw.chromosome_size(chromosome)
+      region = Region.new(chromosome, coordinate, finish)
       raise ArgumentError.new("invalid region") if region.stop > @raw.chromosome_size(chromosome)
       # The raw materialization limit applies equally to the larger float result.
       raise AllocationLimitError.new("scaled values exceed the configured materialization limit") if region.length > Int32::MAX || region.length * sizeof(Float64) > @raw.materialization_limit
@@ -30,11 +32,12 @@ module D4
     end
 
     def read_values_into(chromosome : String, start : Int, buffer : Slice(Float64)) : Int32
-      @raw.read_values_into(chromosome, start, Slice(Int32).new(0))
-      return 0 if buffer.empty? || start.to_i64 == @raw.chromosome_size(chromosome)
+      coordinate = checked_coordinate(start)
+      @raw.read_values_into(chromosome, coordinate, Slice(Int32).new(0))
+      return 0 if buffer.empty? || coordinate == @raw.chromosome_size(chromosome)
       count = 0
-      length = Math.min(buffer.size.to_i64, @raw.chromosome_size(chromosome) - start.to_i64)
-      scan_values(Region.new(chromosome, start.to_i64, start.to_i64 + length), buffer) do |_offset, _values, value_count|
+      length = Math.min(buffer.size.to_i64, @raw.chromosome_size(chromosome) - coordinate)
+      scan_values(Region.new(chromosome, coordinate, coordinate + length), buffer) do |_offset, _values, value_count|
         count += value_count
       end
       count
@@ -81,6 +84,11 @@ module D4
 
     private def denominator : Float64
       metadata.denominator
+    end
+
+    private def checked_coordinate(value : Int) : Int64
+      raise ArgumentError.new("invalid region") if value < Int64::MIN || value > Int64::MAX
+      value.to_i64
     end
   end
 

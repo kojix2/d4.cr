@@ -104,18 +104,19 @@ module D4
     end
 
     def value(chromosome : String, position : Int) : Int32
-      raise ArgumentError.new("invalid point coordinate") if position < 0 || position.to_i64 >= chromosome_size(chromosome)
+      coordinate = checked_coordinate(position, "invalid point coordinate")
+      raise ArgumentError.new("invalid point coordinate") if coordinate < 0 || coordinate >= chromosome_size(chromosome)
       check_open
       if (secondary = @secondary).nil? || secondary.empty?(chromosome)
-        return primary_value(chromosome, position.to_i64)
+        return primary_value(chromosome, coordinate)
       end
       dictionary = @metadata.dictionary
       if dictionary.type.simple_range? && dictionary.bit_width > 0
-        primary = primary_value(chromosome, position.to_i64)
+        primary = primary_value(chromosome, coordinate)
         # Only the final primary code can represent a secondary value.
         return primary if primary != dictionary.high - 1
       end
-      region = checked_region(chromosome, position.to_i64, position.to_i64 + 1)
+      region = checked_region(chromosome, coordinate, coordinate + 1)
       result = 0_i32
       scan_values(region, Slice(Int32).new(1)) do |_start, values, count|
         result = values[0] if count == 1
@@ -141,7 +142,7 @@ module D4
 
     def values(chromosome : String, start : Int = 0, stop : Int? = nil) : Array(Int32)
       check_open
-      region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
+      region = checked_public_region(chromosome, start, stop)
       bytes = region.length * sizeof(Int32)
       raise AllocationLimitError.new("values would allocate #{bytes} bytes") if region.length > Int32::MAX || bytes > @options.max_materialized_bytes
       output = Array(Int32).new(region.length.to_i, 0_i32)
@@ -162,9 +163,10 @@ module D4
     def read_values_into(chromosome : String, start : Int, buffer : Slice(Int32)) : Int32
       check_open
       chrom = self.chromosome(chromosome)
-      checked_region(chromosome, start.to_i64, start.to_i64) # Validate even for an empty buffer.
-      return 0 if start.to_i64 == chrom.size || buffer.empty?
-      region = checked_region(chromosome, start.to_i64, start.to_i64 + Math.min(chrom.size - start.to_i64, buffer.size))
+      coordinate = checked_coordinate(start, "invalid region #{chromosome}")
+      checked_region(chromosome, coordinate, coordinate) # Validate even for an empty buffer.
+      return 0 if coordinate == chrom.size || buffer.empty?
+      region = checked_region(chromosome, coordinate, coordinate + Math.min(chrom.size - coordinate, buffer.size))
       count = region.length.to_i
       ValueScanner.new(self, region, @secondary, count).fill(buffer[0, count])
     end
@@ -173,7 +175,7 @@ module D4
     # it returns true.  Cancellation is cooperative; an in-flight source read
     # is allowed to finish before the next checkpoint.
     def scan_values(chromosome : String, buffer : Slice(Int32), start : Int = 0, stop : Int? = nil, *, cancelled : Proc(Bool)? = nil, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
-      scan_values(checked_region(chromosome, start.to_i64, stop.try(&.to_i64)), buffer, cancelled: cancelled) { |block_start, values, count| yield block_start, values, count }
+      scan_values(checked_public_region(chromosome, start, stop), buffer, cancelled: cancelled) { |block_start, values, count| yield block_start, values, count }
     end
 
     def scan_values(region : Region, buffer : Slice(Int32), *, cancelled : Proc(Bool)? = nil, & : Int64, Slice(Int32), Int32 -> Nil) : Nil
@@ -198,7 +200,7 @@ module D4
 
     def each_value(chromosome : String, start : Int = 0, stop : Int? = nil, & : Int32 -> Nil) : Nil
       check_open
-      region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
+      region = checked_public_region(chromosome, start, stop)
       return if region.length == 0
       scan_values(region, scan_buffer(region)) do |_offset, values, count|
         count.times { |index| yield values[index] }
@@ -206,12 +208,12 @@ module D4
     end
 
     def each_value(chromosome : String, start : Int = 0, stop : Int? = nil)
-      ValueIterator.new(self, checked_region(chromosome, start.to_i64, stop.try(&.to_i64)))
+      ValueIterator.new(self, checked_public_region(chromosome, start, stop))
     end
 
     def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil, & : RawInterval -> Nil) : Nil
       check_open
-      region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
+      region = checked_public_region(chromosome, start, stop)
       return if region.length == 0
       interval_start = region.start
       previous = 0_i32
@@ -232,14 +234,14 @@ module D4
     end
 
     def each_interval(chromosome : String, start : Int = 0, stop : Int? = nil)
-      IntervalIterator.new(self, checked_region(chromosome, start.to_i64, stop.try(&.to_i64)))
+      IntervalIterator.new(self, checked_public_region(chromosome, start, stop))
     end
 
     # Calls `cancelled` between scan blocks and sum-index I/O chunks, raising
     # `CancelledError` when the callback returns true.
     def sum(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto, cancelled : Proc(Bool)? = nil) : Int64
       check_cancelled(cancelled)
-      region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
+      region = checked_public_region(chromosome, start, stop)
       return sum_scan(region, cancelled) if index.scan?
       if stored = @sum_index
         granularity = stored.granularity
@@ -300,7 +302,7 @@ module D4
     end
 
     def mean(chromosome : String, start : Int = 0, stop : Int? = nil, *, index : IndexPolicy = IndexPolicy::Auto) : Float64?
-      region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
+      region = checked_public_region(chromosome, start, stop)
       return if region.length == 0
       sum(region, index: index).to_f64 / region.length
     end
@@ -311,7 +313,7 @@ module D4
 
     def summary(chromosome : String, start : Int = 0, stop : Int? = nil) : Summary
       check_open
-      region = checked_region(chromosome, start.to_i64, stop.try(&.to_i64))
+      region = checked_public_region(chromosome, start, stop)
       return Summary.new(0_i64, 0_i64, nil, nil) if region.length == 0
       length = 0_i64
       sum = 0_i64
@@ -340,6 +342,20 @@ module D4
         raise ArgumentError.new("invalid region #{chromosome}:#{start}-#{actual_stop}")
       end
       Region.new(chromosome, start, actual_stop)
+    end
+
+    # Crystal's `Int` accepts signed and unsigned 8- through 128-bit values.
+    # Convert public coordinates only after checking that they fit the Int64
+    # representation used internally, so malformed unsigned inputs retain the
+    # API's ArgumentError contract instead of leaking OverflowError.
+    private def checked_coordinate(value : Int, message : String) : Int64
+      raise ArgumentError.new(message) if value < Int64::MIN || value > Int64::MAX
+      value.to_i64
+    end
+
+    private def checked_public_region(chromosome : String, start : Int, stop : Int?) : Region
+      message = "invalid region #{chromosome}"
+      checked_region(chromosome, checked_coordinate(start, message), stop ? checked_coordinate(stop, message) : nil)
     end
 
     private def scan_buffer(region : Region) : Slice(Int32)
