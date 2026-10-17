@@ -56,26 +56,19 @@ module D4
       configure(chromosomes, dictionary, denominator)
     end
 
-    def write_values(chromosome : String, position : Int, values : Enumerable(Int32)) : Int32
-      ensure_open
-      cursor = position.to_i64
-      values.each { |value| append_value(chromosome, cursor, value); cursor += 1 }
-      (cursor - position).to_i
-    end
-
     def write_values(chromosome : String, position : Int, values : Array(Int32) | Slice(Int32)) : Int32 # ameba:disable Metrics/CyclomaticComplexity
       ensure_open
       metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
-      chromosome_size = metadata.chromosome_size(chromosome)
-      raise ArgumentError.new("invalid write range") if position < 0 || position.to_i64 + values.size > chromosome_size
-      raise Error.new("writes must be monotonic and non-overlapping") if position < @next_position[chromosome]
+      start = checked_write_coordinate(position)
+      validate_write_range(metadata, chromosome, start, values.size.to_i64)
+      raise Error.new("writes must be monotonic and non-overlapping") if start < @next_position[chromosome]
       index = @chromosome_indices[chromosome]
       raise Error.new("writes must follow chromosome declaration order") if index < @current_chromosome_index
       return 0 if values.empty?
-      advance_primary(metadata, index, position.to_i64)
+      advance_primary(metadata, index, start)
       dictionary = metadata.dictionary
       width = dictionary.bit_width
-      cursor = position.to_i64
+      cursor = start
       if width == 0
         values.each do |value|
           @control.check! if cursor % 65_536 == 0
@@ -98,6 +91,20 @@ module D4
       @current_chromosome_index = index
       @next_position[chromosome] = cursor
       values.size
+    end
+
+    # Keep this overload after Array/Slice so Crystal dispatches known-size
+    # input to the prevalidated bulk path above. An Enumerable can be lazy,
+    # so validate the starting coordinate here and validate each yielded value
+    # before it changes writer state.
+    def write_values(chromosome : String, position : Int, values : Enumerable(Int32)) : Int32
+      ensure_open
+      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      start = checked_write_coordinate(position)
+      validate_write_range(metadata, chromosome, start, 0_i64)
+      cursor = start
+      values.each { |value| append_value(chromosome, cursor, value); cursor += 1 }
+      (cursor - start).to_i
     end
 
     private def append_dense_range(chromosome : String, cursor : Int64, values : Array(Int32) | Slice(Int32),
@@ -150,6 +157,10 @@ module D4
       count
     end
 
+    def write_dense_values(chromosome : String, start_position : Int, values : Array(Int32) | Slice(Int32)) : Int32
+      write_values(chromosome, start_position, values)
+    end
+
     def write_dense_values(chromosome : String, start_position : Int, values : Enumerable(Int32)) : Int32
       write_values(chromosome, start_position, values)
     end
@@ -191,30 +202,62 @@ module D4
 
     def write_interval(chromosome : String, left : Int, right : Int, value : Int32) : Nil
       ensure_open
-      append_run(chromosome, left.to_i64, right.to_i64, value)
+      append_run(chromosome, checked_write_coordinate(left), checked_write_coordinate(right), value)
     end
 
     def write_value(chromosome : String, position : Int, value : Int32) : Nil
-      raise ArgumentError.new("invalid point coordinate") if position < 0 || position.to_i64 >= UInt32::MAX
-      write_interval(chromosome, position, position.to_i64 + 1, value)
+      coordinate = checked_write_coordinate(position, "invalid point coordinate")
+      raise ArgumentError.new("invalid point coordinate") if coordinate < 0 || coordinate >= UInt32::MAX
+      write_interval(chromosome, coordinate, coordinate + 1, value)
     end
 
     def write_scaled_interval(chromosome : String, left : Int, right : Int, value : Float64, *, rounding : Rounding) : Nil
       write_interval(chromosome, left, right, quantize(value, rounding))
     end
 
+    # Quantize known-size input before delegating to the prevalidated dense
+    # writer. This avoids publishing a prefix when a later value is invalid.
+    def write_scaled_values(chromosome : String, position : Int, values : Array(Float64) | Slice(Float64), *, rounding : Rounding) : Int32
+      ensure_open
+      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      start = checked_write_coordinate(position)
+      validate_write_range(metadata, chromosome, start, values.size.to_i64)
+      quantized = Array(Int32).new(values.size)
+      values.each { |value| quantized << quantize(value, rounding) }
+      write_values(chromosome, start, quantized)
+    end
+
     def write_scaled_values(chromosome : String, position : Int, values : Enumerable(Float64), *, rounding : Rounding) : Int32
       ensure_open
-      cursor = position.to_i64
+      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      start = checked_write_coordinate(position)
+      validate_write_range(metadata, chromosome, start, 0_i64)
+      cursor = start
       values.each do |value|
         append_value(chromosome, cursor, quantize(value, rounding))
         cursor += 1
       end
-      (cursor - position).to_i
+      (cursor - start).to_i
     end
 
     private def append_value(chromosome : String, position : Int64, value : Int32) : Nil
+      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      validate_write_range(metadata, chromosome, position, 1_i64)
       append_run(chromosome, position, position + 1, value)
+    end
+
+    private def validate_write_range(metadata : Metadata, chromosome : String, position : Int64, count : Int64) : Nil
+      chromosome_size = metadata.chromosome_size(chromosome)
+      raise ArgumentError.new("invalid write range") if position < 0 || count < 0 || position > chromosome_size || count > chromosome_size - position
+    end
+
+    # Public coordinate arguments use Crystal's broad `Int` union, which
+    # includes UInt64 and Int128. Do the representability check before
+    # converting to Int64 so an out-of-range unsigned coordinate produces the
+    # same ArgumentError as any other invalid write range, not OverflowError.
+    private def checked_write_coordinate(value : Int, message : String = "invalid write range") : Int64
+      raise ArgumentError.new(message) if value < Int64::MIN || value > Int64::MAX
+      value.to_i64
     end
 
     private def quantize(value : Float64, rounding : Rounding) : Int32
@@ -673,7 +716,10 @@ module D4
   module FrameEncoder
     def self.size_for(payload_size : Int) : Int64
       capacity = (Format::DIRECTORY_FRAME_SIZE - Format::FRAME_HEADER_SIZE).to_i64
-      frames = Math.max(1_i64, (payload_size.to_i64 + capacity - 1) // capacity)
+      payload = checked_payload_size(payload_size)
+      max_frames = Int64::MAX // Format::DIRECTORY_FRAME_SIZE
+      raise ArgumentError.new("frame payload size is too large") if payload > max_frames * capacity
+      frames = Math.max(1_i64, (payload + capacity - 1) // capacity)
       frames * Format::DIRECTORY_FRAME_SIZE
     end
 
@@ -696,7 +742,9 @@ module D4
     end
 
     def self.exact_size_for(payload_size : Int) : Int64
-      (Format::FRAME_HEADER_SIZE + payload_size).to_i64
+      payload = checked_payload_size(payload_size)
+      raise ArgumentError.new("frame payload size is too large") if payload > Int64::MAX - Format::FRAME_HEADER_SIZE
+      Format::FRAME_HEADER_SIZE.to_i64 + payload
     end
 
     def self.build_exact(payload : Bytes) : Array(UInt8)
@@ -707,6 +755,11 @@ module D4
 
     private def self.write_u64(output : Array(UInt8), offset : Int32, value : UInt64) : Nil
       8.times { |index| output[offset + index] = ((value >> (index * 8)) & 0xff_u64).to_u8 }
+    end
+
+    private def self.checked_payload_size(value : Int) : Int64
+      raise ArgumentError.new("frame payload size must fit non-negative Int64") if value < 0 || value > Int64::MAX
+      value.to_i64
     end
   end
 
