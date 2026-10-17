@@ -67,4 +67,49 @@ describe "D4 read coordinate boundaries" do
       File.delete(path) if File.exists?(path)
     end
   end
+
+  it "reads a primary table positioned beyond 2 GiB without materializing the file" do
+    temporary = File.tempfile("d4-large-offset", ".d4")
+    path = temporary.path
+    temporary.close
+    File.delete(path)
+    begin
+      D4.create(path,
+        chromosomes: [D4::Chromosome.new("chr", 512_i64)],
+        dictionary: D4::Dictionary.new(0_i32, 2_i32)) { }
+
+      source = D4::LocalSource.new(path)
+      root = D4::Format::Directory.open_root(source, 4_i64 * 1024 * 1024)
+      source.close
+      primary_offset = 3_000_000_000_i64
+      primary_size = root.entry(".ptab", 2_u8).size
+      entries = root.entries.map do |entry|
+        offset = entry.name == ".ptab" ? primary_offset : entry.offset
+        D4::DirectoryEncoder::Item.new(entry.kind, entry.name, offset, entry.size)
+      end
+
+      # This creates a sparse 3 GB file: only the small primary table is
+      # written, but LocalSource still has to seek and read at a true
+      # large-file offset.
+      File.open(path, "r+b") do |output|
+        output.seek(primary_offset, IO::Seek::Set)
+        primary = Bytes.new(primary_size.to_i)
+        primary[0] = 1_u8
+        primary[-1] = 0x80_u8
+        output.write(primary)
+        output.seek(root.offset, IO::Seek::Set)
+        output.write(D4::Format.bytes(D4::DirectoryEncoder.build(root.offset, entries)))
+      end
+
+      File.info(path).size.should be >= primary_offset + primary_size
+      D4.open(path) do |file|
+        file.value("chr", 0).should eq(1_i32)
+        file.value("chr", 511).should eq(1_i32)
+        file.sum("chr").should eq(2_i64)
+      end
+    ensure
+      temporary.close unless temporary.closed?
+      File.delete(path) if File.exists?(path)
+    end
+  end
 end

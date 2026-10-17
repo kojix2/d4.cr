@@ -50,6 +50,14 @@ to `D4::Writer` and `D4::IndexBuilder`.
 
 A GUI coverage viewer is available in the [d4-plot repository](https://github.com/kojix2/d4-plot).
 
+## Large files
+
+D4 files can be several gigabytes even when chromosome lengths fit in
+`Int32`. Use `scan_values` or `each_value` to read large regions;
+`values` has a materialization limit. The `Enumerable` overload of
+`Writer#write_values` writes in 65,536-value chunks and returns an `Int64`
+count, so streaming input does not require a chromosome-sized array.
+
 ## Development
 
 ```sh

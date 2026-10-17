@@ -95,16 +95,37 @@ module D4
 
     # Keep this overload after Array/Slice so Crystal dispatches known-size
     # input to the prevalidated bulk path above. An Enumerable can be lazy,
-    # so validate the starting coordinate here and validate each yielded value
-    # before it changes writer state.
-    def write_values(chromosome : String, position : Int, values : Enumerable(Int32)) : Int32
+    # so keep only a fixed-size chunk in memory even for multi-gigabyte
+    # files. A valid D4 chromosome can also exceed Int32::MAX bases, so
+    # report the consumed count as Int64.
+    def write_values(chromosome : String, position : Int, values : Enumerable(Int32)) : Int64
       ensure_open
       metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
       start = checked_write_coordinate(position)
       validate_write_range(metadata, chromosome, start, 0_i64)
+      chromosome_size = metadata.chromosome_size(chromosome)
+      chromosome_index = @chromosome_indices[chromosome]
       cursor = start
-      values.each { |value| append_value(chromosome, cursor, value); cursor += 1 }
-      (cursor - start).to_i
+      chunk = Array(Int32).new(65_536)
+      values.each do |value|
+        @control.check! if chunk.size % 1_024 == 0
+        # Check the next coordinate before accepting it into the buffered
+        # chunk. This preserves the lazy overload's guarantee that an
+        # overlong input does not write past a chromosome boundary.
+        available = chromosome_size - cursor
+        raise ArgumentError.new("invalid write range") if chunk.size.to_i64 >= available
+        if chunk.empty?
+          raise Error.new("writes must be monotonic and non-overlapping") if cursor < @next_position[chromosome]
+          raise Error.new("writes must follow chromosome declaration order") if chromosome_index < @current_chromosome_index
+        end
+        chunk << value
+        if chunk.size.to_i64 == Math.min(65_536_i64, available)
+          cursor += write_values(chromosome, cursor, chunk)
+          chunk.clear
+        end
+      end
+      cursor += write_values(chromosome, cursor, chunk) unless chunk.empty?
+      cursor - start
     end
 
     private def append_dense_range(chromosome : String, cursor : Int64, values : Array(Int32) | Slice(Int32),
@@ -161,7 +182,7 @@ module D4
       write_values(chromosome, start_position, values)
     end
 
-    def write_dense_values(chromosome : String, start_position : Int, values : Enumerable(Int32)) : Int32
+    def write_dense_values(chromosome : String, start_position : Int, values : Enumerable(Int32)) : Int64
       write_values(chromosome, start_position, values)
     end
 
@@ -227,23 +248,32 @@ module D4
       write_values(chromosome, start, quantized)
     end
 
-    def write_scaled_values(chromosome : String, position : Int, values : Enumerable(Float64), *, rounding : Rounding) : Int32
+    def write_scaled_values(chromosome : String, position : Int, values : Enumerable(Float64), *, rounding : Rounding) : Int64
       ensure_open
       metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
       start = checked_write_coordinate(position)
       validate_write_range(metadata, chromosome, start, 0_i64)
+      chromosome_size = metadata.chromosome_size(chromosome)
+      chromosome_index = @chromosome_indices[chromosome]
       cursor = start
+      chunk = Array(Int32).new(65_536)
       values.each do |value|
-        append_value(chromosome, cursor, quantize(value, rounding))
-        cursor += 1
+        @control.check! if chunk.size % 1_024 == 0
+        quantized = quantize(value, rounding)
+        available = chromosome_size - cursor
+        raise ArgumentError.new("invalid write range") if chunk.size.to_i64 >= available
+        if chunk.empty?
+          raise Error.new("writes must be monotonic and non-overlapping") if cursor < @next_position[chromosome]
+          raise Error.new("writes must follow chromosome declaration order") if chromosome_index < @current_chromosome_index
+        end
+        chunk << quantized
+        if chunk.size.to_i64 == Math.min(65_536_i64, available)
+          cursor += write_values(chromosome, cursor, chunk)
+          chunk.clear
+        end
       end
-      (cursor - start).to_i
-    end
-
-    private def append_value(chromosome : String, position : Int64, value : Int32) : Nil
-      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
-      validate_write_range(metadata, chromosome, position, 1_i64)
-      append_run(chromosome, position, position + 1, value)
+      cursor += write_values(chromosome, cursor, chunk) unless chunk.empty?
+      cursor - start
     end
 
     private def validate_write_range(metadata : Metadata, chromosome : String, position : Int64, count : Int64) : Nil

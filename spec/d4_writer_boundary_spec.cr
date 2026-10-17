@@ -96,4 +96,38 @@ describe "D4 writer coordinate boundaries" do
     expect_raises(ArgumentError, /frame payload size/) { D4::FrameEncoder.exact_size_for(UInt64::MAX) }
     expect_raises(ArgumentError, /frame payload size/) { D4::FrameEncoder.exact_size_for(Int64::MAX) }
   end
+
+  it "writes enumerable input in bounded chunks and returns a 64-bit count" do
+    temporary = File.tempfile("d4-writer-stream", ".d4")
+    path = temporary.path
+    temporary.close
+    File.delete(path)
+    begin
+      D4.create(path,
+        chromosomes: [D4::Chromosome.new("raw", 70_000_i64), D4::Chromosome.new("scaled", 70_000_i64)],
+        dictionary: D4::Dictionary.new(0_i32, 2_i32), denominator: 2.0) do |writer|
+        # The iterator generates more than one chunk without holding all
+        # chromosome values in an array.
+        values = (0...70_000).each.map do |index|
+          index == 65_535 || index == 65_536 ? 9_i32 : (index.odd? ? 1_i32 : 0_i32)
+        end
+        written = writer.write_values("raw", 0, values)
+        written.should be_a(Int64)
+        written.should eq(70_000_i64)
+        scaled = (0...70_000).each.map { |index| index.odd? ? 0.5_f64 : 0.0_f64 }
+        writer.write_scaled_values("scaled", 0, scaled, rounding: D4::Rounding::Floor).should eq(70_000_i64)
+      end
+      D4.open(path) do |file|
+        file.value("raw", 65_535).should eq(9_i32)
+        file.value("raw", 65_536).should eq(9_i32)
+        file.value("raw", 69_999).should eq(1_i32)
+        file.sum("raw").should eq(35_017_i64)
+        file.value("scaled", 69_999).should eq(1_i32)
+        file.sum("scaled").should eq(35_000_i64)
+      end
+    ensure
+      temporary.close unless temporary.closed?
+      File.delete(path) if File.exists?(path)
+    end
+  end
 end
