@@ -528,74 +528,128 @@
     <use href="#octicon-link"/>
   </svg>
 </a>d4.cr</h1>
-<p>A pure Crystal reader and writer for <a href="https://github.com/38/d4-format">D4</a> genomic data files. No Rust runtime or <code>d4binding</code> library is required.</p>
+<p>d4.cr is a Crystal library for <a href="https://github.com/38/d4-format">D4</a> files. It reads local and remote files, including files with multiple tracks, and writes single-track files.</p>
 <h2><a id="install" class="anchor" href="#install">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
 </a>Install</h2>
-<p>Add this shard to <code>shard.yml</code>, then run <code>shards install</code>:</p>
+<p>Add to <code>shard.yml</code>, then run <code>shards install</code>. Crystal 1.21 or later is required.</p>
 <pre><code class="language-yaml">dependencies:
   d4:
-    github: kojix2/d4.cr</code></pre>
-<p>Requires Crystal 1.21 or later.</p>
-<h2><a id="usage" class="anchor" href="#usage">
+    github: bio-cr/d4.cr</code></pre>
+<h2><a id="read-values-and-intervals" class="anchor" href="#read-values-and-intervals">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
-</a>Usage</h2>
+</a>Read values and intervals</h2>
 <pre><code class="language-crystal"><span class="k">require</span> <span class="s">&quot;d4&quot;</span>
 
-<span class="t">D4</span>.create(<span class="s">&quot;depth.d4&quot;</span>, chromosomes: [<span class="t">D4</span><span class="t">::</span><span class="t">Chromosome</span>.new(<span class="s">&quot;chr1&quot;</span>, <span class="n">1000_i64</span>)],
+<span class="t">D4</span>.open(<span class="s">&quot;depth.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>file<span class="o">|</span>
+  p file.chromosomes.map(<span class="o">&amp;</span>.name)
+  p file.value(<span class="s">&quot;chr1&quot;</span>, <span class="n">100</span>)
+  p file.values(<span class="s">&quot;chr1&quot;</span>, <span class="n">100</span>, <span class="n">110</span>)
+
+  file.each_interval(<span class="s">&quot;chr1&quot;</span>, <span class="n">100</span>, <span class="n">110</span>) <span class="k">do</span> <span class="o">|</span>interval<span class="o">|</span>
+    puts <span class="s">&quot;</span><span class="i">#{</span>interval.left<span class="i">}</span><span class="s">\t</span><span class="i">#{</span>interval.right<span class="i">}</span><span class="s">\t</span><span class="i">#{</span>interval.value<span class="i">}</span><span class="s">&quot;</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre>
+<p>Coordinates are zero-based. <code>start</code> is included and <code>stop</code> is excluded. Raw values are <code>Int32</code>; chromosome sizes and interval positions are <code>Int64</code>.</p>
+<h2><a id="write-one-track" class="anchor" href="#write-one-track">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Write one track</h2>
+<pre><code class="language-crystal">chromosomes <span class="o">=</span> [<span class="t">D4</span><span class="t">::</span><span class="t">Chromosome</span>.new(<span class="s">&quot;chr1&quot;</span>, <span class="n">1_000_i64</span>)]
+
+<span class="t">D4</span>.create(<span class="s">&quot;depth.d4&quot;</span>, chromosomes: chromosomes,
   dictionary: <span class="t">D4</span><span class="t">::</span><span class="t">Dictionary</span>.new(<span class="n">0_i32</span>, <span class="n">8_i32</span>)) <span class="k">do</span> <span class="o">|</span>writer<span class="o">|</span>
   writer.write_values(<span class="s">&quot;chr1&quot;</span>, <span class="n">0</span>, [<span class="n">1_i32</span>, <span class="n">2_i32</span>, <span class="n">3_i32</span>])
-<span class="k">end</span>
+  writer.write_interval(<span class="s">&quot;chr1&quot;</span>, <span class="n">100</span>, <span class="n">200</span>, <span class="n">5_i32</span>)
+<span class="k">end</span></code></pre>
+<p>The dictionary puts values in <code>0...8</code> in the primary table; other <code>Int32</code> values go to the secondary table. Unwritten positions default to <code>0</code>. Write chromosomes in declaration order and positions in increasing, non-overlapping order. Existing files are preserved unless <code>WriteOptions.new(overwrite: true)</code> is set.</p>
+<h2><a id="summarize-a-region" class="anchor" href="#summarize-a-region">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Summarize a region</h2>
+<pre><code class="language-crystal">region <span class="o">=</span> <span class="t">D4</span><span class="t">::</span><span class="t">Region</span>.new(<span class="s">&quot;chr1&quot;</span>, <span class="n">100_i64</span>, <span class="n">200_i64</span>)
 
 <span class="t">D4</span>.open(<span class="s">&quot;depth.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>file<span class="o">|</span>
-  p file.values(<span class="s">&quot;chr1&quot;</span>, <span class="n">0</span>, <span class="n">3</span>) <span class="c"># =&gt; [1, 2, 3]</span>
-  p file.sum(<span class="s">&quot;chr1&quot;</span>, <span class="n">0</span>, <span class="n">3</span>)    <span class="c"># =&gt; 6</span>
+  p file.sum(region)
+  p file.summary(region).mean
+  p file.histogram(region, value_range: <span class="n">0_i32</span>...<span class="n">100_i32</span>).counts
+  p file.coverage(region, thresholds: [<span class="n">1_i32</span>, <span class="n">10_i32</span>]).counts
+  p file.scaled.mean(<span class="s">&quot;chr1&quot;</span>, <span class="n">100</span>, <span class="n">200</span>)
 <span class="k">end</span></code></pre>
-<p>The reader supports multiple tracks, embedded indexes, and raw or DEFLATE secondary data. The writer creates one track. HTTP range reading is available with <code>require &quot;d4/http&quot;</code>.</p>
-<p>Long writes and index construction support progress reporting and cooperative
-cancellation. Output is published only after finalization succeeds:</p>
-<pre><code class="language-crystal">control <span class="o">=</span> <span class="t">D4</span><span class="t">::</span><span class="t">WriteControl</span>.new { <span class="o">|</span>progress<span class="o">|</span> puts progress }
+<p><code>scaled</code> divides stored values by the track's metadata denominator.</p>
+<h2><a id="read-multiple-tracks" class="anchor" href="#read-multiple-tracks">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Read multiple tracks</h2>
+<pre><code class="language-crystal"><span class="t">D4</span>.open(<span class="s">&quot;multi.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>file<span class="o">|</span>
+  p file.track_names
+  p file.track(<span class="s">&quot;sample_a&quot;</span>).value(<span class="s">&quot;chr1&quot;</span>, <span class="n">100</span>)
 
-<span class="t">D4</span>.create(<span class="s">&quot;depth.d4&quot;</span>, chromosomes: chromosomes, control: control) <span class="k">do</span> <span class="o">|</span>writer<span class="o">|</span>
-  writer.write_values(<span class="s">&quot;chr1&quot;</span>, <span class="n">0</span>, values)
+  matrix <span class="o">=</span> file.matrix([<span class="s">&quot;sample_a&quot;</span>, <span class="s">&quot;sample_b&quot;</span>])
+  matrix.each_row(<span class="t">D4</span><span class="t">::</span><span class="t">Region</span>.new(<span class="s">&quot;chr1&quot;</span>, <span class="n">100_i64</span>, <span class="n">105_i64</span>)) <span class="k">do</span> <span class="o">|</span>row<span class="o">|</span>
+    puts <span class="s">&quot;</span><span class="i">#{</span>row.position<span class="i">}</span><span class="s">: </span><span class="i">#{</span>row.values<span class="i">}</span><span class="s">&quot;</span>
+  <span class="k">end</span>
+<span class="k">end</span></code></pre>
+<p>For file-level reads of a multi-track file, open it with <code>track: &quot;sample_a&quot;</code>. Matrix tracks must have the same chromosomes and lengths.</p>
+<h2><a id="stream-large-regions" class="anchor" href="#stream-large-regions">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Stream large regions</h2>
+<pre><code class="language-crystal"><span class="t">D4</span>.open(<span class="s">&quot;large.d4&quot;</span>) <span class="k">do</span> <span class="o">|</span>file<span class="o">|</span>
+  nonzero <span class="o">=</span> <span class="n">0_i64</span>
+  buffer <span class="o">=</span> <span class="t">Slice</span>(<span class="t">Int32</span>).new(<span class="n">65_536</span>)
+  file.default_track.scan_values(<span class="s">&quot;chr1&quot;</span>, buffer) <span class="k">do</span> <span class="o">|</span>_start, values, _count<span class="o">|</span>
+    values.each { <span class="o">|</span>value<span class="o">|</span> nonzero <span class="o">+=</span> <span class="n">1</span> <span class="k">if</span> value <span class="o">!=</span> <span class="n">0</span> }
+  <span class="k">end</span>
+  puts nonzero
+<span class="k">end</span></code></pre>
+<p><code>values</code> materializes an array and defaults to a 64 MiB limit. <code>scan_values</code> reuses the buffer; process its slice before the next callback. <code>Writer#write_values</code> also accepts a lazy <code>Enumerable(Int32)</code>.</p>
+<h2><a id="compression-and-indexes" class="anchor" href="#compression-and-indexes">
+  <svg class="octicon-link" aria-hidden="true">
+    <use href="#octicon-link"/>
+  </svg>
+</a>Compression and indexes</h2>
+<pre><code class="language-crystal">options <span class="o">=</span> <span class="t">D4</span><span class="t">::</span><span class="t">WriteOptions</span>.new(
+  compression: <span class="t">D4</span><span class="t">::</span><span class="t">Compression</span>.deflate,
+  indexes: [<span class="t">D4</span><span class="t">::</span><span class="t">IndexKind</span><span class="t">::</span><span class="t">SecondaryFrames</span>, <span class="t">D4</span><span class="t">::</span><span class="t">IndexKind</span><span class="t">::</span><span class="t">Sum</span>]
+)
+
+<span class="t">D4</span>.create(<span class="s">&quot;indexed.d4&quot;</span>,
+  chromosomes: [<span class="t">D4</span><span class="t">::</span><span class="t">Chromosome</span>.new(<span class="s">&quot;chr1&quot;</span>, <span class="n">1_000_i64</span>)],
+  options: options) <span class="k">do</span> <span class="o">|</span>writer<span class="o">|</span>
+  writer.write_interval(<span class="s">&quot;chr1&quot;</span>, <span class="n">100</span>, <span class="n">200</span>, <span class="n">5_i32</span>)
 <span class="k">end</span>
 
-<span class="c"># Another fiber or thread may call control.cancel.</span></code></pre>
-<p>The same control can be passed to <code>D4.build_indexes</code> or directly to
-<code><a href="D4/Writer.html">D4::Writer</a></code> and <code><a href="D4/IndexBuilder.html">D4::IndexBuilder</a></code>.</p>
-<p>A GUI coverage viewer is available in the <a href="https://github.com/kojix2/d4-plot">d4-plot repository</a>.</p>
-<h2><a id="large-files" class="anchor" href="#large-files">
+<span class="c"># For an existing local file without indexes:</span>
+<span class="t">D4</span>.build_indexes(<span class="s">&quot;plain.d4&quot;</span>)</code></pre>
+<p><code>build_indexes</code> makes a temporary copy in the same directory, so allow disk space for another copy of the file. <code><a href="D4/WriteControl.html">D4::WriteControl</a></code> supports progress callbacks and cancellation during writing and index building.</p>
+<h2><a id="read-over-http" class="anchor" href="#read-over-http">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
-</a>Large files</h2>
-<p>D4 files can be several gigabytes even when chromosome lengths fit in
-<code>Int32</code>. Use <code>scan_values</code> or <code>each_value</code> to read large regions;
-<code>values</code> has a materialization limit. The <code>Enumerable</code> overload of
-<code>Writer#write_values</code> writes in 65,536-value chunks, so streaming input
-does not require a chromosome-sized array. All bulk write methods return
-an <code>Int64</code> count.
-Chromosome lengths and returned genomic positions use <code>Int64</code>. Pass an
-ordered array of <code><a href="D4/Chromosome.html">D4::Chromosome</a></code> objects to <code>D4.create</code>; the writer is
-fully configured at creation. Chromosome lengths are checked against the
-supported <code>UInt32</code> coordinate range.</p>
-<h2><a id="development" class="anchor" href="#development">
+</a>Read over HTTP</h2>
+<pre><code class="language-crystal"><span class="k">require</span> <span class="s">&quot;d4/http&quot;</span>
+
+source <span class="o">=</span> <span class="t">D4</span><span class="t">::</span><span class="t">HTTPSource</span>.new(<span class="s">&quot;https://example.org/depth.d4&quot;</span>)
+<span class="t">D4</span>.open(source, sync_close: <span class="n">true</span>) <span class="k">do</span> <span class="o">|</span>file<span class="o">|</span>
+  p file.sum(<span class="s">&quot;chr1&quot;</span>, <span class="n">0</span>, <span class="n">1000</span>)
+<span class="k">end</span></code></pre>
+<p>The server must support HTTP byte-range requests. Pass a <code>HTTPSource</code>, not a URL string, to <code>D4.open</code>.</p>
+<h2><a id="origin-and-license" class="anchor" href="#origin-and-license">
   <svg class="octicon-link" aria-hidden="true">
     <use href="#octicon-link"/>
   </svg>
-</a>Development</h2>
-<pre><code class="language-sh">crystal spec --single-module
-crystal tool format --check src spec</code></pre>
-<h2><a id="license" class="anchor" href="#license">
-  <svg class="octicon-link" aria-hidden="true">
-    <use href="#octicon-link"/>
-  </svg>
-</a>License</h2>
-<p>MIT. See <a href="LICENSE">LICENSE</a>. Rust-generated test fixtures retain the upstream notice in <a href="THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
+</a>Origin and license</h2>
+<p>Hao Hou, Brent Pedersen, and Aaron Quinlan introduced D4 in their <a href="https://doi.org/10.1038/s43588-021-00085-0">paper</a>. The <a href="https://github.com/38/d4-format">original Rust project</a> provides d4tools. d4.cr is a separate Crystal implementation by kojix2; Brent Pedersen also wrote <a href="https://github.com/brentp/d4-nim">d4-nim</a>.</p>
+<p>d4.cr is MIT licensed; see <a href="LICENSE">LICENSE</a>. Upstream test fixtures are credited in <a href="THIRD_PARTY_NOTICES.md">THIRD_PARTY_NOTICES.md</a>.</p>
 </div>
 </body>
 </html>
