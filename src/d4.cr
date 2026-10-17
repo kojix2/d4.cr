@@ -86,33 +86,12 @@ module D4
     end
   end
 
-  # Create a new D4 writer
-  def self.writer(path : String | Path, *, options : WriteOptions = WriteOptions.new,
-                  control : WriteControl = WriteControl.new)
-    Writer.new(path, options, control)
-  end
-
-  # Create a new D4 writer with a block
-  def self.writer(path : String | Path, *, options : WriteOptions = WriteOptions.new,
-                  control : WriteControl = WriteControl.new, & : Writer -> T) forall T
-    writer = Writer.new(path, options, control)
-    begin
-      result = yield writer
-      writer.finish
-      result
-    rescue error
-      writer.abort
-      raise error
-    end
-  end
-
   def self.create(path : String | Path, *, chromosomes : Array(Chromosome),
                   dictionary : Dictionary = Dictionary.new(0_i32, 64_i32), denominator : Float64 = 1.0,
                   default_value : Int32 = 0_i32, options : WriteOptions = WriteOptions.new,
                   control : WriteControl = WriteControl.new) : Writer
-    writer = Writer.new(path, options, control)
-    writer.configure(chromosomes, dictionary, denominator, default_value)
-    writer
+    Writer.new(path, chromosomes: chromosomes, dictionary: dictionary, denominator: denominator,
+      default_value: default_value, options: options, control: control)
   end
 
   def self.create(path : String | Path, *, chromosomes : Array(Chromosome),

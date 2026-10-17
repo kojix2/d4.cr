@@ -176,8 +176,7 @@ describe "D4 format compatibility and lifecycle" do
     path = File.join(Dir.tempdir, "d4-crystal-abort-#{Random.rand(1_000_000)}.d4")
     begin
       expect_raises(ArgumentError, "stop") do
-        D4.writer(path) do |writer|
-          writer.set_chromosomes({"chr" => 1_u32})
+        D4.create(path, chromosomes: [D4::Chromosome.new("chr", 1_i64)]) do |writer|
           raise ArgumentError.new("stop")
         end
       end
@@ -191,7 +190,9 @@ describe "D4 format compatibility and lifecycle" do
     path = File.join(Dir.tempdir, "d4-crystal-existing-#{Random.rand(1_000_000)}.d4")
     begin
       File.write(path, "untouched")
-      expect_raises(D4::Error, "destination already exists") { D4::Writer.new(path) }
+      expect_raises(D4::Error, "destination already exists") do
+        D4.create(path, chromosomes: [D4::Chromosome.new("chr", 1_i64)])
+      end
       File.read(path).should eq("untouched")
     ensure
       File.delete(path) if File.exists?(path)
@@ -204,7 +205,9 @@ describe "D4 format compatibility and lifecycle" do
       missing = "#{path}.missing"
       begin
         File.symlink(missing, path)
-        expect_raises(D4::Error, "destination already exists") { D4::Writer.new(path) }
+        expect_raises(D4::Error, "destination already exists") do
+          D4.create(path, chromosomes: [D4::Chromosome.new("chr", 1_i64)])
+        end
         File.symlink?(path).should be_true
       ensure
         File.delete(path) if File.exists?(path) || File.symlink?(path)
@@ -214,9 +217,8 @@ describe "D4 format compatibility and lifecycle" do
 
   it "does not replace a destination created while writing" do
     path = File.join(Dir.tempdir, "d4-crystal-raced-destination-#{Random.rand(1_000_000)}.d4")
-    writer = D4::Writer.new(path)
+    writer = D4.create(path, chromosomes: [D4::Chromosome.new("chr", 1_i64)])
     begin
-      writer.set_chromosomes({"chr" => 1_u32})
       File.write(path, "untouched")
       expect_raises(D4::Error, "destination already exists") { writer.close }
       File.read(path).should eq("untouched")
@@ -439,7 +441,9 @@ describe "D4 format compatibility and lifecycle" do
     path = File.join(Dir.tempdir, "d4-crystal-quantized-#{Random.rand(1_000_000)}.d4")
     begin
       D4.create(path, chromosomes: [D4::Chromosome.new("chr", 4)], denominator: 2.0) do |writer|
-        writer.write_scaled_values("chr", 0, [0.25, -0.25, 1.25], rounding: D4::Rounding::NearestAway)
+        scaled_written = writer.write_scaled_values("chr", 0, [0.25, -0.25, 1.25], rounding: D4::Rounding::NearestAway)
+        scaled_written.should be_a(Int64)
+        scaled_written.should eq(3_i64)
         expect_raises(ArgumentError) do
           writer.write_scaled_interval("chr", 3, 4, Float64::NAN, rounding: D4::Rounding::Floor)
         end

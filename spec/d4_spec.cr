@@ -39,11 +39,14 @@ describe D4 do
   it "writes and reads a pure Crystal D4 file" do
     path = File.join(Dir.tempdir, "d4-crystal-roundtrip-#{Random.rand(1_000_000)}.d4")
     begin
-      D4.writer(path) do |writer|
-        writer.set_chromosomes({"chr1" => 12_u32, "chr2" => 5_u32})
-        writer.write_values("chr1", 0, [1_i32, 1_i32, 2_i32, 2_i32, 150_i32])
-        writer.write_intervals("chr1", [D4::RawInterval.new(7, 10, -3)])
-        writer.write_dense_values("chr2", 1, [9_i32, 9_i32])
+      D4.create(path, chromosomes: [D4::Chromosome.new("chr1", 12_i64), D4::Chromosome.new("chr2", 5_i64)]) do |writer|
+        values_written = writer.write_values("chr1", 0, [1_i32, 1_i32, 2_i32, 2_i32, 150_i32])
+        values_written.should be_a(Int64)
+        values_written.should eq(5_i64)
+        intervals_written = writer.write_intervals("chr1", [D4::RawInterval.new(7, 10, -3)])
+        intervals_written.should be_a(Int64)
+        intervals_written.should eq(1_i64)
+        writer.write_values("chr2", 1, [9_i32, 9_i32])
       end
 
       D4.open(path) do |file|
@@ -62,8 +65,7 @@ describe D4 do
   it "uses caller-owned storage with read_values_into" do
     path = File.join(Dir.tempdir, "d4-crystal-buffer-#{Random.rand(1_000_000)}.d4")
     begin
-      D4.writer(path) do |writer|
-        writer.set_chromosomes({"chr1" => 4_u32})
+      D4.create(path, chromosomes: [D4::Chromosome.new("chr1", 4_i64)]) do |writer|
         writer.write_values("chr1", 0, [4_i32, 5_i32, 6_i32, 7_i32])
       end
       D4.open(path) do |file|

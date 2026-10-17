@@ -1,6 +1,36 @@
 require "./spec_helper"
 
 describe "D4 writer coordinate boundaries" do
+  it "validates Int64 chromosome lengths at writer creation" do
+    path = File.join(Dir.tempdir, "d4-crystal-int64-chromosomes-#{Random.rand(1_000_000)}.d4")
+    begin
+      expect_raises(ArgumentError, /non-negative/) do
+        D4.create(path, chromosomes: [D4::Chromosome.new("chr", -1_i64)])
+      end
+      expect_raises(D4::UnsupportedFeatureError, /UInt32::MAX/) do
+        D4.create(path, chromosomes: [D4::Chromosome.new("chr", UInt32::MAX.to_i64 + 1)])
+      end
+      expect_raises(D4::UnsupportedFeatureError, /UInt32::MAX/) do
+        D4::Chromosome.new("chr", UInt64::MAX)
+      end
+      # Configuration of a long chromosome must not allocate its primary table.
+      maximum = D4::Chromosome.new("chr", UInt32::MAX)
+      maximum.size.should eq(UInt32::MAX.to_i64)
+      writer = D4.create(path, chromosomes: [maximum])
+      writer.abort
+
+      D4.create(path, chromosomes: [D4::Chromosome.new("chr", 4_i64)]) do |small_writer|
+        small_writer.write_value("chr", 3, 7_i32)
+      end
+      D4.open(path) do |file|
+        file.chromosome_size("chr").should eq(4_i64)
+        file.values("chr").should eq([0, 0, 0, 7])
+      end
+    ensure
+      File.delete(path) if File.exists?(path)
+    end
+  end
+
   it "rejects overflowing positions without advancing writer state" do
     temporary = File.tempfile("d4-writer-boundary", ".d4")
     path = temporary.path
@@ -34,9 +64,6 @@ describe "D4 writer coordinate boundaries" do
         writer.write_values("chr", 1, Slice[1_i32, 1_i32])
       end
       expect_raises(ArgumentError, /invalid write range/) do
-        writer.write_dense_values("chr", 1, [1_i32, 1_i32])
-      end
-      expect_raises(ArgumentError, /invalid write range/) do
         writer.write_scaled_values("chr", 1, [1.0_f64, 1.0_f64], rounding: D4::Rounding::Floor)
       end
       expect_raises(ArgumentError, /invalid write range/) do
@@ -67,8 +94,12 @@ describe "D4 writer coordinate boundaries" do
         writer.write_value("chr", UInt64::MAX, 1_i32)
       end
 
-      writer.write_values("chr", 0, [1_i32]).should eq(1)
-      writer.write_values("chr", 1, [1_i32]).should eq(1)
+      array_count = writer.write_values("chr", 0, [1_i32])
+      array_count.should be_a(Int64)
+      array_count.should eq(1_i64)
+      slice_count = writer.write_values("chr", 1, Slice[1_i32])
+      slice_count.should be_a(Int64)
+      slice_count.should eq(1_i64)
       writer.write_values("chr", 2, [] of Int32).should eq(0)
       writer.write_values("chr", 2, ([] of Int32).each).should eq(0)
       writer.write_scaled_values("chr", 2, ([] of Float64).each, rounding: D4::Rounding::Floor).should eq(0)

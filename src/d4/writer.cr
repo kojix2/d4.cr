@@ -7,9 +7,12 @@ module D4
   class Writer
     getter control : WriteControl
 
-    def initialize(@path : String | Path, @options : WriteOptions = WriteOptions.new,
+    def initialize(@path : String | Path, *, chromosomes : Array(Chromosome),
+                   dictionary : Dictionary, denominator : Float64 = 1.0,
+                   @default_value : Int32 = 0_i32, @options : WriteOptions = WriteOptions.new,
                    @control : WriteControl = WriteControl.new)
       ensure_destination_available
+      @metadata = Metadata.new(chromosomes, dictionary, denominator)
       @primary_spool = nil.as(::File?)
       @secondary_spool = nil.as(::File?)
       @secondary_starts = Hash(String, Int64).new
@@ -28,43 +31,18 @@ module D4
       @next_position = Hash(String, Int64).new(0_i64)
       @closed = false
       @finished = false
-      @metadata = nil.as(Metadata?)
-      @default_value = 0_i32
+      @metadata.chromosomes.each_with_index { |chromosome, index| @chromosome_indices[chromosome.name] = index }
     end
 
-    def configure(chromosomes : Array(Chromosome), dictionary : Dictionary, denominator : Float64 = 1.0, default_value : Int32 = 0) : Nil
+    def write_values(chromosome : String, position : Int, values : Array(Int32) | Slice(Int32)) : Int64 # ameba:disable Metrics/CyclomaticComplexity
       ensure_open
-      raise Error.new("chromosomes have already been set") if @metadata
-      @metadata = Metadata.new(chromosomes, dictionary, denominator)
-      chromosomes.each_with_index { |chromosome, index| @chromosome_indices[chromosome.name] = index }
-      @default_value = default_value
-    end
-
-    def set_chromosomes(chromosomes : Hash(String, UInt32), dict_type : DictType = DictType::SimpleRange, denominator : Float64 = 1.0) : Nil
-      set_chromosomes(chromosomes.map { |name, size| Chromosome.new(name, size.to_i64) }, dict_type, denominator)
-    end
-
-    def set_chromosomes(chromosomes : Array(Tuple(String, UInt32)), dict_type : DictType = DictType::SimpleRange, denominator : Float64 = 1.0) : Nil
-      set_chromosomes(chromosomes.map { |name, size| Chromosome.new(name, size.to_i64) }, dict_type, denominator)
-    end
-
-    def set_chromosomes(chromosomes : Array(Chromosome), dict_type : DictType = DictType::SimpleRange, denominator : Float64 = 1.0) : Nil
-      ensure_open
-      raise Error.new("chromosomes have already been set") if @metadata
-      raise UnsupportedFeatureError.new("supply a value-map dictionary via configure or D4.create") unless dict_type.simple_range?
-      dictionary = Dictionary.new(0_i32, 128_i32)
-      configure(chromosomes, dictionary, denominator)
-    end
-
-    def write_values(chromosome : String, position : Int, values : Array(Int32) | Slice(Int32)) : Int32 # ameba:disable Metrics/CyclomaticComplexity
-      ensure_open
-      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      metadata = @metadata
       start = checked_write_coordinate(position)
       validate_write_range(metadata, chromosome, start, values.size.to_i64)
       raise Error.new("writes must be monotonic and non-overlapping") if start < @next_position[chromosome]
       index = @chromosome_indices[chromosome]
       raise Error.new("writes must follow chromosome declaration order") if index < @current_chromosome_index
-      return 0 if values.empty?
+      return 0_i64 if values.empty?
       advance_primary(metadata, index, start)
       dictionary = metadata.dictionary
       width = dictionary.bit_width
@@ -90,17 +68,14 @@ module D4
       @encoded_position = cursor
       @current_chromosome_index = index
       @next_position[chromosome] = cursor
-      values.size
+      values.size.to_i64
     end
 
-    # Keep this overload after Array/Slice so Crystal dispatches known-size
-    # input to the prevalidated bulk path above. An Enumerable can be lazy,
-    # so keep only a fixed-size chunk in memory even for multi-gigabyte
-    # files. A valid D4 chromosome can also exceed Int32::MAX bases, so
-    # report the consumed count as Int64.
+    # Known-size input follows the prevalidated bulk path above. Lazy input
+    # is held in fixed-size chunks even for multi-gigabyte files.
     def write_values(chromosome : String, position : Int, values : Enumerable(Int32)) : Int64
       ensure_open
-      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      metadata = @metadata
       start = checked_write_coordinate(position)
       validate_write_range(metadata, chromosome, start, 0_i64)
       chromosome_size = metadata.chromosome_size(chromosome)
@@ -168,22 +143,14 @@ module D4
       cursor + values.size
     end
 
-    def write_intervals(chromosome : String, intervals : Enumerable(RawInterval)) : Int32
+    def write_intervals(chromosome : String, intervals : Enumerable(RawInterval)) : Int64
       ensure_open
-      count = 0
+      count = 0_i64
       intervals.each do |interval|
         append_run(chromosome, interval.left, interval.right, interval.value)
         count += 1
       end
       count
-    end
-
-    def write_dense_values(chromosome : String, start_position : Int, values : Array(Int32) | Slice(Int32)) : Int32
-      write_values(chromosome, start_position, values)
-    end
-
-    def write_dense_values(chromosome : String, start_position : Int, values : Enumerable(Int32)) : Int64
-      write_values(chromosome, start_position, values)
     end
 
     def close : Nil
@@ -238,9 +205,9 @@ module D4
 
     # Quantize known-size input before delegating to the prevalidated dense
     # writer. This avoids publishing a prefix when a later value is invalid.
-    def write_scaled_values(chromosome : String, position : Int, values : Array(Float64) | Slice(Float64), *, rounding : Rounding) : Int32
+    def write_scaled_values(chromosome : String, position : Int, values : Array(Float64) | Slice(Float64), *, rounding : Rounding) : Int64
       ensure_open
-      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      metadata = @metadata
       start = checked_write_coordinate(position)
       validate_write_range(metadata, chromosome, start, values.size.to_i64)
       quantized = Array(Int32).new(values.size)
@@ -250,7 +217,7 @@ module D4
 
     def write_scaled_values(chromosome : String, position : Int, values : Enumerable(Float64), *, rounding : Rounding) : Int64
       ensure_open
-      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      metadata = @metadata
       start = checked_write_coordinate(position)
       validate_write_range(metadata, chromosome, start, 0_i64)
       chromosome_size = metadata.chromosome_size(chromosome)
@@ -291,7 +258,7 @@ module D4
     end
 
     private def quantize(value : Float64, rounding : Rounding) : Int32
-      denominator = (@metadata || raise Error.new("set_chromosomes must be called before writing")).denominator
+      denominator = @metadata.denominator
       scaled = value * denominator
       raise ArgumentError.new("scaled value must be finite") unless scaled.finite?
       rounded = case rounding
@@ -310,7 +277,7 @@ module D4
 
     private def append_run(chromosome : String, left : Int64, right : Int64, value : Int32) : Nil
       @control.check!
-      metadata = @metadata || raise Error.new("set_chromosomes must be called before writing")
+      metadata = @metadata
       chrom = metadata.chromosome(chromosome)
       raise ArgumentError.new("invalid write range") if left < 0 || right < left || right > chrom.size
       index = @chromosome_indices[chromosome]
@@ -463,7 +430,7 @@ module D4
 
     private def emit : Nil
       @control.update(WriteProgress.new(WriteStage::Finalizing))
-      metadata = @metadata || raise Error.new("set_chromosomes must be called before closing")
+      metadata = @metadata
       chromosomes = metadata.chromosomes
       while @encoded_chromosome_index < chromosomes.size
         @control.update(WriteProgress.new(WriteStage::Finalizing,

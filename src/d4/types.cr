@@ -15,10 +15,11 @@ module D4
     getter name : String
     getter size : Int64
 
-    def initialize(@name : String, @size : Int64)
+    def initialize(@name : String, size : Int)
       raise ArgumentError.new("chromosome name must not be empty") if @name.empty?
-      raise ArgumentError.new("chromosome size must be non-negative") if @size < 0
-      raise UnsupportedFeatureError.new("D4 supports chromosome sizes up to UInt32::MAX") if @size > UInt32::MAX
+      raise ArgumentError.new("chromosome size must be non-negative") if size < 0
+      raise UnsupportedFeatureError.new("D4 supports chromosome sizes up to UInt32::MAX") if size > UInt32::MAX
+      @size = size.to_i64
     end
   end
 
@@ -44,15 +45,6 @@ module D4
     private def checked_range_coordinate(value : Int) : Int64
       raise ArgumentError.new("region coordinate exceeds Int64") if value < Int64::MIN || value > Int64::MAX
       value.to_i64
-    end
-
-    # Keep the generic Range overload compatible with other numeric values
-    # that already implement `to_i64`, while normalizing their conversion
-    # overflow to the same public argument error.
-    private def checked_range_coordinate(value) : Int64
-      value.to_i64
-    rescue OverflowError
-      raise ArgumentError.new("region coordinate exceeds Int64")
     end
 
     def length : Int64

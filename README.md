@@ -45,8 +45,8 @@ end
 # Another fiber or thread may call control.cancel.
 ```
 
-The same control can be passed to `D4.writer`, `D4.build_indexes`, or directly
-to `D4::Writer` and `D4::IndexBuilder`.
+The same control can be passed to `D4.build_indexes` or directly to
+`D4::Writer` and `D4::IndexBuilder`.
 
 A GUI coverage viewer is available in the [d4-plot repository](https://github.com/kojix2/d4-plot).
 
@@ -55,8 +55,13 @@ A GUI coverage viewer is available in the [d4-plot repository](https://github.co
 D4 files can be several gigabytes even when chromosome lengths fit in
 `Int32`. Use `scan_values` or `each_value` to read large regions;
 `values` has a materialization limit. The `Enumerable` overload of
-`Writer#write_values` writes in 65,536-value chunks and returns an `Int64`
-count, so streaming input does not require a chromosome-sized array.
+`Writer#write_values` writes in 65,536-value chunks, so streaming input
+does not require a chromosome-sized array. All bulk write methods return
+an `Int64` count.
+Chromosome lengths and returned genomic positions use `Int64`. Pass an
+ordered array of `D4::Chromosome` objects to `D4.create`; the writer is
+fully configured at creation. Chromosome lengths are checked against the
+supported `UInt32` coordinate range.
 
 ## Development
 
