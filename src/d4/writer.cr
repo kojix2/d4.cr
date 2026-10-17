@@ -489,7 +489,9 @@ module D4
 
     private def ensure_destination_available : Nil
       target = @path.to_s
-      raise Error.new("destination already exists: #{target}") if !@options.overwrite? && ::File.exists?(target)
+      if !@options.overwrite? && (::File.exists?(target) || ::File.symlink?(target))
+        raise Error.new("destination already exists: #{target}")
+      end
     end
 
     private def each_secondary_record(chromosome : Chromosome, & : Bytes -> Nil) : Nil

@@ -198,6 +198,20 @@ describe "D4 format compatibility and lifecycle" do
     end
   end
 
+  {% unless flag?(:win32) %}
+    it "rejects a dangling symlink destination when the writer is created" do
+      path = File.join(Dir.tempdir, "d4-crystal-dangling-#{Random.rand(1_000_000)}.d4")
+      missing = "#{path}.missing"
+      begin
+        File.symlink(missing, path)
+        expect_raises(D4::Error, "destination already exists") { D4::Writer.new(path) }
+        File.symlink?(path).should be_true
+      ensure
+        File.delete(path) if File.exists?(path) || File.symlink?(path)
+      end
+    end
+  {% end %}
+
   it "does not replace a destination created while writing" do
     path = File.join(Dir.tempdir, "d4-crystal-raced-destination-#{Random.rand(1_000_000)}.d4")
     writer = D4::Writer.new(path)
